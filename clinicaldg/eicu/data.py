@@ -2,7 +2,7 @@ import pandas as pd
 pd.options.mode.chained_assignment = None
 import numpy as np
 from clinicaldg.eicu.data_extraction.data_extraction_mortality import data_extraction_mortality
-import clinicaldg.eicu.Constants as Constants
+from clinicaldg.eicu import Constants
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from torch.utils.data import ConcatDataset, Dataset
 

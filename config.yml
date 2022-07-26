@@ -1,0 +1,71 @@
+mnist: 
+  mnist_dir: 'path/to/mnist'
+
+eicu:
+  eicu_dir: 'path/to/raw/eicu' 
+  benchmark_dir: 'path/to/preprocessed/eicu'
+  ts_cont_features: 
+    - Heart Rate
+    - MAP (mmHg)
+    - Invasive BP Diastolic
+    - Invasive BP Systolic
+    - O2 Saturation
+    - Respiratory Rate
+    - Temperature (C)
+    - glucose
+    - FiO2
+    - pH
+  ts_cat_features: 
+    - GCS Total
+    - Eyes
+    - Motor
+    - Verbal
+  static_cont_features: 
+    - admissionheight
+    - admissionweight
+    - age
+  static_cat_features: 
+    - apacheadmissiondx
+    - gender
+  normal_values:
+    'Eyes': 4
+    'GCS Total': 15
+    'Heart Rate': 86
+    'Motor': 6
+    'Invasive BP Diastolic': 56
+    'Invasive BP Systolic': 118
+    'O2 Saturation': 98
+    'Respiratory Rate': 19
+    'Verbal': 5
+    'glucose': 128
+    'admissionweight': 81
+    'Temperature (C)': 36
+    'admissionheight': 170
+    'MAP (mmHg)': 77
+    'pH': 7.4
+    'FiO2': 0.21
+
+cxr:
+  image_paths: 
+    MIMIC: 'path/to/mimic'
+    CXP: 'path/to/cxp'
+    NIH: 'path/to/nih'
+    PAD: 'path/to/pad'
+  cache_dir: ''
+  take_labels: 
+    - No Finding
+    - Atelectasis
+    - Cardiomegaly
+    - Effusion
+    - Pneumonia
+    - Pneumothorax
+    - Consolidation
+    - Edema
+  IMAGENET_MEAN: 
+    - 0.485
+    - 0.456
+    - 0.406
+  IMAGENET_STD:
+    - 0.229
+    - 0.224
+    - 0.225

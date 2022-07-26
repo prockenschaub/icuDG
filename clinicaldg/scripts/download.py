@@ -10,13 +10,16 @@ import uuid
 import json
 import os
 from pathlib import Path
-
-
-mnist_dir = '/scratch/ssd001/home/haoran/domainbed_data/MNIST/'
+import yaml
 
 # MNIST #######################################################################
 
 def download_mnist():
+    # Find path where to store the downloaded MNIST data
+    with open("config.yml", "r") as stream:
+        config = yaml.safe_load(stream)
+    mnist_dir = config['mnist']['mnist_dir']
+
     # Original URL: http://yann.lecun.com/exdb/mnist/
     Path(mnist_dir).mkdir(exist_ok = True, parents = True)
     MNIST(mnist_dir, download=True)

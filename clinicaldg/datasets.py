@@ -11,10 +11,10 @@ from torchvision.transforms.functional import rotate
 import numpy as np
 import pandas as pd
 from clinicaldg.lib import misc
-import clinicaldg.eicu.Constants as eicuConstants
+from clinicaldg.eicu import Constants as eicuConstants
 import clinicaldg.eicu.data as eicuData
 import clinicaldg.eicu.Augmentations as eicuAugmentations
-import clinicaldg.cxr.Constants as cxrConstants
+from clinicaldg.cxr import Constants as cxrConstants
 import clinicaldg.cxr.data as cxrData
 import clinicaldg.cxr.Augmentations as cxrAugmentations
 import clinicaldg.cxr.process as cxrProcess

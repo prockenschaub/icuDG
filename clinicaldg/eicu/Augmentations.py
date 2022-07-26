@@ -1,4 +1,4 @@
-from clinicaldg.eicu.Constants import *
+from clinicaldg.eicu import Constants
 import numpy as np
 import pandas as pd
 from clinicaldg import datasets

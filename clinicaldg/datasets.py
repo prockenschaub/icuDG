@@ -11,6 +11,7 @@ from torchvision.transforms.functional import rotate
 import numpy as np
 import pandas as pd
 from clinicaldg.lib import misc
+from clinicaldg.mnist import Constants as mnistConstants
 from clinicaldg.eicu import Constants as eicuConstants
 import clinicaldg.eicu.data as eicuData
 import clinicaldg.eicu.Augmentations as eicuAugmentations
@@ -18,7 +19,6 @@ from clinicaldg.cxr import Constants as cxrConstants
 import clinicaldg.cxr.data as cxrData
 import clinicaldg.cxr.Augmentations as cxrAugmentations
 import clinicaldg.cxr.process as cxrProcess
-from clinicaldg.scripts.download import mnist_dir
 from sklearn.metrics import roc_auc_score, accuracy_score, recall_score, f1_score, confusion_matrix, precision_score, matthews_corrcoef
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -371,7 +371,7 @@ class ColoredMNIST():
     num_classes = 2
     
     def __init__(self, hparams, args):        
-        mnist = MNIST(mnist_dir, train=True, download=True)
+        mnist = MNIST(mnistConstants.mnist_dir, train=True, download=True)
         mnist_train = [mnist.data[:50000], mnist.targets[:50000]]
         mnist_val = [mnist.data[50000:], mnist.targets[50000:]]
         idx = np.random.permutation(range(len(mnist_train[1])))

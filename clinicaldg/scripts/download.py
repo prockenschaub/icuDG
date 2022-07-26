@@ -10,19 +10,15 @@ import uuid
 import json
 import os
 from pathlib import Path
-import yaml
+
+from clinicaldg.mnist import Constants as mnistConstants
 
 # MNIST #######################################################################
 
 def download_mnist():
-    # Find path where to store the downloaded MNIST data
-    with open("config.yml", "r") as stream:
-        config = yaml.safe_load(stream)
-    mnist_dir = config['mnist']['mnist_dir']
-
     # Original URL: http://yann.lecun.com/exdb/mnist/
-    Path(mnist_dir).mkdir(exist_ok = True, parents = True)
-    MNIST(mnist_dir, download=True)
+    Path(mnistConstants.mnist_dir).mkdir(exist_ok = True, parents = True)
+    MNIST(mnistConstants.mnist_dir, download=True)
 
 if __name__ == "__main__":
     download_mnist()

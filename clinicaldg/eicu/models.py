@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-import clinicaldg.eicu.Constants as Constants
+from clinicaldg.eicu import Constants
 
 class FlattenedDense(nn.Module):
     def __init__(self, ts_cat_levels, static_cat_levels, emb_dim, num_layers, num_hidden_units,

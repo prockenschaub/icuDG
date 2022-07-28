@@ -7,7 +7,7 @@
 #SBATCH --partition=medium
 #SBATCH --time=05:00:00
 
-cd ~/work/clinicaldg # NOTE: Change if your repo lives elsewhere
+cd ~/work/Clinicaldg # NOTE: Change if your repo lives elsewhere
 
 eval "$($(which conda) shell.bash hook)"
 conda activate clinicaldg
@@ -21,7 +21,7 @@ do
     python -m clinicaldg.scripts.train \
         --dataset eICU \
         --es_method ${es} \
-        --hparams '{\"eicu_architecture\": \"GRU\"}' \
+        --hparams '{"eicu_architecture": "GRU"}' \
         --hparams_seed ${hs} \
         --trial_seed ${ts} \
         --seed ${seed} \

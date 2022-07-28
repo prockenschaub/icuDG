@@ -7,7 +7,7 @@
 #SBATCH --partition=medium
 #SBATCH --time=05:00:00
 
-cd ~/work/Clinicaldg # NOTE: Change if your repo lives elsewhere
+cd ~/work/ClinicalDG # NOTE: Change if your repo lives elsewhere
 
 eval "$($(which conda) shell.bash hook)"
 conda activate clinicaldg
@@ -25,6 +25,6 @@ do
         --hparams_seed ${hs} \
         --trial_seed ${ts} \
         --seed ${seed} \
-        --output_dir "~/work/clinicaldg/outputs/eicu/run${SLURM_ARRAY_TASK_ID}" \
+        --output_dir "outputs/eicu/run${SLURM_ARRAY_TASK_ID}" \
         --delete_model
 done < <(sed -n "$((${SLURM_ARRAY_TASK_ID}+1))p" "sweeps/eicu_params.csv")

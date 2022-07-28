@@ -1,23 +1,30 @@
 #!/bin/bash
 
-cd ../
+#SBATCH --job-name=cdg-eicu
+#SBATCH --output=logs/%x-%A-%a.log
+#SBATCH --ntasks=2
+#SBATCH --mem=20G
+#SBATCH --partition=medium
+#SBATCH --time=05:00:00
 
-slurm_pre='--partition t4v2,p100,t4v1,rtx6000 --gres gpu:1 --mem 7gb -c 4 --job-name eicu --output /scratch/ssd001/home/haoran/projects/ClinicalDG/slurm_logs/eicu_%A.log'
+cd ~/work/clinicaldg # NOTE: Change if your repo lives elsewhere
 
-for es_method in train val; do
-    architecture='GRU'
-    hparams='{"eicu_architecture": '"\"${architecture}\""'}'
-    hparams=`echo $hparams | sed 's/\"/\\\"/g'`
-    python -m clinicaldg.scripts.sweep launch \
-        --output_dir "/scratch/ssd001/home/haoran/clinicaldg_results/eICU" \
-        --command_launcher "slurm" \
-        --n_trials 5 \
-        --algorithms ERMID ERMMerged ERM IRM VREx RVP CORAL IGA MLDG GroupDRO \
-        --datasets eICU \
-        --n_hparams 10 \
-        --slurm_pre "${slurm_pre}" \
-        --es_method "${es_method}" \
-        --hparams "${hparams}" \
-        --skip_confirmation \
+eval "$($(which conda) shell.bash hook)"
+conda activate clinicaldg
+
+set -x
+
+while IFS="," read -r es algo ts hs seed
+do
+    date 
+
+    python -m clinicaldg.scripts.train \
+        --dataset eICU \
+        --es_method ${es} \
+        --hparams '{\"eicu_architecture\": \"GRU\"}' \
+        --hparams_seed ${hs} \
+        --trial_seed ${ts} \
+        --seed ${seed} \
+        --output_dir "~/work/clinicaldg/outputs/eicu/run${SLURM_ARRAY_TASK_ID}" \
         --delete_model
-done
+done < <(sed -n "$((${SLURM_ARRAY_TASK_ID}+1))p" "sweeps/eicu_params.csv")

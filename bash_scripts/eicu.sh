@@ -20,6 +20,7 @@ do
 
     python -m clinicaldg.scripts.train \
         --dataset eICU \
+        --algorithm ${algo} \
         --es_method ${es} \
         --hparams '{"eicu_architecture": "GRU"}' \
         --hparams_seed ${hs} \

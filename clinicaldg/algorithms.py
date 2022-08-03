@@ -152,25 +152,28 @@ class AbstractDANN(Algorithm):
         self.featurizer = experiment.get_featurizer(hparams)
         self.classifier = nn.Linear(self.featurizer.n_outputs, 
             experiment.num_classes)
-        self.discriminator = networks.MLP(self.featurizer.n_outputs,
+        self.discriminator = models.MLP(self.featurizer.n_outputs,
             num_domains, self.hparams)
         self.class_embeddings = nn.Embedding(experiment.num_classes,
             self.featurizer.n_outputs)
 
         # Optimizers
-        self.disc_opt = torch.optim.Adam(
-            (list(self.discriminator.parameters()) + 
-                list(self.class_embeddings.parameters())),
-            lr=self.hparams["lr_d"],
-            weight_decay=self.hparams['weight_decay_d'],
-            betas=(self.hparams['beta1'], 0.9))
-
-        self.gen_opt = torch.optim.Adam(
-            (list(self.featurizer.parameters()) + 
-                list(self.classifier.parameters())),
-            lr=self.hparams["lr_g"],
-            weight_decay=self.hparams['weight_decay_g'],
-            betas=(self.hparams['beta1'], 0.9))
+        self.optimizer = {
+            'disc': torch.optim.Adam(
+                (list(self.discriminator.parameters()) + 
+                    list(self.class_embeddings.parameters())),
+                lr=self.hparams['ann_lr_d'],
+                weight_decay=self.hparams['ann_weight_decay_d'],
+                betas=(self.hparams['ann_beta1'], 0.9)
+            ), 
+            'gen': torch.optim.Adam(
+                (list(self.featurizer.parameters()) + 
+                    list(self.classifier.parameters())),
+                lr=self.hparams['ann_lr_g'],
+                weight_decay=self.hparams['ann_weight_decay_g'],
+                betas=(self.hparams['ann_beta1'], 0.9)
+            )
+        }
 
     def update(self, minibatches, device):
         self.update_count += 1
@@ -199,24 +202,24 @@ class AbstractDANN(Algorithm):
         input_grad = autograd.grad(disc_softmax[:, disc_labels].sum(),
             [disc_input], create_graph=True)[0]
         grad_penalty = (input_grad**2).sum(dim=1).mean(dim=0)
-        disc_loss += self.hparams['grad_penalty'] * grad_penalty
+        disc_loss += self.hparams['ann_grad_penalty'] * grad_penalty
 
-        d_steps_per_g = self.hparams['d_steps_per_g_step']
+        d_steps_per_g = self.hparams['ann_d_steps_per_g_step']
         if (self.update_count.item() % (1+d_steps_per_g) < d_steps_per_g):
 
-            self.disc_opt.zero_grad()
+            self.optimizer['disc'].zero_grad()
             disc_loss.backward()
-            self.disc_opt.step()
+            self.optimizer['disc'].step()
             return {'disc_loss': disc_loss.item()}
         else:
             all_preds = self.classifier(all_z)
             classifier_loss = cross_entropy(all_preds, all_y)
             gen_loss = (classifier_loss +
-                        (self.hparams['lambda'] * -disc_loss))
-            self.disc_opt.zero_grad()
-            self.gen_opt.zero_grad()
+                        (self.hparams['ann_lambda'] * -disc_loss))
+            self.optimizer['disc'].zero_grad()
+            self.optimizer['gen'].zero_grad()
             gen_loss.backward()
-            self.gen_opt.step()
+            self.optimizer['gen'].step()
             return {'gen_loss': gen_loss.item()}
 
     def predict(self, x):

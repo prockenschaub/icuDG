@@ -39,8 +39,13 @@ def save_checkpoint(model, optimizer, sampler_dicts, start_step, es, rng):
     slurm_job_id = os.environ.get('SLURM_JOB_ID')        
     
     if slurm_job_id is not None and Path(f'/checkpoint/{getpass.getuser()}/{slurm_job_id}/').exists():        
+        if isinstance(model.optimizer, dict):
+            optimizer_dict = {k: opt.state_dict() for k, opt in model.optimizer.items()}
+        else:
+            optimizer_dict = optimizer.state_dict()
+
         torch.save({'model_dict': model.state_dict(),
-                    'optimizer_dict': optimizer.state_dict(),
+                    'optimizer_dict': optimizer_dict,
                     'sampler_dicts': sampler_dicts,
                     'start_step': start_step,
                     'es': es,

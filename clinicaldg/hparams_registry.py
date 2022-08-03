@@ -31,14 +31,14 @@ def _hparams(algorithm, dataset, random_seed):
     # corresponds to exactly one algorithm.
 
     if algorithm in ['DANN', 'CDANN']:
-        _hparam('lambda', 1.0, lambda r: 10**r.uniform(-2, 2))
-        _hparam('weight_decay_d', 0., lambda r: 10**r.uniform(-6, -2))
-        _hparam('d_steps_per_g_step', 1, lambda r: int(2**r.uniform(0, 3)))
-        _hparam('grad_penalty', 0., lambda r: 10**r.uniform(-2, 1))
-        _hparam('beta1', 0.5, lambda r: r.choice([0., 0.5]))
-        _hparam('mlp_width', 256, lambda r: int(2 ** r.uniform(6, 10)))
-        _hparam('mlp_depth', 3, lambda r: int(r.choice([3, 4, 5])))
-        _hparam('mlp_dropout', 0., lambda r: r.choice([0., 0.1, 0.5]))
+        _hparam('ann_lambda', 1.0, lambda r: 10**r.uniform(-2, 2))
+        _hparam('ann_weight_decay_d', 0., lambda r: 10**r.uniform(-6, -2))
+        _hparam('ann_d_steps_per_g_step', 1, lambda r: int(2**r.uniform(0, 3)))
+        _hparam('ann_grad_penalty', 0., lambda r: 10**r.uniform(-2, 1))
+        _hparam('ann_beta1', 0.5, lambda r: r.choice([0., 0.5]))
+        _hparam('ann_mlp_width', 256, lambda r: int(2 ** r.uniform(6, 10)))
+        _hparam('ann_mlp_depth', 3, lambda r: int(r.choice([3, 4, 5])))
+        _hparam('ann_mlp_dropout', 0., lambda r: r.choice([0., 0.1, 0.5]))
 
     elif algorithm == "RSC":
         _hparam('rsc_f_drop_factor', 1/3, lambda r: r.uniform(0, 0.5))
@@ -101,21 +101,21 @@ def _hparams(algorithm, dataset, random_seed):
 
 
     if algorithm in ['DANN', 'CDANN'] and dataset in SMALL_IMAGES:
-        _hparam('lr_g', 1e-3, lambda r: 10**r.uniform(-4.5, -2.5) )
+        _hparam('ann_lr_g', 1e-3, lambda r: 10**r.uniform(-4.5, -2.5) )
     elif algorithm in ['DANN', 'CDANN']:
-        _hparam('lr_g', 5e-5, lambda r: 10**r.uniform(-5, -3.5) )
+        _hparam('ann_lr_g', 5e-5, lambda r: 10**r.uniform(-5, -3.5) )
 
 
     if algorithm in ['DANN', 'CDANN'] and dataset in SMALL_IMAGES:
-        _hparam('lr_d', 1e-3, lambda r: 10**r.uniform(-4.5, -2.5) )
+        _hparam('ann_lr_d', 1e-3, lambda r: 10**r.uniform(-4.5, -2.5) )
     elif algorithm in ['DANN', 'CDANN']:
-        _hparam('lr_d', 5e-5, lambda r: 10**r.uniform(-5, -3.5) )
+        _hparam('ann_lr_d', 5e-5, lambda r: 10**r.uniform(-5, -3.5) )
 
 
     if algorithm in ['DANN', 'CDANN'] and dataset in SMALL_IMAGES:
-        _hparam('weight_decay_g', 0., lambda r: 0.)
+        _hparam('ann_weight_decay_g', 0., lambda r: 0.)
     elif algorithm in ['DANN', 'CDANN']:
-        _hparam('weight_decay_g', 0., lambda r: 10**r.uniform(-6, -2) )
+        _hparam('ann_weight_decay_g', 0., lambda r: 10**r.uniform(-6, -2) )
         
         
     if dataset[:4] == 'eICU':

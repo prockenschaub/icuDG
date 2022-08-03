@@ -163,7 +163,13 @@ if __name__ == "__main__":
     if has_checkpoint():
         state = load_checkpoint()
         algorithm.load_state_dict(state['model_dict'])
-        algorithm.optimizer.load_state_dict(state['optimizer_dict'])
+        
+        if isinstance(algorithm.optimizer, dict):
+            for k, opt in algorithm.optimizer.items():
+                opt.load_state_dict(state['optimizer_dict'][k])
+        else:
+            algorithm.optimizer.load_state_dict(state['optimizer_dict'])
+        
         [train_loader.sampler.load_state_dict(state['sampler_dicts'][c]) for c, train_loader in enumerate(train_loaders)]
         start_step = state['start_step']
         es = state['es']

@@ -9,7 +9,8 @@ import copy
 import numpy as np
 from itertools import chain
 
-from clinicaldg import networks
+from clinicaldg import models
+from clinicaldg.lib.evalution import cross_entropy
 from clinicaldg.lib.misc import random_pairs_of_minibatches
 
 ALGORITHMS = [
@@ -26,11 +27,10 @@ ALGORITHMS = [
     'CDANN', 
     'MTL', 
     'SagNet',
-    'ARM',
+    'ARM',  # NOTE: not currently fully implemented
     'VREx',
     'RSC',
     'SD',
-    # new
     'RVP',
     'IGA'
 ]
@@ -47,13 +47,6 @@ def cat(lst):
     elif isinstance(lst[0], dict):
         return {i: torch.cat([j[i] for j in lst]) if torch.is_tensor(lst[0][i]) else list(chain([j[i] for j in lst])) for i in lst[0]}
 
-def cross_entropy(logits, y):
-    # multiclass
-    if y.ndim == 1 or y.shape[1] == 1:
-        return F.cross_entropy(logits, y)
-    # multitask
-    else:
-        return F.binary_cross_entropy_with_logits(logits, y.float())
     
 class Algorithm(torch.nn.Module):
     """
@@ -62,7 +55,7 @@ class Algorithm(torch.nn.Module):
     - update()
     - predict()
     """
-    def __init__(self, input_shape, num_classes, num_domains, hparams):
+    def __init__(self, experiment, num_domains, hparams):
         super(Algorithm, self).__init__()
         self.hparams = hparams
 
@@ -81,11 +74,10 @@ class ERM(Algorithm):
     Empirical Risk Minimization (ERM)
     """
 
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(ERM, self).__init__(input_shape, num_classes, num_domains,
-                                  hparams)
-        self.featurizer = networks.Featurizer(input_shape, self.hparams, dataset_name, dataset)
-        self.classifier = nn.Linear(self.featurizer.n_outputs, num_classes)
+    def __init__(self, experiment, num_domains, hparams):
+        super(ERM, self).__init__(experiment, num_domains, hparams)
+        self.featurizer = experiment.get_featurizer(self.hparams)
+        self.classifier = nn.Linear(self.featurizer.n_outputs, experiment.num_classes)
         self.network = nn.Sequential(self.featurizer, self.classifier)
         self.optimizer = torch.optim.Adam(
             self.network.parameters(),
@@ -116,12 +108,18 @@ class ERMMerged(ERM):
     
 class ARM(ERM):
     """ Adaptive Risk Minimization (ARM) """
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        original_input_shape = input_shape
+    # PR: this algorithm isn't currently useable (and isn't reported in the 
+    #     original manuscript by Zhang et al.) since networks.ContextNet isn't
+    #     currently implemented.
+
+    def __init__(self, experiment, num_domains, hparams):
+        raise NotImplementedError()
+
+        original_input_shape = experiment.input_shape
         input_shape = (1 + original_input_shape[0],) + original_input_shape[1:]
-        super(ARM, self).__init__(input_shape, num_classes, num_domains,
+        super(ARM, self).__init__(input_shape, experiment.num_classes, num_domains,
                                   hparams)
-        self.context_net = networks.ContextNet(original_input_shape)
+        self.context_net = networks.ContextNet(original_input_shape) # <- this does not currently exist
         self.support_size = hparams['batch_size']
 
     def predict(self, x):
@@ -142,22 +140,21 @@ class ARM(ERM):
 class AbstractDANN(Algorithm):
     """Domain-Adversarial Neural Networks (abstract class)"""
 
-    def __init__(self, input_shape, num_classes, num_domains,
-                 hparams, conditional, class_balance, dataset_name, dataset):
-
-        super(AbstractDANN, self).__init__(input_shape, num_classes, num_domains,
-                                  hparams)
+    def __init__(self, experiment, num_domains, hparams, conditional, 
+                    class_balance):
+        super(AbstractDANN, self).__init__(experiment, num_domains, hparams)
 
         self.register_buffer('update_count', torch.tensor([0]))
         self.conditional = conditional
         self.class_balance = class_balance
 
         # Algorithms
-        self.featurizer = networks.Featurizer(input_shape, self.hparams, dataset_name, dataset)
-        self.classifier = nn.Linear(self.featurizer.n_outputs, num_classes)
+        self.featurizer = experiment.get_featurizer(hparams)
+        self.classifier = nn.Linear(self.featurizer.n_outputs, 
+            experiment.num_classes)
         self.discriminator = networks.MLP(self.featurizer.n_outputs,
             num_domains, self.hparams)
-        self.class_embeddings = nn.Embedding(num_classes,
+        self.class_embeddings = nn.Embedding(experiment.num_classes,
             self.featurizer.n_outputs)
 
         # Optimizers
@@ -227,24 +224,23 @@ class AbstractDANN(Algorithm):
 
 class DANN(AbstractDANN):
     """Unconditional DANN"""
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(DANN, self).__init__(input_shape, num_classes, num_domains,
-            hparams, conditional=False, class_balance=False, dataset_name = dataset_name, dataset = dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(DANN, self).__init__(experiment, num_domains,
+            hparams, conditional=False, class_balance=False)
 
 
 class CDANN(AbstractDANN):
     """Conditional DANN"""
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(CDANN, self).__init__(input_shape, num_classes, num_domains,
-            hparams, conditional=True, class_balance=True, dataset_name = dataset_name, dataset = dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(CDANN, self).__init__(experiment, num_domains,
+            hparams, conditional=True, class_balance=True)
 
 
 class IRM(ERM):
     """Invariant Risk Minimization"""
 
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(IRM, self).__init__(input_shape, num_classes, num_domains,
-                                  hparams, dataset_name, dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(IRM, self).__init__(experiment, num_domains, hparams)
         self.register_buffer('update_count', torch.tensor([0]))
 
     @staticmethod
@@ -296,9 +292,8 @@ class IRM(ERM):
     
 class VREx(ERM):
     """V-REx algorithm from http://arxiv.org/abs/2003.00688"""
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(VREx, self).__init__(input_shape, num_classes, num_domains,
-                                  hparams, dataset_name, dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(VREx, self).__init__(experiment, num_domains, hparams)
         self.register_buffer('update_count', torch.tensor([0]))
 
     def update(self, minibatches, device):
@@ -341,9 +336,8 @@ class VREx(ERM):
 
 class RVP(ERM):
     """RVP algorithm from https://arxiv.org/abs/2006.07544"""
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(RVP, self).__init__(input_shape, num_classes, num_domains,
-                                  hparams, dataset_name, dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(RVP, self).__init__(experiment, num_domains, hparams)
         self.register_buffer('update_count', torch.tensor([0]))
 
     def update(self, minibatches, device):
@@ -390,9 +384,8 @@ class Mixup(ERM):
     https://arxiv.org/pdf/2001.00677.pdf
     https://arxiv.org/pdf/1912.01805.pdf
     """
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(Mixup, self).__init__(input_shape, num_classes, num_domains,
-                                    hparams, dataset_name, dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(Mixup, self).__init__(experiment, num_domains, hparams)
 
     def update(self, minibatches, device):
         objective = 0
@@ -421,10 +414,9 @@ class GroupDRO(ERM):
     Robust ERM minimizes the error at the worst minibatch
     Algorithm 1 from [https://arxiv.org/pdf/1911.08731.pdf]
     """
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(GroupDRO, self).__init__(input_shape, num_classes, num_domains,
-                                        hparams, dataset_name, dataset)
-        self.register_buffer("q", torch.ones(len(dataset.TRAIN_ENVS)))
+    def __init__(self, experiment, num_domains, hparams):
+        super(GroupDRO, self).__init__(experiment, num_domains, hparams)
+        self.register_buffer("q", torch.ones(num_domains))
 
     def update(self, minibatches, device):
         assert len(minibatches) == len(self.q), str(len(minibatches)) + ' ' + str(len(self.q))
@@ -456,9 +448,8 @@ class MLDG(ERM):
     Related: https://arxiv.org/pdf/1703.03400.pdf
     Related: https://arxiv.org/pdf/1910.13580.pdf
     """
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(MLDG, self).__init__(input_shape, num_classes, num_domains,
-                                   hparams, dataset_name, dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(MLDG, self).__init__(experiment, num_domains, hparams)
 
     def update(self, minibatches, device):
         """
@@ -569,9 +560,8 @@ class AbstractMMD(ERM):
     Perform ERM while matching the pair-wise domain feature distributions
     using MMD (abstract class)
     """
-    def __init__(self, input_shape, num_classes, num_domains, hparams, gaussian, dataset_name, dataset):
-        super(AbstractMMD, self).__init__(input_shape, num_classes, num_domains,
-                                  hparams, dataset_name, dataset)
+    def __init__(self, experiment, num_domains, hparams, gaussian):
+        super(AbstractMMD, self).__init__(experiment, num_domains, hparams)
         if gaussian: 
             self.kernel_type = "gaussian"
         else:
@@ -647,9 +637,8 @@ class MMD(AbstractMMD):
     MMD using Gaussian kernel
     """
 
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(MMD, self).__init__(input_shape, num_classes,
-                                          num_domains, hparams, gaussian=True, dataset_name = dataset_name, dataset = dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(MMD, self).__init__(experiment, num_domains, hparams, gaussian=True)
 
 
 class CORAL(AbstractMMD):
@@ -657,9 +646,8 @@ class CORAL(AbstractMMD):
     MMD using mean and covariance difference 
     """
 
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(CORAL, self).__init__(input_shape, num_classes,
-                                         num_domains, hparams, gaussian=False, dataset_name = dataset_name, dataset = dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(CORAL, self).__init__(experiment, num_domains, hparams, gaussian=False)
 
 
 class MTL(Algorithm):
@@ -669,11 +657,11 @@ class MTL(Algorithm):
     (https://arxiv.org/abs/1711.07910)
     """
 
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(MTL, self).__init__(input_shape, num_classes, num_domains,
-                                  hparams)
-        self.featurizer = networks.Featurizer(input_shape, self.hparams, dataset_name, dataset)
-        self.classifier = nn.Linear(self.featurizer.n_outputs * 2, num_classes)
+    def __init__(self, experiment, num_domains, hparams):
+        super(MTL, self).__init__(experiment, num_domains, hparams)
+        self.featurizer = experiment.get_featurizer(hparams)
+        self.classifier = nn.Linear(self.featurizer.n_outputs * 2, 
+            experiment.num_classes)
         self.optimizer = torch.optim.Adam(
             list(self.featurizer.parameters()) +\
             list(self.classifier.parameters()),
@@ -720,15 +708,17 @@ class SagNet(Algorithm):
     Algorithm 1 from: https://arxiv.org/abs/1910.11645 
     """
 
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(SagNet, self).__init__(input_shape, num_classes, num_domains,
-                                  hparams)
+    def __init__(self, experiment, num_domains, hparams):
+        super(SagNet, self).__init__(experiment, num_domains, hparams)
+
         # featurizer network
-        self.network_f = networks.Featurizer(input_shape, self.hparams, dataset_name, dataset)
+        self.network_f = experiment.get_featurizer(hparams)
         # content network
-        self.network_c = nn.Linear(self.network_f.n_outputs, num_classes)
+        self.network_c = nn.Linear(self.network_f.n_outputs, 
+            experiment.num_classes)
         # style network
-        self.network_s = nn.Linear(self.network_f.n_outputs, num_classes)
+        self.network_s = nn.Linear(self.network_f.n_outputs, 
+            experiment.num_classes)
 
         # # This commented block of code implements something closer to the
         # # original paper, but is specific to ResNet and puts in disadvantage
@@ -831,12 +821,11 @@ class SagNet(Algorithm):
 
 
 class RSC(ERM):
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(RSC, self).__init__(input_shape, num_classes, num_domains,
-                                   hparams, dataset_name, dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(RSC, self).__init__(experiment, num_domains, hparams)
         self.drop_f = (1 - hparams['rsc_f_drop_factor']) * 100
         self.drop_b = (1 - hparams['rsc_b_drop_factor']) * 100
-        self.num_classes = num_classes
+        self.num_classes = experiment.num_classes
 
     def update(self, minibatches, device):
         # inputs
@@ -890,9 +879,8 @@ class SD(ERM):
     Gradient Starvation: A Learning Proclivity in Neural Networks
     Equation 25 from [https://arxiv.org/pdf/2011.09468.pdf]
     """
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
-        super(SD, self).__init__(input_shape, num_classes, num_domains,
-                                        hparams, dataset_name, dataset)
+    def __init__(self, experiment, num_domains, hparams):
+        super(SD, self).__init__(experiment, num_domains, hparams)
         self.sd_reg = hparams["sd_reg"] 
 
     def update(self, minibatches, device):
@@ -915,10 +903,9 @@ class IGA(ERM):
     """
     Inter-environmental Gradient Alignment from https://arxiv.org/pdf/2008.01883.pdf
     """
-    def __init__(self, input_shape, num_classes, num_domains, hparams, dataset_name, dataset):
+    def __init__(self, experiment, num_domains, hparams):
         torch.backends.cudnn.enabled = False # GRU second order derivatives
-        super(IGA, self).__init__(input_shape, num_classes, num_domains,
-                                  hparams, dataset_name, dataset)
+        super(IGA, self).__init__(experiment, num_domains, hparams)
         self.register_buffer('update_count', torch.tensor([0]))
 
     def grad_variance_penalty(self, losses, model):

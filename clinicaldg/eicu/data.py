@@ -1,10 +1,17 @@
+# Based on code by Zhang et al., rearranged and refactored by 
+# Patrick Rockenschaub. 
+
 import pandas as pd
 pd.options.mode.chained_assignment = None
 import numpy as np
+
+from torch.utils.data import ConcatDataset, Dataset
+
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+
 from clinicaldg.eicu.data_extraction.data_extraction_mortality import data_extraction_mortality
 from clinicaldg.eicu import Constants
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from torch.utils.data import ConcatDataset, Dataset
+
 
 hospitals = pd.read_csv((Constants.eicu_dir/'hospital.csv'))
 hospitals['region'] = hospitals['region'].fillna('Missing')

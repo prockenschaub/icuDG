@@ -1,15 +1,14 @@
 import numpy as np
 import pandas as pd
-from clinicaldg.cxr import Constants
-from clinicaldg import datasets
+from clinicaldg.cxr import Constants, experiments
 from clinicaldg.eicu.Augmentations import compute_subsample_probability, aug_f
 
 def subsample_augment(dfs, g1_mean, g2_mean, g1_dist, g2_dist, target_name = 'Pneumonia'):   
     means = {}
-    means[datasets.CXR.TRAIN_ENVS[0]] = (g1_mean + g1_dist/2, g2_mean - g2_dist/2)
-    means[datasets.CXR.TRAIN_ENVS[1]] = (g1_mean - g1_dist/2, g2_mean + g2_dist/2)
-    means[datasets.CXR.VAL_ENV] = (0.07, 0.04)
-    means[datasets.CXR.TEST_ENV] = (0.05, 0.05)
+    means[experiments.CXR.TRAIN_ENVS[0]] = (g1_mean + g1_dist/2, g2_mean - g2_dist/2)
+    means[experiments.CXR.TRAIN_ENVS[1]] = (g1_mean - g1_dist/2, g2_mean + g2_dist/2)
+    means[experiments.CXR.VAL_ENV] = (0.07, 0.04)
+    means[experiments.CXR.TEST_ENV] = (0.05, 0.05)
 
     print('Subsampling parameters: \n' + str(means), flush = True)
 

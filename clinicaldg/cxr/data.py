@@ -1,13 +1,19 @@
-import torch
-import os
+# Based on code by Zhang et al., rearranged and refactored by 
+# Patrick Rockenschaub. 
+
 import numpy as np
-from PIL import Image
-from clinicaldg.cxr import Constants, process
 import pandas as pd
-from torchvision import transforms
 import pickle
 from pathlib import Path
+from PIL import Image, ImageFile
+
+import torch
+from torchvision import transforms
 from torch.utils.data import Dataset, ConcatDataset
+
+from clinicaldg.cxr import Constants
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def get_dataset(dfs_all, envs = [], split = None, only_frontal = True, imagenet_norm = True, augment = 0, cache = False, subset_label = None):
       
@@ -51,6 +57,7 @@ def get_dataset(dfs_all, envs = [], split = None, only_frontal = True, imagenet_
         ds.dataframe = pd.concat([i.dataframe for i in datasets])
     
     return ds
+
 
 class AllDatasetsShared(Dataset):
     def __init__(self, dataframe, transform=None, split = None, cache = True, cache_dir = '', subset_label = None):
@@ -116,7 +123,24 @@ class AllDatasetsShared(Dataset):
             label = int(label[Constants.take_labels.index(self.subset_label)])
                 
         return img, label, meta
-            
-
+        
     def __len__(self):
         return self.dataset_size
+
+
+class GenderConcatDataset(Dataset):
+    '''
+    Wraps a CXR dataset so that the gender information is added to the first output 
+    '''
+    def __init__(self, ds):
+        super().__init__()
+        self.ds = ds
+    
+    def __len__(self):
+        return len(self.ds)
+    
+    def __getitem__(self, idx):
+        x, y, meta = self.ds[idx]
+        x_new = {'img': x, 
+                 'concat': torch.tensor([meta['Sex'] == 'M']).float()}
+        return x_new, y, meta   

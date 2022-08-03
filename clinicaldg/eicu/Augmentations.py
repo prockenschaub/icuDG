@@ -1,7 +1,6 @@
-from clinicaldg.eicu import Constants
+from clinicaldg.eicu import Constants, experiments
 import numpy as np
 import pandas as pd
-from clinicaldg import datasets
 
 def corrupt(col, p):
     return np.logical_xor(col, np.random.binomial(n = 1, p = p, size = len(col)))  
@@ -28,11 +27,11 @@ class AddCorrelatedFeature():
     def __init__(self, train_corrupt_dist, train_corrupt_mean, val_corrupt, test_corrupt, feat_name):
         self.feat_name = feat_name
         
-        self.corrupts = {datasets.eICU.TRAIN_ENVS[0]: train_corrupt_mean - train_corrupt_dist, 
-                    datasets.eICU.TRAIN_ENVS[1]:train_corrupt_mean,
-                      datasets.eICU.TRAIN_ENVS[2]: train_corrupt_mean + train_corrupt_dist,
-                      datasets.eICU.VAL_ENV: val_corrupt,
-                      datasets.eICU.TEST_ENV: test_corrupt}   
+        self.corrupts = {experiments.eICU.TRAIN_ENVS[0]: train_corrupt_mean - train_corrupt_dist, 
+                    experiments.eICU.TRAIN_ENVS[1]:train_corrupt_mean,
+                      experiments.eICU.TRAIN_ENVS[2]: train_corrupt_mean + train_corrupt_dist,
+                      experiments.eICU.VAL_ENV: val_corrupt,
+                      experiments.eICU.TEST_ENV: test_corrupt}   
 
         print('CorrLabel parameters: \n' + str(self.corrupts), flush = True)    
         assert(all([i >=0 for i in self.corrupts.values()]))
@@ -45,11 +44,11 @@ class Subsample():
     def __init__(self, g1_mean, g2_mean, g1_dist, g2_dist):
 
         self.means = {
-            datasets.eICU.TRAIN_ENVS[0]: (g1_mean + g1_dist, g2_mean - g2_dist),
-            datasets.eICU.TRAIN_ENVS[1]: (g1_mean, g2_mean),
-            datasets.eICU.TRAIN_ENVS[2]: (g1_mean - g1_dist, g2_mean + g2_dist),
-            datasets.eICU.VAL_ENV: (0.3, 0.3),
-            datasets.eICU.TEST_ENV: (0.1, 0.5)
+            experiments.eICU.TRAIN_ENVS[0]: (g1_mean + g1_dist, g2_mean - g2_dist),
+            experiments.eICU.TRAIN_ENVS[1]: (g1_mean, g2_mean),
+            experiments.eICU.TRAIN_ENVS[2]: (g1_mean - g1_dist, g2_mean + g2_dist),
+            experiments.eICU.VAL_ENV: (0.3, 0.3),
+            experiments.eICU.TEST_ENV: (0.1, 0.5)
         }
 
         print('Subsampling parameters: \n' + str(self.means), flush = True)
@@ -84,11 +83,11 @@ class GaussianNoise():
         self.feat_name = feat_name
         self.std = std
 
-        self.corrupts = {datasets.eICU.TRAIN_ENVS[0]: train_corrupt_mean - train_corrupt_dist, 
-                    datasets.eICU.TRAIN_ENVS[1]:train_corrupt_mean,
-                      datasets.eICU.TRAIN_ENVS[2]: train_corrupt_mean + train_corrupt_dist,
-                      datasets.eICU.VAL_ENV: val_corrupt,
-                      datasets.eICU.TEST_ENV: test_corrupt}   
+        self.corrupts = {experiments.eICU.TRAIN_ENVS[0]: train_corrupt_mean - train_corrupt_dist, 
+                    experiments.eICU.TRAIN_ENVS[1]:train_corrupt_mean,
+                      experiments.eICU.TRAIN_ENVS[2]: train_corrupt_mean + train_corrupt_dist,
+                      experiments.eICU.VAL_ENV: val_corrupt,
+                      experiments.eICU.TEST_ENV: test_corrupt}   
 
         print('CorrNoise parameters: \n' + str(self.corrupts), flush = True)                    
 

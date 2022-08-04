@@ -5,10 +5,8 @@ Things that don't belong anywhere else
 """
 
 import hashlib
-import json
-import os
 import sys
-from shutil import copyfile
+import inspect
 
 import numpy as np
 import torch
@@ -135,3 +133,8 @@ def to_device(obj, device):
         return {a: b.to(device) if torch.is_tensor(b) or isinstance(b, torch.nn.Module) else b for a,b in obj.items() }
     else:
         raise ValueError("invalid object type passed to to_device")
+
+def list_classes(module):
+    classes = inspect.getmembers(module, inspect.isclass)
+    names = list(dict(classes).keys())
+    return names

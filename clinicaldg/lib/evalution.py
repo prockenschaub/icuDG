@@ -1,6 +1,13 @@
 import numpy as np
 import torch.nn.functional as F
-from sklearn.metrics import roc_auc_score, accuracy_score, recall_score, f1_score, confusion_matrix, precision_score, matthews_corrcoef
+from sklearn.metrics import (
+    roc_auc_score, 
+    accuracy_score, 
+    recall_score, 
+    f1_score, 
+    confusion_matrix, 
+    matthews_corrcoef
+)
 
 def compute_opt_thres(target, pred):
     opt_thres = 0

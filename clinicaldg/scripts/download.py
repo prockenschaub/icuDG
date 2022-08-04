@@ -1,17 +1,9 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 from torchvision.datasets import MNIST
-import xml.etree.ElementTree as ET
-from zipfile import ZipFile
-import argparse
-import tarfile
-import shutil
-import uuid
-import json
-import os
 from pathlib import Path
 
-from clinicaldg.mnist import Constants as mnistConstants
+from clinicaldg.experiments.mnist import Constants as mnistConstants
 
 # MNIST #######################################################################
 

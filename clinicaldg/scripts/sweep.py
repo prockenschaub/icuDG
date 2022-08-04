@@ -6,24 +6,19 @@ Run sweeps
 
 import argparse
 import copy
-import getpass
 import hashlib
 import json
 import os
-import random
 import shutil
-import time
-import uuid
 import tqdm
 
 import numpy as np
 import torch
 
-from clinicaldg import datasets
-from clinicaldg import hparams_registry
+from clinicaldg import experiments
 from clinicaldg import algorithms
 from clinicaldg.lib import misc
-from clinicaldg import command_launchers
+from lib import command_launchers
 
 import shlex
 
@@ -137,7 +132,7 @@ if __name__ == "__main__":
     parser.add_argument('--datasets', nargs='+', type=str, default=DATASETS)
     parser.add_argument('--es_method', choices=['train', 'val', 'test'])
     parser.add_argument('--algorithms', nargs='+', type=str,
-                        default=algorithms.ALGORITHMS)
+                        default=misc.list_classes(algorithms))
     parser.add_argument('--n_hparams', type=int, default=20)
     parser.add_argument('--output_dir', type=str, required=True)
     parser.add_argument('--seed', type=int, default=0)

@@ -7,7 +7,6 @@ import os
 import random
 import sys
 import time
-import uuid
 
 import numpy as np
 import PIL
@@ -16,15 +15,17 @@ import torchvision
 import torch.utils.data
 
 from clinicaldg import experiments
-from clinicaldg import hparams_registry
 from clinicaldg import algorithms
 from clinicaldg.lib import misc
+from clinicaldg.lib.hparams_registry import HparamRegistry
 from clinicaldg.lib.fast_data_loader import InfiniteDataLoader, FastDataLoader
-from clinicaldg.utils import EarlyStopping, has_checkpoint, load_checkpoint, save_checkpoint
+from clinicaldg.lib.early_stopping import EarlyStopping
+from clinicaldg.lib.checkpoint import has_checkpoint, load_checkpoint, save_checkpoint
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 if __name__ == "__main__":
+    # Define command line arguments
     parser = argparse.ArgumentParser(description='Domain generalization')
     parser.add_argument('--experiment', type=str, default="ColoredMNIST")
     parser.add_argument('--algorithm', type=str, default="ERM")
@@ -63,11 +64,21 @@ if __name__ == "__main__":
     for k, v in sorted(vars(args).items()):
         print('\t{}: {}'.format(k, v))
 
+    # Load the selected algorithm and experiment classes
+    algorithm_class = vars(algorithms)[args.algorithm]
+    experiment_class = vars(experiments)[args.experiment]     
+
+    # Choose hyperparameters based on algorithm and experiment
+    hparam_registry = HparamRegistry()
+    hparam_registry.register(algorithm_class.HPARAM_SPEC)
+    hparam_registry.register(experiment_class.HPARAM_SPEC)
+
     if args.hparams_seed == 0:
-        hparams = hparams_registry.default_hparams(args.algorithm, args.experiment)
+        hparams = hparam_registry.get_defaults()
     else:
-        hparams = hparams_registry.random_hparams(args.algorithm, args.experiment,
-            misc.seed_hash(args.hparams_seed, args.trial_seed))
+        hparams = hparam_registry.get_random_instance(
+            misc.seed_hash(args.hparams_seed, args.trial_seed)
+        )
     if args.hparams:
         hparams.update(json.loads(args.hparams))
 
@@ -84,27 +95,25 @@ if __name__ == "__main__":
     if torch.cuda.is_available():
         device = "cuda"
     else:
-        device = "cpu"
-        
-    exp_class = vars(experiments)[args.experiment]                    
+        device = "cpu"               
 
     if args.experiment in vars(experiments):
-        experiment = exp_class(hparams, args)
+        experiment = experiment_class(hparams, args)
     else:
         raise NotImplementedError
     
     if args.algorithm == 'ERMID': # ERM trained on the training subset of the test env
-        TRAIN_ENVS = [exp_class.TEST_ENV]
-        VAL_ENV = exp_class.TEST_ENV
-        TEST_ENV = exp_class.TEST_ENV
+        TRAIN_ENVS = [experiment_class.TEST_ENV]
+        VAL_ENV = experiment_class.TEST_ENV
+        TEST_ENV = experiment_class.TEST_ENV
     elif args.algorithm == 'ERMMerged': # ERM trained on merged training subsets of all envs
-        TRAIN_ENVS = exp_class.ENVIRONMENTS
-        VAL_ENV = exp_class.TEST_ENV  
-        TEST_ENV = exp_class.TEST_ENV
+        TRAIN_ENVS = experiment_class.ENVIRONMENTS
+        VAL_ENV = experiment_class.TEST_ENV  
+        TEST_ENV = experiment_class.TEST_ENV
     else:
-        TRAIN_ENVS = exp_class.TRAIN_ENVS
-        VAL_ENV = exp_class.VAL_ENV  
-        TEST_ENV = exp_class.TEST_ENV
+        TRAIN_ENVS = experiment_class.TRAIN_ENVS
+        VAL_ENV = experiment_class.VAL_ENV  
+        TEST_ENV = experiment_class.TEST_ENV
         
     print("Training Environments: " + str(TRAIN_ENVS))
     print("Validation Environment: " + str(VAL_ENV))
@@ -143,9 +152,8 @@ if __name__ == "__main__":
      for env in experiment.ENVIRONMENTS   
     }
 
-    algorithm_class = algorithms.get_algorithm_class(args.algorithm)
+    
     algorithm = algorithm_class(experiment, len(TRAIN_ENVS), hparams)
-
     algorithm.to(device)
     
     print("Number of parameters: %s" % sum([np.prod(p.size()) for p in algorithm.parameters()]))

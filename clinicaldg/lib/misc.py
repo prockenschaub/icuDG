@@ -128,9 +128,9 @@ def to_device(obj, device):
     if torch.is_tensor(obj) or isinstance(obj, torch.nn.Module):
         return obj.to(device)
     elif isinstance(obj, (list, tuple)):
-        return [obj.to(device) for i in obj]
+        return [to_device(i, device) for i in obj]
     elif isinstance(obj, dict):
-        return {a: b.to(device) if torch.is_tensor(b) or isinstance(b, torch.nn.Module) else b for a,b in obj.items() }
+        return {a: to_device(b, device) if torch.is_tensor(b) or isinstance(b, torch.nn.Module) else b for a,b in obj.items() }
     else:
         raise ValueError("invalid object type passed to to_device")
 
@@ -138,3 +138,48 @@ def list_classes(module):
     classes = inspect.getmembers(module, inspect.isclass)
     names = list(dict(classes).keys())
     return names
+
+def cat(lst):
+    # Is this a list of tensors?
+    if np.all([torch.is_tensor(i) for i in lst]):
+        return torch.cat(lst)
+
+    # Is this a list of lists/tuples?
+    elif np.all([isinstance(i, (list, tuple)) for i in lst]):
+        return [cat(x) for x in zip(*lst)]       
+
+    # Is this a list of dictionaries?
+    elif np.all([isinstance(i, dict) for i in lst]):
+        return {k: cat([i[k] for i in lst]) for k in lst[0].keys() }
+
+    raise ValueError(
+        f'Can only concatenate lists of tensors, lists, or dicts. '
+        f'Got {np.unique([str(i.__class__) for i in lst])}.'
+    )
+
+def predict_on_set(algorithm, loader, device, aux_fn=None):
+    all_preds, all_targets, all_aux = [], [], []
+    with torch.no_grad():
+        for batch in loader:
+            # Batch: (x, y, ...)
+            
+            # Make predictions
+            x = to_device(batch[0], device)
+            
+            algorithm.eval()
+            preds = algorithm.predict(x).cpu()
+
+            # Extract auxilliary information 
+            aux = None
+            if aux_fn is not None:
+                aux = aux_fn(batch)
+
+            # Store all necessary information
+            all_preds += [preds]
+            all_targets += [batch[1]]
+            all_aux += [aux]
+    
+    return cat(all_preds), cat(all_targets), all_aux
+
+def add_prefix(dictionary, prefix):
+    return {f'{prefix}_{str(key)}': val for key, val in dictionary.items()}

@@ -1,8 +1,9 @@
 import torch
 from torch.utils.data import TensorDataset, ConcatDataset
 
-from clinicaldg.lib import misc
 from clinicaldg.lib.hparams_registry import HparamSpec
+from clinicaldg.lib.misc import predict_on_set
+from clinicaldg.lib.metrics import cross_entropy
 from clinicaldg.experiments import ExperimentBase
 from clinicaldg.networks import MLP
 
@@ -58,63 +59,52 @@ class ColoredMNIST(ExperimentBase):
         self.d = ColoredMNISTDataset(hparams, args)   
     
     def get_torch_dataset(self, envs, dset):
-            '''
-            envs: a list of region names
-            dset: split within envs, one of ['train', 'val', 'test']
-            '''
+        '''
+        envs: a list of region names
+        dset: split within envs, one of ['train', 'val', 'test']
+        '''
+        
+        datasets = []
+        
+        for e in envs:
+            xall = self.d.sets[e]['images']
+            if e in self.TRAIN_ENVS:
+                if dset == 'train':
+                    idx_start, idx_end = 0, int(len(xall) * self.TRAIN_PCT)
+                elif dset == 'val':
+                    idx_start, idx_end = int(len(xall) * self.TRAIN_PCT), int(len(xall) * (self.TRAIN_PCT + self.VAL_PCT))
+                elif dset == 'test':
+                    idx_start, idx_end = int(len(xall) * (self.TRAIN_PCT + self.VAL_PCT)), len(xall)
+                else:
+                    raise NotImplementedError
+                    
+            elif e == self.VAL_ENV: # on validation environment, use 50% for validation and 50% for test
+                if dset == 'val':
+                    idx_start, idx_end = 0, int(len(xall) * (0.5))
+                elif dset == 'test':
+                    idx_start, idx_end = int(len(xall) * (0.5)), len(xall)
+                else:
+                    raise NotImplementedError
+                    
+            datasets.append(TensorDataset(xall[idx_start:idx_end], self.d.sets[e]['labels'][idx_start:idx_end])) 
             
-            datasets = []
-            
-            for e in envs:
-                xall = self.d.sets[e]['images']
-                if e in self.TRAIN_ENVS:
-                    if dset == 'train':
-                        idx_start, idx_end = 0, int(len(xall) * self.TRAIN_PCT)
-                    elif dset == 'val':
-                        idx_start, idx_end = int(len(xall) * self.TRAIN_PCT), int(len(xall) * (self.TRAIN_PCT + self.VAL_PCT))
-                    elif dset == 'test':
-                        idx_start, idx_end = int(len(xall) * (self.TRAIN_PCT + self.VAL_PCT)), len(xall)
-                    else:
-                        raise NotImplementedError
-                        
-                elif e == self.VAL_ENV: # on validation environment, use 50% for validation and 50% for test
-                    if dset == 'val':
-                        idx_start, idx_end = 0, int(len(xall) * (0.5))
-                    elif dset == 'test':
-                        idx_start, idx_end = int(len(xall) * (0.5)), len(xall)
-                    else:
-                        raise NotImplementedError
-                        
-                datasets.append(TensorDataset(xall[idx_start:idx_end], self.sets[e]['labels'][idx_start:idx_end])) 
-                
-            return ConcatDataset(datasets) 
+        return ConcatDataset(datasets) 
+
+    def get_loss_fn(self):
+        return cross_entropy
 
     def get_featurizer(self, hparams):
         return MLP(self.input_shape[0], hparams['mlp_width'], hparams['mlp_depth'], 128, hparams['mlp_dropout'])
 
-    def predict_on_set(self, algorithm, loader, device):
-        correct = 0
-        total = 0
+    def eval_metrics(self, algorithm, loader, device, **kwargs):
+        p, y, _ = predict_on_set(algorithm, loader, device)
 
-        algorithm.eval()
-        with torch.no_grad():
-            for x, y in loader:
-                x = x.to(device)
-                y = y.to(device).squeeze().long()
-                p = algorithm.predict(x)
-            
-                batch_weights = torch.ones(len(x))
-                batch_weights = batch_weights.to(device)
+        if p.size(1) == 1:
+            correct = (p.gt(0).eq(y).float()).sum().item()
+        else:
+            correct = (p.argmax(1).eq(y).float()).sum().item()
 
-                if p.size(1) == 1:
-                    correct += (p.gt(0).eq(y).float() * batch_weights.view(-1, 1)).sum().item()
-                else:
-                    correct += (p.argmax(1).eq(y).float() * batch_weights).sum().item()
-                total += batch_weights.sum().item()
-        algorithm.train()
-    
-        return correct / total
+        total = len(y)
 
-    def eval_metrics(self, algorithm, loader, env_name, weights, device):
-        return {env_name + '_acc' : misc.accuracy(algorithm, loader, weights = None, device = device)}
+        return {'acc' : correct / total}
     

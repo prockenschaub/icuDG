@@ -1,13 +1,37 @@
+from functools import partial
 import numpy as np
 
-import torch
+import torch.nn.functional as F
 from torch.utils.data import ConcatDataset
 
-from clinicaldg import networks
+from clinicaldg.lib.misc import predict_on_set
 from clinicaldg.lib.hparams_registry import HparamSpec
+from clinicaldg.lib.metrics import roc_auc_score
 from clinicaldg.experiments import ExperimentBase 
 
 from . import data, featurizer
+
+
+def bce_loss(logits, y, reduction='mean', **kwargs):
+    logits, y = logits[..., -1], y[..., -1]
+    ce = F.binary_cross_entropy_with_logits(
+        logits, 
+        y, 
+        reduction='none', 
+        **kwargs
+    )
+    
+    # Mask padded values when calculating the loss
+    mask = y != data.PAD_VALUE
+    masked_ce = ce * mask
+
+    # Aggregate as needed
+    if reduction == 'mean':
+        return masked_ce.sum() / mask.sum()
+    elif reduction == 'sum':
+        return masked_ce.sum()
+    return masked_ce
+
 
 class MultiCenterBase(ExperimentBase):
     
@@ -55,6 +79,9 @@ class MultiCenterBase(ExperimentBase):
         
         return ConcatDataset(datasets)
 
+    def get_loss_fn(self):
+        return bce_loss
+
     def get_featurizer(self, hparams):
         if hparams['mc_architecture'] == "tcn":
             return featurizer.TCNet(
@@ -69,31 +96,39 @@ class MultiCenterBase(ExperimentBase):
             f"as a featurizer for the MultiCenter experiment"
         )
 
-    def predict_on_set(self, algorithm, loader, device):
-        preds, targets, genders = [], [], []
-        with torch.no_grad():
-            for x, y in loader:
-                x = {j: x[j].to(device) for j in x}
-                algorithm.eval()
-                logits = algorithm.predict(x)
+    def eval_metrics(self, algorithm, loader, device, **kwargs):
+        logits, y, _ = predict_on_set(algorithm, loader, device)
+        logits, y = logits[..., -1], y[..., -1]
 
-                targets += y.detach().cpu().numpy().tolist()
-                genders += x['gender'].cpu().numpy().tolist()
-                preds_list = torch.nn.Softmax(dim = 1)(logits)[:, 1].detach().cpu().numpy().tolist()
-                if isinstance(preds_list, list):
-                    preds += preds_list
-                else:
-                    preds += [preds_list]
-        return np.array(preds), np.array(targets), np.array(genders)
+        # Mask any predictions that were made on padded values
+        mask = y != data.PAD_VALUE
+        logits = logits.view(-1)[mask.view(-1)].numpy()
+        y = y.view(-1)[mask.view(-1)].long().numpy()
 
-    def eval_metrics(self, algorithm, loader, env_name, weights, device):
-        preds, targets, genders = self.predict_on_set(algorithm, loader, device)
-        male = genders == 1
-        return 1 #binary_clf_metrics(preds, targets, male, env_name) # male - female
-    
+        return {
+            'roc': roc_auc_score(y, logits)
+        }
 
-class MultiCenterMimic(MultiCenterBase):
-    TRAIN_ENVS = [env for env in MultiCenterBase.ENVIRONMENTS if env != 'mimic']
+
+def _not(lst, excl):
+    return [x for x in lst if x != excl]
+
+class MultiCenterMIMIC(MultiCenterBase):
+    TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'mimic')
     VAL_ENV = 'mimic'
     TEST_ENV = 'mimic'
     
+class MultiCenterEICU(MultiCenterBase):
+    TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'eicu')
+    VAL_ENV = 'eicu'
+    TEST_ENV = 'eicu'
+
+class MultiCenterHIRID(MultiCenterBase):
+    TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'hirid')
+    VAL_ENV = 'hirid'
+    TEST_ENV = 'hirid'
+
+class MultiCenterAUMC(MultiCenterBase):
+    TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'aumc')
+    VAL_ENV = 'aumc'
+    TEST_ENV = 'aumc'

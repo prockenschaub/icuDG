@@ -3,14 +3,28 @@
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.evalution import binary_clf_metrics
+from clinicaldg.lib.metrics import (
+    compute_opt_thres, 
+    roc_auc_score,
+    accuracy_score,
+    recall_score, 
+    tnr, 
+    matthews_corrcoef
+)
 from clinicaldg.experiments import ExperimentBase 
+
+from clinicaldg.lib.misc import predict_on_set, cat
 
 from . import Constants, Augmentations, featurizer
 from .data import AugmentedDataset
 
+
+#def cross_entropy(logits, y, **kwargs):
+#    return F.cross_entropy(logits, y, **kwargs)
+    
 
 class eICUBase(ExperimentBase):
     '''
@@ -51,6 +65,9 @@ class eICUBase(ExperimentBase):
     def get_torch_dataset(self, envs, dset):
         return self.d.get_torch_dataset(envs, dset)
 
+    def get_loss_fn(self):
+        return F.cross_entropy
+
     def get_featurizer(self, hparams):
         input_size = (
             len(Constants.ts_cont_features) +
@@ -82,28 +99,36 @@ class eICUBase(ExperimentBase):
             f"as a featurizer for the eICU experiment"
         )
 
-    def predict_on_set(self, algorithm, loader, device):
-        preds, targets, genders = [], [], []
-        with torch.no_grad():
-            for x, y in loader:
-                x = {j: x[j].to(device) for j in x}
-                algorithm.eval()
-                logits = algorithm.predict(x)
-
-                targets += y.detach().cpu().numpy().tolist()
-                genders += x['gender'].cpu().numpy().tolist()
-                preds_list = torch.nn.Softmax(dim = 1)(logits)[:, 1].detach().cpu().numpy().tolist()
-                if isinstance(preds_list, list):
-                    preds += preds_list
-                else:
-                    preds += [preds_list]
-        return np.array(preds), np.array(targets), np.array(genders)
-
-    def eval_metrics(self, algorithm, loader, env_name, weights, device):
-        preds, targets, genders = self.predict_on_set(algorithm, loader, device)
+    def eval_metrics(self, algorithm, loader, device, **kwargs):
+        def extract_gender(batch):
+            return batch[0]['gender']
+        
+        preds, targets, genders = predict_on_set(algorithm, loader, device, extract_gender)
+        
+        # Post-process predictions for evaluation
+        preds = F.softmax(preds, dim=1)[:, 1].numpy()
+        targets = targets.numpy()
+        genders = cat(genders).numpy()
         male = genders == 1
-        return binary_clf_metrics(preds, targets, male, env_name) # male - female
-    
+
+        # Calculate metrics
+        opt_thres = compute_opt_thres(targets, preds)
+
+        preds_rounded_opt = (preds >= opt_thres)
+        tpr_gap_opt = recall_score(targets[male], preds_rounded_opt[male], zero_division = 0) - recall_score(targets[~male], preds_rounded_opt[~male], zero_division = 0)
+        tnr_gap_opt = tnr(targets[male], preds_rounded_opt[male]) - tnr(targets[~male], preds_rounded_opt[~male])
+        parity_gap_opt = (preds_rounded_opt[male].sum() / male.sum()) - (preds_rounded_opt[~male].sum() / (~male).sum())    
+        phi_opt = matthews_corrcoef(preds_rounded_opt, male)
+
+        return {
+            'roc': roc_auc_score(targets, preds),
+            'acc': accuracy_score(targets, preds_rounded_opt),
+            'tpr_gap': tpr_gap_opt,
+            'tnr_gap': tnr_gap_opt,
+            'parity_gap': parity_gap_opt,
+            'phi': phi_opt
+        }
+
 
 class eICU(eICUBase): 
     def __init__(self, hparams, args):

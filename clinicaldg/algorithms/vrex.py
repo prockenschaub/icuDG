@@ -1,11 +1,9 @@
 import torch
 
 from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.evalution import cross_entropy
+from clinicaldg.lib.misc import cat
 
 from .erm import ERM
-from .utils import cat
-
 
 class VREx(ERM):
     """V-REx algorithm from http://arxiv.org/abs/2003.00688"""
@@ -34,7 +32,7 @@ class VREx(ERM):
         for i, (x, y) in enumerate(minibatches):
             logits = all_logits[all_logits_idx:all_logits_idx + y.shape[0]]
             all_logits_idx += y.shape[0]
-            nll = cross_entropy(logits, y)
+            nll = self.loss_fn(logits, y)
             losses[i] = nll
 
         mean = losses.mean()

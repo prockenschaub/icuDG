@@ -4,7 +4,6 @@ import torch
 import torch.autograd as autograd
 
 from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.evalution import cross_entropy
 from clinicaldg.lib.misc import random_pairs_of_minibatches
 
 from .erm import ERM
@@ -58,7 +57,7 @@ class MLDG(ERM):
                 weight_decay=self.hparams['weight_decay']
             )
 
-            inner_obj = cross_entropy(inner_net(xi), yi)
+            inner_obj = self.loss_fn(inner_net(xi), yi)
 
             inner_opt.zero_grad()
             inner_obj.backward()
@@ -75,7 +74,7 @@ class MLDG(ERM):
             objective += inner_obj.item()
 
             # this computes Gj on the clone-network
-            loss_inner_j = cross_entropy(inner_net(xj), yj)
+            loss_inner_j = self.loss_fn(inner_net(xj), yj)
             grad_inner_j = autograd.grad(loss_inner_j, inner_net.parameters(),
                 allow_unused=True)
 

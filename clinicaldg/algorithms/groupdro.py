@@ -1,7 +1,6 @@
 import torch
 
 from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.evalution import cross_entropy
 
 from .erm import ERM
 
@@ -29,7 +28,7 @@ class GroupDRO(ERM):
 
         for m in range(len(minibatches)):
             x, y = minibatches[m]
-            losses[m] = cross_entropy(self.predict(x), y)
+            losses[m] = self.loss_fn(self.predict(x), y)
             self.q[m] *= (self.hparams["groupdro_eta"] * losses[m].data).exp()
 
         self.q /= self.q.sum()

@@ -1,12 +1,9 @@
-import numpy as np
-
 import torch
 import torch.nn as nn
 
-from clinicaldg.lib.evalution import cross_entropy
+from clinicaldg.lib.misc import cat
 
 from .base import Algorithm
-from .utils import cat
 
 class ERM(Algorithm):
     """
@@ -18,6 +15,7 @@ class ERM(Algorithm):
         self.featurizer = experiment.get_featurizer(self.hparams)
         self.classifier = nn.Linear(self.featurizer.n_outputs, experiment.num_classes)
         self.network = nn.Sequential(self.featurizer, self.classifier)
+        self.loss_fn = experiment.get_loss_fn()
         self.optimizer = torch.optim.Adam(
             self.network.parameters(),
             lr=self.hparams["lr"],
@@ -26,8 +24,8 @@ class ERM(Algorithm):
 
     def update(self, minibatches, device):
         all_x = cat([x for x,y in minibatches])
-        all_y = torch.cat([y for x,y in minibatches])
-        loss = cross_entropy(self.predict(all_x), all_y.squeeze().long())
+        all_y = cat([y for x,y in minibatches])
+        loss = self.loss_fn(self.predict(all_x), all_y)
 
         self.optimizer.zero_grad()
         loss.backward()

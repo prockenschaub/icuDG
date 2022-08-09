@@ -86,22 +86,21 @@ if __name__ == "__main__":
     for k, v in sorted(hparams.items()):
         print('\t{}: {}'.format(k, v))
     
+
+    # Seed everything
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+    # Choose device (CPU or GPU)
     if torch.cuda.is_available():
         device = "cuda"
     else:
         device = "cpu"               
-
-    if args.experiment in vars(experiments):
-        experiment = experiment_class(hparams, args)
-    else:
-        raise NotImplementedError
     
+    # Confirm environment assignment (envs differ for Oracle runs)
     if args.algorithm == 'ERMID': # ERM trained on the training subset of the test env
         TRAIN_ENVS = [experiment_class.TEST_ENV]
         VAL_ENV = experiment_class.TEST_ENV
@@ -119,55 +118,53 @@ if __name__ == "__main__":
     print("Validation Environment: " + str(VAL_ENV))
     print("Test Environment: " + str(TEST_ENV))    
   
+    # Instantiate experiment and algorithm
+    experiment = experiment_class(hparams, args)
+    algorithm = algorithm_class(experiment, len(TRAIN_ENVS), hparams).to(device)
+
+    # Get the datasets for each environment and split them into train/val/test
     train_dss = [experiment.get_torch_dataset([env], 'train') for env in TRAIN_ENVS]
     
-    train_loaders = [InfiniteDataLoader(
-        dataset=i,
-        weights=None,
-        batch_size=hparams['batch_size'],
-        num_workers=experiment.N_WORKERS)
+    train_loaders = [
+        InfiniteDataLoader(
+            dataset=i,
+            weights=None,
+            batch_size=hparams['batch_size'],
+            num_workers=experiment.N_WORKERS
+        )
         for i in train_dss
         ]
     
-    if args.es_method == 'val':
-        val_ds = experiment.get_torch_dataset([VAL_ENV], 'val')
-    elif args.es_method == 'train':
+    if args.es_method == 'train':
         val_ds = experiment.get_torch_dataset(TRAIN_ENVS, 'val')
+    elif args.es_method == 'val':
+        val_ds = experiment.get_torch_dataset([VAL_ENV], 'val')
     elif args.es_method == 'test':
         val_ds = experiment.get_torch_dataset([TEST_ENV], 'val')
         
     if hasattr(experiment, 'NUM_SAMPLES_VAL'):
-        val_ds = torch.utils.data.Subset(val_ds, np.random.choice(np.arange(len(val_ds)), min(experiment.NUM_SAMPLES_VAL, len(val_ds)), replace = False))
+        num_samples_val = min(experiment.NUM_SAMPLES_VAL, len(val_ds))
+        val_idx = np.random.choice(np.arange(len(val_ds)), num_samples_val, replace = False)
+        val_ds = torch.utils.data.Subset(val_ds, val_idx)
 
-    eval_loader = FastDataLoader(
+    val_loader = FastDataLoader(
         dataset=val_ds,
         batch_size=hparams['batch_size']*4,
-        num_workers=experiment.N_WORKERS)
+        num_workers=experiment.N_WORKERS
+    )
     
     test_loaders = {env:
         FastDataLoader(
-        dataset=experiment.get_torch_dataset([env], 'test'),
-        batch_size=hparams['batch_size']*4,
-        num_workers=experiment.N_WORKERS)
-     for env in experiment.ENVIRONMENTS   
+            dataset=experiment.get_torch_dataset([env], 'test'),
+            batch_size=hparams['batch_size']*4,
+            num_workers=experiment.N_WORKERS
+        )
+        for env in experiment.ENVIRONMENTS   
     }
-
-    
-    algorithm = algorithm_class(experiment, len(TRAIN_ENVS), hparams)
-    algorithm.to(device)
     
     print("Number of parameters: %s" % sum([np.prod(p.size()) for p in algorithm.parameters()]))
 
-    train_minibatches_iterator = zip(*train_loaders)   
-    checkpoint_vals = collections.defaultdict(lambda: [])
-
-    steps_per_epoch = min([len(i)/hparams['batch_size'] for i in train_dss])
-
-    n_steps = args.max_steps or experiment.MAX_STEPS
-    checkpoint_freq = args.checkpoint_freq or experiment.CHECKPOINT_FREQ
-    
-    es = EarlyStopping(patience = experiment.ES_PATIENCE)
-    
+    # Load any existing checkpoints
     if has_checkpoint():
         state = load_checkpoint()
         algorithm.load_state_dict(state['model_dict'])
@@ -184,12 +181,28 @@ if __name__ == "__main__":
         torch.random.set_rng_state(state['rng'])
         print("Loaded checkpoint at step %s" % start_step)
     else:
-        start_step = 0        
+        start_step = 0    
+
+    # Set any remaining training settings
+    train_minibatches_iterator = zip(*train_loaders)   
+    checkpoint_vals = collections.defaultdict(lambda: [])
+
+    steps_per_epoch = min([len(i)/hparams['batch_size'] for i in train_dss])
+
+    n_steps = args.max_steps or experiment.MAX_STEPS
+    checkpoint_freq = args.checkpoint_freq or experiment.CHECKPOINT_FREQ
     
+    es = EarlyStopping(patience = experiment.ES_PATIENCE)    
     last_results_keys = None
+
+
+    # Main training loop -------------------------------------------------------
     for step in range(start_step, n_steps):
+        # Check early stopping
         if es.early_stop:
             break
+
+        # Forward pass and parameter update
         step_start_time = time.time()
         minibatches_device = [(misc.to_device(xy[0], device), misc.to_device(xy[1], device))
             for xy in next(train_minibatches_iterator)]
@@ -200,6 +213,7 @@ if __name__ == "__main__":
         for key, val in step_vals.items():
             checkpoint_vals[key].append(val)
 
+        # Validation and checkpointing
         if step % checkpoint_freq == 0:
             results = {
                 'step': step,
@@ -209,8 +223,9 @@ if __name__ == "__main__":
             for key, val in checkpoint_vals.items():
                 results[key] = np.mean(val)
 
-            # validation
-            results.update(experiment.eval_metrics(algorithm, eval_loader, 'es', weights = None, device = device))                        
+            val_metrics = experiment.eval_metrics(algorithm, val_loader, device=device)
+            val_metrics = misc.add_prefix(val_metrics, "es")
+            results.update(val_metrics)                        
                 
             results_keys = sorted(results.keys())
             if results_keys != last_results_keys:
@@ -236,6 +251,8 @@ if __name__ == "__main__":
             
             es(-results['es_' + experiment.ES_METRIC], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
 
+
+    # Testing ------------------------------------------------------------------
     algorithm.load_state_dict(torch.load(os.path.join(args.output_dir, "model.pkl")))
     algorithm.eval()
     
@@ -253,7 +270,9 @@ if __name__ == "__main__":
     
     final_results = {}         
     for name, loader in test_loaders.items():
-        final_results.update(experiment.eval_metrics(algorithm, loader, name, weights = None, device = device))
+        test_metrics = experiment.eval_metrics(algorithm, loader, device = device)
+        test_metrics = misc.add_prefix(test_metrics, name)
+        final_results.update(test_metrics)
         
     save_dict['test_results'] = final_results    
         

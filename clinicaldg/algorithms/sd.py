@@ -1,10 +1,9 @@
 import torch
 
 from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.evalution import cross_entropy
+from clinicaldg.lib.misc import cat
 
 from .erm import ERM
-from .utils import cat
 
 
 class SD(ERM):
@@ -25,7 +24,7 @@ class SD(ERM):
         all_y = torch.cat([y for x,y in minibatches])
         all_p = self.predict(all_x)
 
-        loss = cross_entropy(all_p, all_y)
+        loss = self.loss_fn(all_p, all_y)
         penalty = (all_p ** 2).mean()
         objective = loss + self.sd_reg * penalty
 

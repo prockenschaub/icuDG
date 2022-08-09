@@ -2,16 +2,16 @@ import torch
 import torch.autograd as autograd
 
 from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.evalution import cross_entropy
+from clinicaldg.lib.misc import cat
 
 from .erm import ERM
-from .utils import cat
+
 
 
 class IRM(ERM):
     """Invariant Risk Minimization"""
 
-    HPARAM_SPEC = [
+    HPARAM_SPEC = ERM.HPARAM_SPEC + [
         HparamSpec('irm_lambda', 1e2, lambda r: 10**r.uniform(-1, 5)),
         HparamSpec('irm_penalty_anneal_iters', 500, lambda r: int(10**r.uniform(0, 4)))
     ]
@@ -20,12 +20,11 @@ class IRM(ERM):
         super(IRM, self).__init__(experiment, num_domains, hparams)
         self.register_buffer('update_count', torch.tensor([0]))
 
-    @staticmethod
-    def _irm_penalty(logits, y):
+    def _irm_penalty(self, logits, y):
         device = logits.device
         scale = torch.tensor(1.).to(device).requires_grad_()
-        loss_1 = cross_entropy(logits[::2] * scale, y[::2])
-        loss_2 = cross_entropy(logits[1::2] * scale, y[1::2])
+        loss_1 = self.loss_fn(logits[::2] * scale, y[::2])
+        loss_2 = self.loss_fn(logits[1::2] * scale, y[1::2])
         grad_1 = autograd.grad(loss_1, [scale], create_graph=True)[0]
         grad_2 = autograd.grad(loss_2, [scale], create_graph=True)[0]
         result = torch.sum(grad_1 * grad_2)
@@ -44,7 +43,7 @@ class IRM(ERM):
         for i, (x, y) in enumerate(minibatches):
             logits = all_logits[all_logits_idx:all_logits_idx + y.shape[0]]
             all_logits_idx += y.shape[0]
-            nll += cross_entropy(logits, y)
+            nll += self.loss_fn(logits, y)
             penalty += self._irm_penalty(logits, y)
         nll /= len(minibatches)
         penalty /= len(minibatches)

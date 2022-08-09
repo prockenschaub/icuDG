@@ -1,3 +1,4 @@
+import copy
 
 from torch import nn
 from torch.nn.utils import weight_norm
@@ -9,7 +10,7 @@ from torch.nn.utils import weight_norm
 # Recurrent Networks for Sequence Modeling (https://arxiv.org/abs/1803.01271)
 #
 # Code copied from https://github.com/locuslab/TCN
-# Comments added by Patrick Rockenschaub
+# Comments and Conv1d deepcopy fix added by Patrick Rockenschaub
 
 
 class Chomp1d(nn.Module):
@@ -25,6 +26,44 @@ class Chomp1d(nn.Module):
         # x: (batch_size, num_features, padding + seq_length + padding)
         return x[:, :, :-self.chomp_size].contiguous()
         # return (batch_size, num_features, padding + seq_length)
+
+
+def deepcopy_for_conv1d(self, memo):
+    """Workaround for RuntimeError "Only Tensors created explicitly by the user 
+    (graph leaves) support the deepcopy protocol at the moment" when copying a 
+    layer with weight norm. 
+    
+    Adapted from https://github.com/pytorch/pytorch/issues/28594#issuecomment-679534348
+    """
+
+    # save and delete the weightnorm weight on self
+    weight = None
+    if hasattr(self, 'weight'):
+        weight = getattr(self, 'weight')
+        delattr(self, 'weight')
+
+    # remove this deepcopy method to avoid infinite recursion
+    __deepcopy__ = self.__deepcopy__
+    del self.__deepcopy__
+
+    # actually do the copy
+    result = copy.deepcopy(self)
+
+    # restore weightnorm weight on self
+    if weight is None:
+        setattr(self, 'weight', weight)
+    self.__deepcopy__ = __deepcopy__
+
+    return result
+
+class Conv1dWithWN(nn.Conv1d):
+    """Wrapper around nn.Conv1d that automatically applies weight norm and 
+    fixes a deepcopy issue."""
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        weight_norm(self)
+        self.__deepcopy__ = deepcopy_for_conv1d.__get__(self, self.__class__)
+
 
 class TemporalBlock(nn.Module):
     """A single temporal convolution block + residual connection. Consists of 
@@ -51,15 +90,15 @@ class TemporalBlock(nn.Module):
     def __init__(self, n_inputs, n_outputs, kernel_size, stride, dilation, padding, dropout=0.2):
         super(TemporalBlock, self).__init__()
         # First causal convolution layer
-        self.conv1 = weight_norm(nn.Conv1d(n_inputs, n_outputs, kernel_size,
-                                           stride=stride, padding=padding, dilation=dilation))
+        self.conv1 = Conv1dWithWN(n_inputs, n_outputs, kernel_size,
+                                           stride=stride, padding=padding, dilation=dilation)
         self.chomp1 = Chomp1d(padding)
         self.relu1 = nn.ReLU()
         self.dropout1 = nn.Dropout(dropout)
 
         # Second causal convolution layer
-        self.conv2 = weight_norm(nn.Conv1d(n_outputs, n_outputs, kernel_size,
-                                           stride=stride, padding=padding, dilation=dilation))
+        self.conv2 = Conv1dWithWN(n_outputs, n_outputs, kernel_size,
+                                           stride=stride, padding=padding, dilation=dilation)
         self.chomp2 = Chomp1d(padding)
         self.relu2 = nn.ReLU()
         self.dropout2 = nn.Dropout(dropout)

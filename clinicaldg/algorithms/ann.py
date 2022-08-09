@@ -5,10 +5,10 @@ import torch.autograd as autograd
 
 from clinicaldg.networks import MLP
 from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.evalution import cross_entropy
+from clinicaldg.lib.metrics import cross_entropy
+from clinicaldg.lib.misc import cat
 
 from .base import Algorithm
-from .utils import cat
 
 
 class AbstractDANN(Algorithm):
@@ -26,7 +26,6 @@ class AbstractDANN(Algorithm):
         HparamSpec('ann_mlp_dropout', 0., lambda r: r.choice([0., 0.1, 0.5])),
         HparamSpec('ann_lr_g', 5e-5, lambda r: 10**r.uniform(-5, -3.5)),
         HparamSpec('ann_lr_d', 5e-5, lambda r: 10**r.uniform(-5, -3.5)),
-        
     ]
 
     def __init__(self, experiment, num_domains, hparams, conditional, 

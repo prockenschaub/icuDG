@@ -5,7 +5,6 @@ import torch.autograd as autograd
 
 from clinicaldg.networks import MLP
 from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.metrics import cross_entropy
 from clinicaldg.lib.misc import cat
 
 from .base import Algorithm
@@ -36,6 +35,9 @@ class AbstractDANN(Algorithm):
         self.conditional = conditional
         self.class_balance = class_balance
 
+        self.experiment = experiment
+        self.loss_fn = experiment.get_loss_fn()
+
         # Algorithms
         self.featurizer = experiment.get_featurizer(hparams)
         self.classifier = nn.Linear(self.featurizer.n_outputs, 
@@ -47,8 +49,11 @@ class AbstractDANN(Algorithm):
             num_domains, 
             hparams['ann_mlp_dropout']
         )
-        self.class_embeddings = nn.Embedding(experiment.num_classes,
-            self.featurizer.n_outputs)
+        self.class_embeddings = nn.Embedding(
+            experiment.num_classes+1,  
+            self.featurizer.n_outputs, 
+            padding_idx=experiment.num_classes # allow embedding of masked steps
+        )
 
         # Optimizers
         self.optimizer = {
@@ -71,30 +76,31 @@ class AbstractDANN(Algorithm):
     def update(self, minibatches, device):
         self.update_count += 1
         all_x = cat([x for x, y in minibatches])
-        all_y = torch.cat([y for x, y in minibatches])
+        all_y = cat([y for x, y in minibatches])
+        all_masks = cat([self.experiment.get_mask(batch) for batch in minibatches])
         all_z = self.featurizer(all_x)
         if self.conditional:
-            disc_input = all_z + self.class_embeddings(all_y)
+            disc_input = all_z + self.class_embeddings(all_y.long())
         else:
             disc_input = all_z
         disc_out = self.discriminator(disc_input)
         disc_labels = torch.cat([
-            torch.full((y.shape[0], ), i, dtype=torch.int64, device=device)
+            torch.full(y.shape, i, dtype=torch.int64, device=device)
             for i, (x, y) in enumerate(minibatches)
         ])
 
         if self.class_balance:
-            y_counts = F.one_hot(all_y).sum(dim=0)
-            weights = 1. / (y_counts[all_y] * y_counts.shape[0]).float()
-            disc_loss = cross_entropy(disc_out, disc_labels, reduction='none')
-            disc_loss = (weights * disc_loss).sum()
+            y_counts = F.one_hot(all_y.long().flatten()).sum(dim=0)
+            weights = 1. / (y_counts[all_y.long().flatten()] * self.experiment.num_classes).float()
         else:
-            disc_loss = cross_entropy(disc_out, disc_labels)
+            weights = torch.ones_like(all_y.flatten())
+        disc_loss = F.cross_entropy(disc_out.flatten(end_dim=-2), disc_labels.flatten(), reduction='none')
+        disc_loss = (all_masks.flatten() * weights.flatten() * disc_loss).sum()
 
-        disc_softmax = F.softmax(disc_out, dim=1)
-        input_grad = autograd.grad(disc_softmax[:, disc_labels].sum(),
+        input_grad = autograd.grad(
+            F.cross_entropy(disc_out.flatten(end_dim=-2), disc_labels.flatten(), reduction='sum'),
             [disc_input], create_graph=True)[0]
-        grad_penalty = (input_grad**2).sum(dim=1).mean(dim=0)
+        grad_penalty = (input_grad**2).sum(dim=-1).mean()
         disc_loss += self.hparams['ann_grad_penalty'] * grad_penalty
 
         d_steps_per_g = self.hparams['ann_d_steps_per_g_step']
@@ -106,7 +112,7 @@ class AbstractDANN(Algorithm):
             return {'disc_loss': disc_loss.item()}
         else:
             all_preds = self.classifier(all_z)
-            classifier_loss = cross_entropy(all_preds, all_y)
+            classifier_loss = self.loss_fn(all_preds, all_y, all_masks)
             gen_loss = (classifier_loss +
                         (self.hparams['ann_lambda'] * -disc_loss))
             self.optimizer['disc'].zero_grad()

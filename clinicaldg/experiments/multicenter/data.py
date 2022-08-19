@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 
 from . import Constants
 
-PAD_VALUE = -999
+PAD_VALUE = 2
 MAX_LEN = 193
 
 def count_features(df):
@@ -43,7 +43,7 @@ class MultiCenterDataset():
             _type_: _description_
         """
         # Get the hourly data preprocessed with the R package ``ricu``
-        path = f'{Constants.ts_paths[db]}/{outcome}_short.csv' # TODO: remove `short`
+        path = f'{Constants.ts_paths[db]}/{outcome}.csv'
         df = pd.read_csv(path, index_col=['stay_id', 'time'])
         features = df.columns[df.columns != 'sepsis']
 
@@ -87,10 +87,14 @@ class SingleCenter(Dataset):
         
         # Get features and labels
         num_time_steps = pat_data.shape[0]
-        X = pat_data.drop('sepsis', axis=1).values
-        Y = pat_data[['sepsis']].values
+        X = pat_data.drop('sepsis', axis=1).values   # T x P
+        Y = pat_data[['sepsis']].values              # T x 1
 
-        return pad_to_len(X, num_time_steps), pad_to_len(Y, num_time_steps)
+        # Pad them to the right length
+        X = pad_to_len(X, num_time_steps)   # MAX_LEN x P
+        Y = pad_to_len(Y, num_time_steps)   # MAX_LEN x 1
+
+        return X, Y[:, -1] 
 
 def pad_to_len(x, len):
     x_pad = np.full((MAX_LEN, x.shape[1]), PAD_VALUE, dtype=np.float32)

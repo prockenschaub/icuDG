@@ -19,7 +19,7 @@ do
     date 
 
     python -m clinicaldg.scripts.train \
-        --dataset MultiCenterMIMIC \
+        --experiment MultiCenterMIMIC \
         --algorithm ${algo} \
         --es_method ${es} \
         --hparams '{"mc_architecture": "tcn"}' \

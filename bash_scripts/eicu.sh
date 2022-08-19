@@ -19,7 +19,7 @@ do
     date 
 
     python -m clinicaldg.scripts.train \
-        --dataset eICU \
+        --experiment eICU \
         --algorithm ${algo} \
         --es_method ${es} \
         --hparams '{"eicu_architecture": "GRU"}' \

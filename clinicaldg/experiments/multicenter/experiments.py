@@ -50,15 +50,15 @@ class MultiCenterBase(base.Experiment):
         HparamSpec('mc_test_env', 'aumc'),
 
         # Training
-        HparamSpec('lr', 1e-3, lambda r: np.exp(r.uniform(low=-10, high=-3))),
+        HparamSpec('lr', 1e-3, lambda r: float(np.exp(r.uniform(low=-10, high=-3)))),
         HparamSpec('batch_size', 128, lambda r: int(r.choice(a=[128, 256, 512, 1024]))),
 
         # Network
         HparamSpec('mc_architecture', 'tcn'),
-        HparamSpec('tcn_hidden_dims', 64, lambda r: r.choice(a=[32, 64, 128])),
-        HparamSpec('tcn_num_layers', 1, lambda r: r.randint(low=1, high=10)),
-        HparamSpec('tcn_kernel_size', 4, lambda r: r.randint(low=2, high=6)),
-        HparamSpec('tcn_dropout', 0.5, lambda r: r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7]))
+        HparamSpec('tcn_hidden_dims', 64, lambda r: int(r.choice(a=[32, 64, 128]))),
+        HparamSpec('tcn_num_layers', 1, lambda r: int(r.randint(low=1, high=10))),
+        HparamSpec('tcn_kernel_size', 4, lambda r: int(r.randint(low=2, high=6))),
+        HparamSpec('tcn_dropout', 0.5, lambda r: float(r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7])))
 
     ]
 

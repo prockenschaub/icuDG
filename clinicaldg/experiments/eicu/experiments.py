@@ -1,7 +1,6 @@
 # Based on code by Zhang et al., rearranged and refactored by 
 # Patrick Rockenschaub. 
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 
@@ -14,19 +13,14 @@ from clinicaldg.lib.metrics import (
     tnr, 
     matthews_corrcoef
 )
-from clinicaldg.experiments import ExperimentBase 
-
+from clinicaldg.experiments import base 
 from clinicaldg.lib.misc import predict_on_set, cat
 
 from . import Constants, Augmentations, featurizer
 from .data import AugmentedDataset
 
 
-#def cross_entropy(logits, y, **kwargs):
-#    return F.cross_entropy(logits, y, **kwargs)
-    
-
-class eICUBase(ExperimentBase):
+class eICUBase(base.Experiment):
     '''
     Base hyperparameters:
     eicu_architecture: {MLP, GRU}

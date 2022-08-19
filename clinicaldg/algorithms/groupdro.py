@@ -28,7 +28,8 @@ class GroupDRO(ERM):
 
         for m in range(len(minibatches)):
             x, y = minibatches[m]
-            losses[m] = self.loss_fn(self.predict(x), y)
+            mask = self.experiment.get_mask((x, y))
+            losses[m] = self.loss_fn(self.predict(x), y, mask)
             self.q[m] *= (self.hparams["groupdro_eta"] * losses[m].data).exp()
 
         self.q /= self.q.sum()

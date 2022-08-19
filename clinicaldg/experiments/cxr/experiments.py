@@ -19,7 +19,7 @@ from clinicaldg.lib.metrics import (
     tnr, 
     matthews_corrcoef
 )
-from clinicaldg.experiments import ExperimentBase 
+from clinicaldg.experiments import base 
 
 from . import Constants, Augmentations, process, featurizer
 from .data import get_dataset, GenderConcatDataset
@@ -60,7 +60,7 @@ def multilabel_metrics(preds, targets, grp, num_classes):
     }
 
 
-class CXRBase(ExperimentBase):
+class CXRBase(base.Experiment):
     '''
     Base hyperparameters:
     cxr_augment: {0, 1}
@@ -114,6 +114,10 @@ class CXRBase(ExperimentBase):
 
     def get_loss_fn(self):
         return cross_entropy  # NOTE: not tested after refactor
+
+    def get_mask(self, batch):
+        _, y = batch
+        return torch.ones_like(y)
 
     def get_featurizer(self, hparams):
         return featurizer.EmbNet('densenet', pretrain=True, concat_features=0)

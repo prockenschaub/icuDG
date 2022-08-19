@@ -12,6 +12,7 @@ class ERM(Algorithm):
 
     def __init__(self, experiment, num_domains, hparams):
         super(ERM, self).__init__(experiment, num_domains, hparams)
+        self.experiment = experiment
         self.featurizer = experiment.get_featurizer(self.hparams)
         self.classifier = nn.Linear(self.featurizer.n_outputs, experiment.num_classes)
         self.network = nn.Sequential(self.featurizer, self.classifier)
@@ -25,7 +26,8 @@ class ERM(Algorithm):
     def update(self, minibatches, device):
         all_x = cat([x for x,y in minibatches])
         all_y = cat([y for x,y in minibatches])
-        loss = self.loss_fn(self.predict(all_x), all_y)
+        all_m = cat([self.experiment.get_mask(batch) for batch in minibatches])
+        loss = self.loss_fn(self.predict(all_x), all_y, all_m)
 
         self.optimizer.zero_grad()
         loss.backward()

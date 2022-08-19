@@ -30,9 +30,10 @@ class VREx(ERM):
         all_logits_idx = 0
         losses = torch.zeros(len(minibatches))
         for i, (x, y) in enumerate(minibatches):
+            mask = self.experiment.get_mask((x, y))
             logits = all_logits[all_logits_idx:all_logits_idx + y.shape[0]]
             all_logits_idx += y.shape[0]
-            nll = self.loss_fn(logits, y)
+            nll = self.loss_fn(logits, y, mask)
             losses[i] = nll
 
         mean = losses.mean()

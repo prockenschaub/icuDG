@@ -57,7 +57,8 @@ class MLDG(ERM):
                 weight_decay=self.hparams['weight_decay']
             )
 
-            inner_obj = self.loss_fn(inner_net(xi), yi)
+            maski = self.experiment.get_mask((xi, yi))
+            inner_obj = self.loss_fn(inner_net(xi), yi, maski)
 
             inner_opt.zero_grad()
             inner_obj.backward()
@@ -74,7 +75,8 @@ class MLDG(ERM):
             objective += inner_obj.item()
 
             # this computes Gj on the clone-network
-            loss_inner_j = self.loss_fn(inner_net(xj), yj)
+            maskj = self.experiment.get_mask((xj, yj))
+            loss_inner_j = self.loss_fn(inner_net(xj), yj, maskj)
             grad_inner_j = autograd.grad(loss_inner_j, inner_net.parameters(),
                 allow_unused=True)
 

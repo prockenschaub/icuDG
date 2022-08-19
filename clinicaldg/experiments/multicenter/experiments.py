@@ -1,4 +1,3 @@
-from functools import partial
 import numpy as np
 
 import torch.nn.functional as F
@@ -7,13 +6,13 @@ from torch.utils.data import ConcatDataset
 from clinicaldg.lib.misc import predict_on_set
 from clinicaldg.lib.hparams_registry import HparamSpec
 from clinicaldg.lib.metrics import roc_auc_score
-from clinicaldg.experiments import ExperimentBase 
+from clinicaldg.experiments import base
 
 from . import data, featurizer
 
 
-def bce_loss(logits, y, reduction='mean', **kwargs):
-    logits, y = logits[..., -1], y[..., -1]
+def bce_loss(logits, y, mask, reduction='mean', **kwargs):
+    logits = logits[..., -1]
     ce = F.binary_cross_entropy_with_logits(
         logits, 
         y, 
@@ -22,7 +21,6 @@ def bce_loss(logits, y, reduction='mean', **kwargs):
     )
     
     # Mask padded values when calculating the loss
-    mask = y != data.PAD_VALUE
     masked_ce = ce * mask
 
     # Aggregate as needed
@@ -33,7 +31,7 @@ def bce_loss(logits, y, reduction='mean', **kwargs):
     return masked_ce
 
 
-class MultiCenterBase(ExperimentBase):
+class MultiCenterBase(base.Experiment):
     
     ENVIRONMENTS = ['mimic', 'eicu', 'hirid', 'aumc']
     TRAIN_PCT = 0.7
@@ -82,6 +80,10 @@ class MultiCenterBase(ExperimentBase):
     def get_loss_fn(self):
         return bce_loss
 
+    def get_mask(self, batch):
+        _, y = batch
+        return y != data.PAD_VALUE
+
     def get_featurizer(self, hparams):
         if hparams['mc_architecture'] == "tcn":
             return featurizer.TCNet(
@@ -98,7 +100,7 @@ class MultiCenterBase(ExperimentBase):
 
     def eval_metrics(self, algorithm, loader, device, **kwargs):
         logits, y, _ = predict_on_set(algorithm, loader, device)
-        logits, y = logits[..., -1], y[..., -1]
+        logits = logits[..., -1]
 
         # Mask any predictions that were made on padded values
         mask = y != data.PAD_VALUE

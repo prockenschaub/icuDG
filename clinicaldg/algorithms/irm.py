@@ -41,9 +41,10 @@ class IRM(ERM):
         all_logits = self.network(all_x)
         all_logits_idx = 0
         for i, (x, y) in enumerate(minibatches):
+            mask = self.experiment.get_mask((x, y))
             logits = all_logits[all_logits_idx:all_logits_idx + y.shape[0]]
             all_logits_idx += y.shape[0]
-            nll += self.loss_fn(logits, y)
+            nll += self.loss_fn(logits, y, mask)
             penalty += self._irm_penalty(logits, y)
         nll /= len(minibatches)
         penalty /= len(minibatches)

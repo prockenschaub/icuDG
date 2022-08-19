@@ -21,7 +21,8 @@ class SD(ERM):
 
     def update(self, minibatches, device):
         all_x = cat([x for x,y in minibatches])
-        all_y = torch.cat([y for x,y in minibatches])
+        all_y = cat([y for x,y in minibatches])
+        all_m = cat([batch for batch in minibatches])
         all_p = self.predict(all_x)
 
         loss = self.loss_fn(all_p, all_y)

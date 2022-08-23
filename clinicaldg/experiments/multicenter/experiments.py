@@ -1,5 +1,6 @@
 import numpy as np
 
+import torch
 import torch.nn.functional as F
 from torch.utils.data import ConcatDataset
 
@@ -55,10 +56,11 @@ class MultiCenterBase(base.Experiment):
 
         # Network
         HparamSpec('mc_architecture', 'tcn'),
-        HparamSpec('tcn_hidden_dims', 64, lambda r: int(r.choice(a=[32, 64, 128]))),
-        HparamSpec('tcn_num_layers', 1, lambda r: int(r.randint(low=1, high=10))),
-        HparamSpec('tcn_kernel_size', 4, lambda r: int(r.randint(low=2, high=6))),
-        HparamSpec('tcn_dropout', 0.5, lambda r: float(r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7])))
+        HparamSpec('mc_hidden_dims', 64, lambda r: int(r.choice(a=[32, 64, 128]))),
+        HparamSpec('mc_num_layers', 1, lambda r: int(r.randint(low=1, high=10))),
+        HparamSpec('mc_kernel_size', 4, lambda r: int(r.randint(low=2, high=6))),
+        HparamSpec('mc_heads', 4, lambda r: int(r.randint(low=1, high=3))),
+        HparamSpec('mc_dropout', 0.5, lambda r: float(r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7])))
 
     ]
 
@@ -88,10 +90,18 @@ class MultiCenterBase(base.Experiment):
         if hparams['mc_architecture'] == "tcn":
             return featurizer.TCNet(
                 self.d.num_inputs,
-                hparams['tcn_hidden_dims'],
-                hparams['tcn_num_layers'],
-                hparams['tcn_kernel_size'],
-                hparams['tcn_dropout']
+                hparams['mc_hidden_dims'],
+                hparams['mc_num_layers'],
+                hparams['mc_kernel_size'],
+                hparams['mc_dropout']
+            )
+        elif hparams['mc_architecture'] == "transformer":
+            return featurizer.TransformerNet(
+                self.d.num_inputs,
+                hparams['mc_hidden_dims'],
+                hparams['mc_num_layers'],
+                hparams['mc_heads'],
+                hparams['mc_dropout']
             )
         return NotImplementedError(
             f"Architecture {hparams['mc_architecture']} not available ",
@@ -102,13 +112,22 @@ class MultiCenterBase(base.Experiment):
         logits, y, _ = predict_on_set(algorithm, loader, device)
         logits = logits[..., -1]
 
-        # Mask any predictions that were made on padded values
+        # Obtain mask for predictions on padded values
         mask = y != data.PAD_VALUE
+        
+        # Get the max prediction for each patient to replicate AUC variant 
+        # used by Moor et al. (2021). Use y_hat instead of logits to be able to 
+        # simply mask via element-wise multiplication.
+        y_hat_max = torch.max(torch.sigmoid(logits) * mask, dim=-1)[0].numpy()
+        y_max = torch.max(y * mask, dim=-1)[0].numpy()
+        
+        # Get the "normal" masked logits for each time step
         logits = logits.view(-1)[mask.view(-1)].numpy()
         y = y.view(-1)[mask.view(-1)].long().numpy()
 
         return {
-            'roc': roc_auc_score(y, logits)
+            'roc': roc_auc_score(y, logits),
+            'roc_max': roc_auc_score(y_max, y_hat_max)
         }
 
 

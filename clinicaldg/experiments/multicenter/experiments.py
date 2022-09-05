@@ -48,7 +48,6 @@ class MultiCenterBase(base.Experiment):
     HPARAM_SPEC = [
         # Data
         HparamSpec('mc_outcome', 'sepsis'),
-        HparamSpec('mc_test_env', 'aumc'),
 
         # Training
         HparamSpec('lr', 1e-3, lambda r: float(np.exp(r.uniform(low=-10, high=-3)))),
@@ -136,20 +135,20 @@ def _not(lst, excl):
 
 class MultiCenterMIMIC(MultiCenterBase):
     TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'mimic')
-    VAL_ENV = 'mimic'
+    VAL_ENV = _not(MultiCenterBase.ENVIRONMENTS, 'mimic')
     TEST_ENV = 'mimic'
     
 class MultiCenterEICU(MultiCenterBase):
     TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'eicu')
-    VAL_ENV = 'eicu'
+    VAL_ENV = _not(MultiCenterBase.ENVIRONMENTS, 'eicu')
     TEST_ENV = 'eicu'
 
 class MultiCenterHIRID(MultiCenterBase):
     TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'hirid')
-    VAL_ENV = 'hirid'
+    VAL_ENV = _not(MultiCenterBase.ENVIRONMENTS, 'hirid')
     TEST_ENV = 'hirid'
 
 class MultiCenterAUMC(MultiCenterBase):
     TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'aumc')
-    VAL_ENV = 'aumc'
+    VAL_ENV = _not(MultiCenterBase.ENVIRONMENTS, 'aumc')
     TEST_ENV = 'aumc'

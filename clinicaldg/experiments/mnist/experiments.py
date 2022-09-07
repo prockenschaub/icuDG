@@ -26,8 +26,8 @@ class ColoredMNIST(base.Experiment):
     ES_METRIC = 'acc'
     ES_PATIENCE = 10 # no early stopping for CMNIST to avoid test env overfitting
     TRAIN_ENVS = ['e1', 'e2']
-    VAL_ENV = 'val'
-    TEST_ENV = 'val'
+    VAL_ENVS = ['val']
+    TEST_ENVS = ['val']
     input_shape = (14*14*2, )
     num_classes = 2
     

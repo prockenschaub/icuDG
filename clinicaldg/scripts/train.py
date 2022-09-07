@@ -102,21 +102,21 @@ if __name__ == "__main__":
     
     # Confirm environment assignment (envs differ for Oracle runs)
     if args.algorithm == 'ERMID': # ERM trained on the training subset of the test env
-        TRAIN_ENVS = [experiment_class.TEST_ENV]
-        VAL_ENV = experiment_class.TEST_ENV
-        TEST_ENV = experiment_class.TEST_ENV
+        TRAIN_ENVS = experiment_class.TEST_ENVS
+        VAL_ENVS = experiment_class.TEST_ENVS
+        TEST_ENVS = experiment_class.TEST_ENVS
     elif args.algorithm == 'ERMMerged': # ERM trained on merged training subsets of all envs
         TRAIN_ENVS = experiment_class.ENVIRONMENTS
-        VAL_ENV = experiment_class.TEST_ENV  
-        TEST_ENV = experiment_class.TEST_ENV
+        VAL_ENVS = experiment_class.TEST_ENVS 
+        TEST_ENVS = experiment_class.TEST_ENVS
     else:
         TRAIN_ENVS = experiment_class.TRAIN_ENVS
-        VAL_ENV = experiment_class.VAL_ENV  
-        TEST_ENV = experiment_class.TEST_ENV
+        VAL_ENVS = experiment_class.VAL_ENVS
+        TEST_ENVS = experiment_class.TEST_ENVS
         
     print("Training Environments: " + str(TRAIN_ENVS))
-    print("Validation Environment: " + str(VAL_ENV))
-    print("Test Environment: " + str(TEST_ENV))    
+    print("Validation Environment: " + str(VAL_ENVS))
+    print("Test Environment: " + str(TEST_ENVS))    
   
     # Instantiate experiment and algorithm
     experiment = experiment_class(hparams, args)
@@ -138,9 +138,9 @@ if __name__ == "__main__":
     if args.es_method == 'train':
         val_ds = experiment.get_torch_dataset(TRAIN_ENVS, 'val')
     elif args.es_method == 'val':
-        val_ds = experiment.get_torch_dataset([VAL_ENV], 'val')
+        val_ds = experiment.get_torch_dataset(VAL_ENVS, 'val')
     elif args.es_method == 'test':
-        val_ds = experiment.get_torch_dataset([TEST_ENV], 'val')
+        val_ds = experiment.get_torch_dataset(TEST_ENVS, 'val')
         
     if hasattr(experiment, 'NUM_SAMPLES_VAL'):
         num_samples_val = min(experiment.NUM_SAMPLES_VAL, len(val_ds))
@@ -261,8 +261,8 @@ if __name__ == "__main__":
         "model_input_shape": experiment.input_shape,
         "model_num_classes": experiment.num_classes,
         "model_train_domains": TRAIN_ENVS,
-        "model_val_domain": VAL_ENV,
-        "model_test_domains": TEST_ENV,
+        "model_val_domain": VAL_ENVS,
+        "model_test_domains": TEST_ENVS,
         "model_hparams": hparams,
         "es_step": es.step,
         'es_' + experiment.ES_METRIC: es.best_score

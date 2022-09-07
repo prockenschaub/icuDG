@@ -135,20 +135,20 @@ def _not(lst, excl):
 
 class MultiCenterMIMIC(MultiCenterBase):
     TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'mimic')
-    VAL_ENV = _not(MultiCenterBase.ENVIRONMENTS, 'mimic')
-    TEST_ENV = 'mimic'
+    VAL_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'mimic')
+    TEST_ENVS = ['mimic']
     
 class MultiCenterEICU(MultiCenterBase):
     TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'eicu')
-    VAL_ENV = _not(MultiCenterBase.ENVIRONMENTS, 'eicu')
-    TEST_ENV = 'eicu'
+    VAL_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'eicu')
+    TEST_ENVS = ['eicu']
 
 class MultiCenterHIRID(MultiCenterBase):
     TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'hirid')
-    VAL_ENV = _not(MultiCenterBase.ENVIRONMENTS, 'hirid')
-    TEST_ENV = 'hirid'
+    VAL_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'hirid')
+    TEST_ENVS = ['hirid']
 
 class MultiCenterAUMC(MultiCenterBase):
     TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'aumc')
-    VAL_ENV = _not(MultiCenterBase.ENVIRONMENTS, 'aumc')
-    TEST_ENV = 'aumc'
+    VAL_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'aumc')
+    TEST_ENVS = ['aumc']

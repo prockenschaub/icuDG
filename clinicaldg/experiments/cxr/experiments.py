@@ -74,8 +74,8 @@ class CXRBase(base.Experiment):
     input_shape = None
     ES_PATIENCE = 5 #  * checkpoint_freq steps
     TRAIN_ENVS = ['MIMIC', 'CXP']
-    VAL_ENV = 'NIH'
-    TEST_ENV = 'PAD'    
+    VAL_ENVS = ['NIH']
+    TEST_ENVS = ['PAD']    
     NUM_SAMPLES_VAL = 1024*8 # use a subset of the validation set for early stopping
     
     # Define hyperparameters

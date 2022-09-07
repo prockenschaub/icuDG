@@ -1,7 +1,6 @@
 # Based on code by Zhang et al., rearranged and refactored by 
 # Patrick Rockenschaub. 
 
-import torch
 import torch.nn.functional as F
 
 from clinicaldg.lib.hparams_registry import HparamSpec
@@ -34,8 +33,8 @@ class eICUBase(base.Experiment):
     CHECKPOINT_FREQ = 10
     ES_METRIC = 'roc'
     TRAIN_ENVS = ['Midwest', 'West', 'Northeast']
-    VAL_ENV = 'Missing'
-    TEST_ENV = 'South'
+    VAL_ENVS = ['Missing']
+    TEST_ENVS = ['South']
     num_classes = 2
     input_shape = None
     ES_PATIENCE = 7 # * checkpoint_freq steps

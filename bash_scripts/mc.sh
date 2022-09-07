@@ -26,7 +26,7 @@ do
         --experiment MultiCenter \
         --algorithm ${algo} \
         --es_method ${es} \
-        --hparams "{\"mc_target_env\": \"${DS}\", \"mc_architecture\": \"tcn\"}" \
+        --hparams "{\"mc_target\": \"${DS}\", \"mc_architecture\": \"tcn\"}" \
         --hparams_seed ${hs} \
         --trial_seed ${ts} \
         --seed ${seed} \

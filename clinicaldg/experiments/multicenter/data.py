@@ -14,9 +14,9 @@ def count_features(df):
 
 
 class MultiCenterDataset():
-    def __init__(self, outcome='sepsis', train_pct = 0.7, val_pct = 0.1):        
+    def __init__(self, outcome='sepsis', train_pct = 0.7, val_pct = 0.1, seed=None):        
         self.dfs = {
-            db: MultiCenterDataset.prepare_dataset(db, outcome, train_pct, val_pct)
+            db: MultiCenterDataset.prepare_dataset(db, outcome, train_pct, val_pct, seed)
             for db in Constants.ts_paths.keys()
         }
 
@@ -30,7 +30,7 @@ class MultiCenterDataset():
     def __getitem__(self, idx):
         return self.dfs[idx]
 
-    def prepare_dataset(db, outcome, train_pct, val_pct):
+    def prepare_dataset(db, outcome, train_pct, val_pct, seed=None):
         """_summary_
 
         Args:
@@ -49,7 +49,7 @@ class MultiCenterDataset():
 
         # Randomly shuffle the patients
         pats = df.index.levels[0]
-        pats = np.random.permutation(pats)
+        pats = np.random.RandomState(seed).permutation(pats)
         num_pats = len(pats)
         
         # Split into train / val / test

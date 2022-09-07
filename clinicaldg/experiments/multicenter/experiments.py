@@ -1,4 +1,6 @@
+from functools import partial
 import numpy as np
+import pandas as pd
 
 import torch
 import torch.nn.functional as F
@@ -12,12 +14,16 @@ from clinicaldg.experiments import base
 from . import data, featurizer
 
 
-def bce_loss(logits, y, mask, reduction='mean', **kwargs):
+def bce_loss(logits, y, mask, reduction='mean', pos_weight=None, **kwargs):
     logits = logits[..., -1]
+    if pos_weight is not None:
+        pos_weight = y.new_tensor(pos_weight)
+
     ce = F.binary_cross_entropy_with_logits(
         logits, 
         y, 
         reduction='none', 
+        pos_weight=pos_weight,
         **kwargs
     )
     
@@ -31,8 +37,11 @@ def bce_loss(logits, y, mask, reduction='mean', **kwargs):
         return masked_ce.sum()
     return masked_ce
 
+def _not(lst, excl):
+    return [x for x in lst if x != excl]
 
-class MultiCenterBase(base.Experiment):
+
+class MultiCenter(base.Experiment):
     
     ENVIRONMENTS = ['mimic', 'eicu', 'hirid', 'aumc']
     TRAIN_PCT = 0.7
@@ -40,13 +49,14 @@ class MultiCenterBase(base.Experiment):
     MAX_STEPS = 2000
     N_WORKERS = 1
     CHECKPOINT_FREQ = 10
-    ES_METRIC = 'roc'
+    ES_METRIC = 'roc_max'
     num_classes = 2
     input_shape = None
     ES_PATIENCE = 7 # * checkpoint_freq steps
     
     HPARAM_SPEC = [
         # Data
+        HparamSpec('mc_target', 'mimic'),
         HparamSpec('mc_outcome', 'sepsis'),
 
         # Training
@@ -67,19 +77,32 @@ class MultiCenterBase(base.Experiment):
         self.d = data.MultiCenterDataset(
             hparams['mc_outcome'], 
             self.TRAIN_PCT,
-            self.VAL_PCT
+            self.VAL_PCT,
+            args.seed
         )
 
-    def get_torch_dataset(self, envs, dset):
+        # Assign environments to train / val / test
+        self.TRAIN_ENVS = _not(self.ENVIRONMENTS, hparams['mc_target'])
+        self.VAL_ENVS = _not(self.ENVIRONMENTS, hparams['mc_target'])
+        self.TEST_ENVS = [hparams['mc_target']]
+
+        # Calculate case weights based on train fold of train envs
+        train_data = pd.concat(self.get_datasets(self.TRAIN_ENVS, 'train'))
+        prop_cases = np.mean(train_data.sepsis)
+        self.case_weight = (1 - prop_cases) / prop_cases
+
+    def get_datasets(self, envs, dset):
         datasets = []
         for r in envs:
-            ds = data.SingleCenter(self.d[r][self.d[r]['fold'] == dset])
+            ds = self.d[r][self.d[r]['fold'] == dset]
             datasets.append(ds)
-        
-        return ConcatDataset(datasets)
+        return datasets
+
+    def get_torch_dataset(self, envs, dset):
+        return ConcatDataset([data.SingleCenter(d) for d in self.get_datasets(envs, dset)])
 
     def get_loss_fn(self):
-        return bce_loss
+        return partial(bce_loss, pos_weight=self.case_weight)
 
     def get_mask(self, batch):
         _, y = batch
@@ -128,27 +151,3 @@ class MultiCenterBase(base.Experiment):
             'roc': roc_auc_score(y, logits),
             'roc_max': roc_auc_score(y_max, y_hat_max)
         }
-
-
-def _not(lst, excl):
-    return [x for x in lst if x != excl]
-
-class MultiCenterMIMIC(MultiCenterBase):
-    TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'mimic')
-    VAL_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'mimic')
-    TEST_ENVS = ['mimic']
-    
-class MultiCenterEICU(MultiCenterBase):
-    TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'eicu')
-    VAL_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'eicu')
-    TEST_ENVS = ['eicu']
-
-class MultiCenterHIRID(MultiCenterBase):
-    TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'hirid')
-    VAL_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'hirid')
-    TEST_ENVS = ['hirid']
-
-class MultiCenterAUMC(MultiCenterBase):
-    TRAIN_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'aumc')
-    VAL_ENVS = _not(MultiCenterBase.ENVIRONMENTS, 'aumc')
-    TEST_ENVS = ['aumc']

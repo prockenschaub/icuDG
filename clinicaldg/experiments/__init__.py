@@ -17,9 +17,4 @@ from .eicu.experiments import (
     eICUSubsampleObs
 )
 from .mnist.experiments import ColoredMNIST
-from .multicenter.experiments import (
-    MultiCenterMIMIC, 
-    MultiCenterEICU, 
-    MultiCenterHIRID,
-    MultiCenterAUMC
-)
+from .multicenter.experiments import MultiCenter

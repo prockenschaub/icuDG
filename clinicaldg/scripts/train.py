@@ -100,26 +100,28 @@ if __name__ == "__main__":
     else:
         device = "cpu"               
     
+    # Instantiate experiment
+    experiment = experiment_class(hparams, args)
+
     # Confirm environment assignment (envs differ for Oracle runs)
     if args.algorithm == 'ERMID': # ERM trained on the training subset of the test env
-        TRAIN_ENVS = experiment_class.TEST_ENVS
-        VAL_ENVS = experiment_class.TEST_ENVS
-        TEST_ENVS = experiment_class.TEST_ENVS
+        TRAIN_ENVS = experiment.TEST_ENVS
+        VAL_ENVS = experiment.TEST_ENVS
+        TEST_ENVS = experiment.TEST_ENVS
     elif args.algorithm == 'ERMMerged': # ERM trained on merged training subsets of all envs
-        TRAIN_ENVS = experiment_class.ENVIRONMENTS
-        VAL_ENVS = experiment_class.TEST_ENVS 
-        TEST_ENVS = experiment_class.TEST_ENVS
+        TRAIN_ENVS = experiment.ENVIRONMENTS
+        VAL_ENVS = experiment.TEST_ENVS 
+        TEST_ENVS = experiment.TEST_ENVS
     else:
-        TRAIN_ENVS = experiment_class.TRAIN_ENVS
-        VAL_ENVS = experiment_class.VAL_ENVS
-        TEST_ENVS = experiment_class.TEST_ENVS
+        TRAIN_ENVS = experiment.TRAIN_ENVS
+        VAL_ENVS = experiment.VAL_ENVS
+        TEST_ENVS = experiment.TEST_ENVS
         
     print("Training Environments: " + str(TRAIN_ENVS))
-    print("Validation Environment: " + str(VAL_ENVS))
-    print("Test Environment: " + str(TEST_ENVS))    
+    print("Validation Environments: " + str(VAL_ENVS))
+    print("Test Environments: " + str(TEST_ENVS))    
   
     # Instantiate experiment and algorithm
-    experiment = experiment_class(hparams, args)
     algorithm = algorithm_class(experiment, len(TRAIN_ENVS), hparams).to(device)
 
     # Get the datasets for each environment and split them into train/val/test
@@ -270,7 +272,7 @@ if __name__ == "__main__":
     
     final_results = {}         
     for name, loader in test_loaders.items():
-        test_metrics = experiment.eval_metrics(algorithm, loader, device = device)
+        test_metrics = experiment.eval_metrics(algorithm, loader, device=device)
         test_metrics = misc.add_prefix(test_metrics, name)
         final_results.update(test_metrics)
         

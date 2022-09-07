@@ -20,11 +20,11 @@ class IRM(ERM):
         super(IRM, self).__init__(experiment, num_domains, hparams)
         self.register_buffer('update_count', torch.tensor([0]))
 
-    def _irm_penalty(self, logits, y):
+    def _irm_penalty(self, logits, y, mask):
         device = logits.device
         scale = torch.tensor(1.).to(device).requires_grad_()
-        loss_1 = self.loss_fn(logits[::2] * scale, y[::2])
-        loss_2 = self.loss_fn(logits[1::2] * scale, y[1::2])
+        loss_1 = self.loss_fn(logits[::2] * scale, y[::2], mask[::2])
+        loss_2 = self.loss_fn(logits[1::2] * scale, y[1::2], mask[1::2])
         grad_1 = autograd.grad(loss_1, [scale], create_graph=True)[0]
         grad_2 = autograd.grad(loss_2, [scale], create_graph=True)[0]
         result = torch.sum(grad_1 * grad_2)
@@ -45,7 +45,7 @@ class IRM(ERM):
             logits = all_logits[all_logits_idx:all_logits_idx + y.shape[0]]
             all_logits_idx += y.shape[0]
             nll += self.loss_fn(logits, y, mask)
-            penalty += self._irm_penalty(logits, y)
+            penalty += self._irm_penalty(logits, y, mask)
         nll /= len(minibatches)
         penalty /= len(minibatches)
         loss = nll + (penalty_weight * penalty)

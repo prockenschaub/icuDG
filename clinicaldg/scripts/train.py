@@ -121,7 +121,7 @@ if __name__ == "__main__":
     print("Validation Environments: " + str(VAL_ENVS))
     print("Test Environments: " + str(TEST_ENVS))    
   
-    # Instantiate experiment and algorithm
+    # Instantiate algorithm
     algorithm = algorithm_class(experiment, len(TRAIN_ENVS), hparams).to(device)
 
     # Get the datasets for each environment and split them into train/val/test
@@ -263,7 +263,7 @@ if __name__ == "__main__":
         "model_input_shape": experiment.input_shape,
         "model_num_classes": experiment.num_classes,
         "model_train_domains": TRAIN_ENVS,
-        "model_val_domain": VAL_ENVS,
+        "model_val_domains": VAL_ENVS,
         "model_test_domains": TEST_ENVS,
         "model_hparams": hparams,
         "es_step": es.step,

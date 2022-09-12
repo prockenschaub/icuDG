@@ -10,7 +10,7 @@ PAD_VALUE = 2
 MAX_LEN = 193
 
 def count_features(df):
-    return len(df.drop(columns=['sepsis', 'fold']).columns)
+    return len(df.drop(columns=['label', 'fold']).columns)
 
 
 class MultiCenterDataset():
@@ -43,9 +43,13 @@ class MultiCenterDataset():
             _type_: _description_
         """
         # Get the hourly data preprocessed with the R package ``ricu``
+        print(db)
+        from datetime import datetime
+        start = datetime.now()
         path = f'{Constants.ts_paths[db]}/{outcome}.csv'
         df = pd.read_csv(path, index_col=['stay_id', 'time'])
-        features = df.columns[df.columns != 'sepsis']
+        df.rename(columns={outcome: 'label'}, inplace=True)
+        features = df.columns[df.columns != 'label']
 
         # Randomly shuffle the patients
         pats = df.index.levels[0]
@@ -60,16 +64,15 @@ class MultiCenterDataset():
         df.loc[pats[bounds[1]:], 'fold'] = 'test'
 
         # Normalise
-        for f in features:
-            if np.all(df[f].isna()):
-                continue # don't scale if feature is not recorded at this site
-            scaler = StandardScaler().fit(df[df.fold == 'train'][[f]])
-            df[f] = scaler.transform(df[[f]])
+        means = df[df.fold == 'train'][features].mean()
+        stds = df[df.fold == 'train'][features].std()
+        df = pd.concat((df[['fold', 'label']], (df[features] - means) / stds))
 
         # Fill missing values
         df = df.groupby('stay_id').ffill()  # start with forward fill
         df = df.fillna(value=0)             # fill any remaining NAs with 0
 
+        print(f'Finished in {datetime.now() - start}')
         return df
            
 class SingleCenter(Dataset):
@@ -87,8 +90,8 @@ class SingleCenter(Dataset):
         
         # Get features and labels
         num_time_steps = pat_data.shape[0]
-        X = pat_data.drop('sepsis', axis=1).values   # T x P
-        Y = pat_data[['sepsis']].values              # T x 1
+        X = pat_data.drop('label', axis=1).values   # T x P
+        Y = pat_data[['label']].values              # T x 1
 
         # Pad them to the right length
         X = pad_to_len(X, num_time_steps)   # MAX_LEN x P

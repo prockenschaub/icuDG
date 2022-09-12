@@ -88,7 +88,7 @@ class MultiCenter(base.Experiment):
 
         # Calculate case weights based on train fold of train envs
         train_data = pd.concat(self.get_datasets(self.TRAIN_ENVS, 'train'))
-        prop_cases = np.mean(train_data.sepsis)
+        prop_cases = np.mean(train_data.label)
         self.case_weight = (1 - prop_cases) / prop_cases
 
     def get_datasets(self, envs, dset):

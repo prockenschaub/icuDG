@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
+import multiprocessing
+from functools import partial
 
 from torch.utils.data import Dataset
-from sklearn.preprocessing import StandardScaler
 
 from . import Constants
 
@@ -12,13 +13,21 @@ MAX_LEN = 193
 def count_features(df):
     return len(df.drop(columns=['label', 'fold']).columns)
 
-
 class MultiCenterDataset():
     def __init__(self, outcome='sepsis', train_pct = 0.7, val_pct = 0.1, seed=None):        
-        self.dfs = {
-            db: MultiCenterDataset.prepare_dataset(db, outcome, train_pct, val_pct, seed)
-            for db in Constants.ts_paths.keys()
-        }
+        # self.dfs = {
+        #     db: MultiCenterDataset.prepare_dataset(db, outcome, train_pct, val_pct, seed)
+        #     for db in Constants.ts_paths.keys()
+        # }
+
+        # Hack to avoid pandas/python unnecessarily hanging on to memory. Start
+        # reading in subprocesses which are terminated afterwards, releasing 
+        # their resources. 
+        # See https://stackoverflow.com/questions/39100971/how-do-i-release-memory-used-by-a-pandas-dataframe 
+        df_names = Constants.ts_paths.keys()
+        fun = partial(MultiCenterDataset.prepare_dataset, outcome=outcome, train_pct=train_pct, val_pct=val_pct, seed=seed)
+        res = multiprocessing.Pool(1).map(fun, df_names)
+        self.dfs = dict(zip(df_names, res))
 
         num_features = [count_features(df) for df in self.dfs.values()]
         assert(len(np.unique(num_features)) == 1)
@@ -44,7 +53,7 @@ class MultiCenterDataset():
         """
         # Get the hourly data preprocessed with the R package ``ricu``
         path = f'{Constants.ts_paths[db]}/{outcome}.csv'
-        df = pd.read_csv(path, index_col=['stay_id', 'time'])
+        df = pd.read_csv(path, index_col=['stay_id', 'time'], dtype=np.float32)
         df.rename(columns={outcome: 'label'}, inplace=True)
         features = df.columns[df.columns != 'label']
 
@@ -69,7 +78,7 @@ class MultiCenterDataset():
         df = df.groupby('stay_id').ffill()  # start with forward fill
         df = df.fillna(value=0)             # fill any remaining NAs with 0
 
-        return df
+        return df.copy()
            
 class SingleCenter(Dataset):
     def __init__(self, df):

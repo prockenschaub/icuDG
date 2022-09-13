@@ -20,7 +20,7 @@ do
     python -m clinicaldg.scripts.train \
         --experiment MultiCenter \
         --algorithm ${algo} \
-        --es_method ${es} \
+        --es_method val \
         --hparams "{\"test_env\": \"${t}\", \"val_env\": \"${v}\", \"mc_architecture\": \"tcn\"}" \
         --hparams_seed ${hs} \
         --trial_seed ${ts} \

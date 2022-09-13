@@ -43,9 +43,6 @@ class MultiCenterDataset():
             _type_: _description_
         """
         # Get the hourly data preprocessed with the R package ``ricu``
-        print(db)
-        from datetime import datetime
-        start = datetime.now()
         path = f'{Constants.ts_paths[db]}/{outcome}.csv'
         df = pd.read_csv(path, index_col=['stay_id', 'time'])
         df.rename(columns={outcome: 'label'}, inplace=True)
@@ -66,13 +63,12 @@ class MultiCenterDataset():
         # Normalise
         means = df[df.fold == 'train'][features].mean()
         stds = df[df.fold == 'train'][features].std()
-        df = pd.concat((df[['fold', 'label']], (df[features] - means) / stds))
+        df = pd.concat((df[['fold', 'label']], (df[features] - means) / stds), axis=1)
 
         # Fill missing values
         df = df.groupby('stay_id').ffill()  # start with forward fill
         df = df.fillna(value=0)             # fill any remaining NAs with 0
 
-        print(f'Finished in {datetime.now() - start}')
         return df
            
 class SingleCenter(Dataset):

@@ -110,8 +110,8 @@ if __name__ == "__main__":
         TEST_ENVS = experiment.TEST_ENVS
     elif args.algorithm == 'ERMMerged': # ERM trained on merged training subsets of all envs
         TRAIN_ENVS = experiment.ENVIRONMENTS
-        VAL_ENVS = experiment.TEST_ENVS 
-        TEST_ENVS = experiment.TEST_ENVS
+        VAL_ENVS = experiment.ENVIRONMENTS 
+        TEST_ENVS = experiment.ENVIRONMENTS
     else:
         TRAIN_ENVS = experiment.TRAIN_ENVS
         VAL_ENVS = experiment.VAL_ENVS

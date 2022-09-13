@@ -38,7 +38,7 @@ def bce_loss(logits, y, mask, reduction='mean', pos_weight=None, **kwargs):
     return masked_ce
 
 def _not(lst, excl):
-    return [x for x in lst if x != excl]
+    return [x for x in lst if x not in excl]
 
 
 class MultiCenter(base.Experiment):
@@ -56,35 +56,39 @@ class MultiCenter(base.Experiment):
     
     HPARAM_SPEC = [
         # Data
-        HparamSpec('mc_target', 'mimic'),
-        HparamSpec('mc_outcome', 'sepsis'),
+        HparamSpec('outcome', 'sepsis'),
+        HparamSpec('val_env', None),
+        HparamSpec('test_env', 'mimic'),
 
         # Training
         HparamSpec('lr', 1e-3, lambda r: float(np.exp(r.uniform(low=-10, high=-3)))),
         HparamSpec('batch_size', 128, lambda r: int(r.choice(a=[128, 256, 512, 1024]))),
 
         # Network
-        HparamSpec('mc_architecture', 'tcn'),
-        HparamSpec('mc_hidden_dims', 64, lambda r: int(r.choice(a=[32, 64, 128]))),
-        HparamSpec('mc_num_layers', 1, lambda r: int(r.randint(low=1, high=10))),
-        HparamSpec('mc_kernel_size', 4, lambda r: int(r.randint(low=2, high=6))),
-        HparamSpec('mc_heads', 4, lambda r: int(r.randint(low=1, high=3))),
-        HparamSpec('mc_dropout', 0.5, lambda r: float(r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7])))
+        HparamSpec('architecture', 'tcn'),
+        HparamSpec('hidden_dims', 64, lambda r: int(r.choice(a=[32, 64, 128]))),
+        HparamSpec('num_layers', 1, lambda r: int(r.randint(low=1, high=10))),
+        HparamSpec('kernel_size', 4, lambda r: int(r.randint(low=2, high=6))),
+        HparamSpec('heads', 4, lambda r: int(r.randint(low=1, high=3))),
+        HparamSpec('dropout', 0.5, lambda r: float(r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7])))
 
     ]
 
     def __init__(self, hparams, args):
         self.d = data.MultiCenterDataset(
-            hparams['mc_outcome'], 
+            hparams['outcome'], 
             self.TRAIN_PCT,
             self.VAL_PCT,
             args.seed
         )
 
         # Assign environments to train / val / test
-        self.TRAIN_ENVS = _not(self.ENVIRONMENTS, hparams['mc_target'])
-        self.VAL_ENVS = _not(self.ENVIRONMENTS, hparams['mc_target'])
-        self.TEST_ENVS = [hparams['mc_target']]
+        self.TRAIN_ENVS = _not(self.ENVIRONMENTS, [hparams['val_env']] + [hparams['test_env']])
+        if hparams['val_env'] == 'train':
+            self.VAL_ENVS = self.TRAIN_ENVS
+        else:
+            self.VAL_ENVS = [hparams['val_env']]
+        self.TEST_ENVS = [hparams['test_env']]
 
         # Calculate case weights based on train fold of train envs
         train_data = pd.concat(self.get_datasets(self.TRAIN_ENVS, 'train'))
@@ -109,24 +113,24 @@ class MultiCenter(base.Experiment):
         return y != data.PAD_VALUE
 
     def get_featurizer(self, hparams):
-        if hparams['mc_architecture'] == "tcn":
+        if hparams['architecture'] == "tcn":
             return featurizer.TCNet(
                 self.d.num_inputs,
-                hparams['mc_hidden_dims'],
-                hparams['mc_num_layers'],
-                hparams['mc_kernel_size'],
-                hparams['mc_dropout']
+                hparams['hidden_dims'],
+                hparams['num_layers'],
+                hparams['kernel_size'],
+                hparams['dropout']
             )
-        elif hparams['mc_architecture'] == "transformer":
+        elif hparams['architecture'] == "transformer":
             return featurizer.TransformerNet(
                 self.d.num_inputs,
-                hparams['mc_hidden_dims'],
-                hparams['mc_num_layers'],
-                hparams['mc_heads'],
-                hparams['mc_dropout']
+                hparams['hidden_dims'],
+                hparams['num_layers'],
+                hparams['heads'],
+                hparams['dropout']
             )
         return NotImplementedError(
-            f"Architecture {hparams['mc_architecture']} not available ",
+            f"Architecture {hparams['architecture']} not available ",
             f"as a featurizer for the MultiCenter experiment"
         )
 

@@ -4,18 +4,20 @@ from itertools import product
 from clinicaldg.lib import misc
 
 # Define values to sweep over --------------------------------------------------
-es_methods = ['train', 'val']
-algorithms = ['ERMID', 'ERMMerged', 'ERM', 'IRM', 'VREx', 'RVP', 'CORAL',
-              'IGA', 'MLDG', 'GroupDRO']
+algorithms = ['ERMID', 'ERMMerged', 'ERM', 'CORAL', 'VREx', 'IGA']
 n_trials = 5
-n_hparams = 30
+n_hparams = 10
+envs = ['mimic', 'eicu', 'hirid', 'aumc']
 
 # Generate grid ----------------------------------------------------------------
 trial_seed = np.arange(n_trials)
 hparams_seed = np.arange(n_hparams)
 
-grid = product(es_methods, algorithms, trial_seed, hparams_seed)
-grid = pd.DataFrame(grid, columns=['es', 'algorithm', 'trial_seed', 'hparams_seed'])
+grid = product(algorithms, envs, ['train'] + envs, trial_seed, hparams_seed)
+grid = pd.DataFrame(
+    grid, 
+    columns=['algorithm', 'test_env', 'val_env', 'trial_seed', 'hparams_seed']
+)
 
 seeds = []
 for i in range(grid.shape[0]):

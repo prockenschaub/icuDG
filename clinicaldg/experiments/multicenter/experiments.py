@@ -62,7 +62,7 @@ class MultiCenter(base.Experiment):
 
         # Training
         HparamSpec('lr', 1e-3, lambda r: float(np.exp(r.uniform(low=-10, high=-3)))),
-        HparamSpec('batch_size', 128, lambda r: int(r.choice(a=[128, 256, 512, 1024]))),
+        HparamSpec('batch_size', 128, lambda r: int(r.choice(a=[128, 256, 512]))),
 
         # Network
         HparamSpec('architecture', 'tcn'),

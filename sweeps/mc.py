@@ -4,20 +4,27 @@ from itertools import product
 from clinicaldg.lib import misc
 
 # Define values to sweep over --------------------------------------------------
-algorithms = ['ERMID', 'ERMMerged', 'ERM', 'CORAL', 'VREx', 'IGA']
+oracles = ['ERMID', 'ERMMerged']
+algorithms = ['ERM', 'CORAL', 'VREx', 'IGA']
 n_trials = 5
 n_hparams = 10
 envs = ['mimic', 'eicu', 'hirid', 'aumc']
-
-# Generate grid ----------------------------------------------------------------
 trial_seed = np.arange(n_trials)
 hparams_seed = np.arange(n_hparams)
 
-grid = product(algorithms, envs, ['train'] + envs, trial_seed, hparams_seed)
-grid = pd.DataFrame(
-    grid, 
-    columns=['algorithm', 'test_env', 'val_env', 'trial_seed', 'hparams_seed']
-)
+# Generate grid ----------------------------------------------------------------
+
+col_names = ['algorithm', 'test_env', 'val_env', 'trial_seed', 'hparams_seed']
+oracle_grid = product(oracles, envs, ['train'], trial_seed, hparams_seed)
+dg_grid = product(algorithms, envs, ['train'] + envs, trial_seed, hparams_seed)
+
+grid = pd.concat((
+    pd.DataFrame(oracle_grid, columns=col_names),
+    pd.DataFrame(dg_grid, columns=col_names)
+))
+
+# TODO: only one round of ERMID and ERMMerged
+# TODO: increase the memory on the cluster to finish more runs
 
 seeds = []
 for i in range(grid.shape[0]):

@@ -7,7 +7,7 @@ from clinicaldg.lib import misc
 oracles = ['ERMID', 'ERMMerged']
 algorithms = ['ERM', 'CORAL', 'VREx', 'IGA']
 n_trials = 5
-n_hparams = 10
+n_hparams = 30
 envs = ['mimic', 'eicu', 'hirid', 'aumc']
 trial_seed = np.arange(n_trials)
 hparams_seed = np.arange(n_hparams)

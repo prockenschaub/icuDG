@@ -86,6 +86,8 @@ if __name__ == "__main__":
     for k, v in sorted(hparams.items()):
         print('\t{}: {}'.format(k, v))
     
+    with open(os.path.join(args.output_dir, "params.json"), 'w') as f:
+        f.write(json.dumps({'hparams': hparams, 'args': vars(args)}))
 
     # Seed everything
     random.seed(args.seed)
@@ -197,7 +199,6 @@ if __name__ == "__main__":
     es = EarlyStopping(patience = experiment.ES_PATIENCE)    
     last_results_keys = None
 
-
     # Main training loop -------------------------------------------------------
     for step in range(start_step, n_steps):
         # Check early stopping
@@ -235,11 +236,6 @@ if __name__ == "__main__":
                 last_results_keys = results_keys
             misc.print_row([results[key] for key in results_keys],
                 colwidth=12)
-
-            results.update({
-                'hparams': hparams,
-                'args': vars(args)    
-            })
 
             epochs_path = os.path.join(args.output_dir, 'results.jsonl')
             with open(epochs_path, 'a') as f:

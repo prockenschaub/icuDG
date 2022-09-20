@@ -276,7 +276,9 @@ if __name__ == "__main__":
         test_metrics = misc.add_prefix(test_metrics, name)
         final_results.update(test_metrics)
         
-    save_dict['test_results'] = final_results    
+    save_dict['test_results'] = final_results 
+    misc.print_row(sorted(final_results.keys()), colwidth=12)
+    misc.print_row([final_results[key] for key in final_results], colwidth=12)   
         
     torch.save(save_dict, os.path.join(args.output_dir, "stats.pkl"))    
 

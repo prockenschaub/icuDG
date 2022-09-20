@@ -15,7 +15,7 @@ class EarlyStopping:
             self.best_score = score
             self.step = step
             save_model(state_dict, path)
-        elif score < self.best_score:
+        elif score <= self.best_score:
             self.counter += 1
             # print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:

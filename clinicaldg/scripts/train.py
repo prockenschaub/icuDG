@@ -200,6 +200,7 @@ if __name__ == "__main__":
     last_results_keys = None
 
     # Main training loop -------------------------------------------------------
+    print("Training:")
     for step in range(start_step, n_steps):
         # Check early stopping
         if es.early_stop:
@@ -227,7 +228,6 @@ if __name__ == "__main__":
                 results[key] = np.mean(val)
 
             val_metrics = experiment.eval_metrics(algorithm, val_loader, device=device)
-            val_metrics = misc.add_prefix(val_metrics, "es")
             results.update(val_metrics)                        
                 
             results_keys = sorted(results.keys())
@@ -247,7 +247,7 @@ if __name__ == "__main__":
             
             checkpoint_vals = collections.defaultdict(lambda: [])
             
-            es(-results['es_' + experiment.ES_METRIC], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
+            es(-results[experiment.ES_METRIC], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
 
 
     # Testing ------------------------------------------------------------------
@@ -273,6 +273,8 @@ if __name__ == "__main__":
         final_results.update(test_metrics)
         
     save_dict['test_results'] = final_results 
+    
+    print("Test performance:")
     misc.print_row(sorted(final_results.keys()), colwidth=12)
     misc.print_row([final_results[key] for key in final_results], colwidth=12)   
         

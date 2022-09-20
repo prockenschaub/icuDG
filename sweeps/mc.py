@@ -23,9 +23,6 @@ grid = pd.concat((
     pd.DataFrame(dg_grid, columns=col_names)
 ))
 
-# TODO: only one round of ERMID and ERMMerged
-# TODO: increase the memory on the cluster to finish more runs
-
 seeds = []
 for i in range(grid.shape[0]):
     r = grid.iloc[i, :]

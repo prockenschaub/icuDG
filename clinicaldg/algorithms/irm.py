@@ -13,7 +13,7 @@ class IRM(ERM):
 
     HPARAM_SPEC = ERM.HPARAM_SPEC + [
         HparamSpec('irm_lambda', 1e2, lambda r: 10**r.uniform(-1, 5)),
-        HparamSpec('irm_penalty_anneal_iters', 500, lambda r: int(10**r.uniform(0, 4)))
+        HparamSpec('irm_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3)))
     ]
 
     def __init__(self, experiment, num_domains, hparams):

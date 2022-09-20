@@ -11,7 +11,7 @@ class IGA(ERM):
     Inter-environmental Gradient Alignment from https://arxiv.org/pdf/2008.01883.pdf
     """
     HPARAM_SPEC = ERM.HPARAM_SPEC + [
-        HparamSpec('iga_lambda', 1e4, lambda r: 10**r.uniform(-1, 5)),
+        HparamSpec('iga_lambda', 1e3, lambda r: 10**r.uniform(-1, 5)),
     ]
 
     def __init__(self, experiment, num_domains, hparams):

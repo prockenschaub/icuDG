@@ -49,7 +49,7 @@ class MultiCenter(base.Experiment):
     MAX_STEPS = 2000
     N_WORKERS = 1
     CHECKPOINT_FREQ = 10
-    ES_METRIC = 'roc_max'
+    ES_METRIC = 'roc'
     num_classes = 2
     input_shape = None
     ES_PATIENCE = 7 # * checkpoint_freq steps
@@ -141,17 +141,8 @@ class MultiCenter(base.Experiment):
         # Obtain mask for predictions on padded values
         mask = y != data.PAD_VALUE
         
-        # Get the max prediction for each patient to replicate AUC variant 
-        # used by Moor et al. (2021). Use y_hat instead of logits to be able to 
-        # simply mask via element-wise multiplication.
-        y_hat_max = torch.max(torch.sigmoid(logits) * mask, dim=-1)[0].numpy()
-        y_max = torch.max(y * mask, dim=-1)[0].numpy()
-        
         # Get the "normal" masked logits for each time step
         logits = logits.view(-1)[mask.view(-1)].numpy()
         y = y.view(-1)[mask.view(-1)].long().numpy()
 
-        return {
-            'roc': roc_auc_score(y, logits),
-            'roc_max': roc_auc_score(y_max, y_hat_max)
-        }
+        return {'roc': roc_auc_score(y, logits)}

@@ -18,3 +18,4 @@ from .eicu.experiments import (
 )
 from .mnist.experiments import ColoredMNIST
 from .multicenter.experiments import MultiCenter
+from .synth.experiments import Synthetic, SyntheticCorrLabel, SyntheticEnvLabel, SyntheticEnvCorrLabel

@@ -5,7 +5,7 @@ from pathlib import Path
 # functions for checkpoint/reload in case of job pre-emption on our slurm cluster
 # will have to customize if you desire this functionality
 # otherwise, the training script will still work fine as-is
-def save_checkpoint(model, optimizer, sampler_dicts, start_step, es, rng):   
+def save_checkpoint(model, optimizer, sampler_dicts, start_step, es, rng, path=Path('.')):   
     slurm_job_id = os.environ.get('SLURM_JOB_ID')        
     
     if slurm_job_id is not None:        
@@ -23,7 +23,7 @@ def save_checkpoint(model, optimizer, sampler_dicts, start_step, es, rng):
                 'es': es,
                 'rng': rng
             }, 
-            Path(f'chkpt').open('wb')                  
+            (path/'chkpt').open('wb')                  
         )
         
 def has_checkpoint():

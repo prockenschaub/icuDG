@@ -241,9 +241,15 @@ if __name__ == "__main__":
             with open(epochs_path, 'a') as f:
                 f.write(json.dumps(results, sort_keys=True) + "\n")
             
-            save_checkpoint(algorithm, algorithm.optimizer, 
-                            [train_loader.sampler.state_dict(train_loader._infinite_iterator) for c, train_loader in enumerate(train_loaders)], 
-                            step+1, es, torch.random.get_rng_state())
+            save_checkpoint(
+                algorithm, 
+                algorithm.optimizer, 
+                [train_loader.sampler.state_dict(train_loader._infinite_iterator) for c, train_loader in enumerate(train_loaders)], 
+                step+1, 
+                es, 
+                torch.random.get_rng_state(),
+                args.output_dir
+            )
             
             checkpoint_vals = collections.defaultdict(lambda: [])
             

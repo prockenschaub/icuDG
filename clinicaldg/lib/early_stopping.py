@@ -2,11 +2,12 @@ import torch
 
 class EarlyStopping:
     # adapted from https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py
-    def __init__(self, patience=5):
+    def __init__(self, patience=5, maximize=True):
         self.patience = patience
         self.counter = 0
         self.best_score = None
         self.early_stop = False
+        self.maximize = maximize
 
     def __call__(self, val_loss, step, state_dict, path):  # lower loss is better
         score = -val_loss 
@@ -15,7 +16,8 @@ class EarlyStopping:
             self.best_score = score
             self.step = step
             save_model(state_dict, path)
-        elif score <= self.best_score:
+        elif (self.maximize and score <= self.best_score) or \
+             (not self.maximize and score >= self.best_score):
             self.counter += 1
             # print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:

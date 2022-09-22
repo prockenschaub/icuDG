@@ -196,7 +196,7 @@ if __name__ == "__main__":
     n_steps = args.max_steps or experiment.MAX_STEPS
     checkpoint_freq = args.checkpoint_freq or experiment.CHECKPOINT_FREQ
     
-    es = EarlyStopping(patience = experiment.ES_PATIENCE)    
+    es = EarlyStopping(patience=experiment.ES_PATIENCE, maximize=experiment.ES_MAXIMIZE)    
     last_results_keys = None
 
     # Main training loop -------------------------------------------------------

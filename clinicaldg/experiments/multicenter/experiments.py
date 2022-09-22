@@ -50,9 +50,11 @@ class MultiCenter(base.Experiment):
     N_WORKERS = 1
     CHECKPOINT_FREQ = 10
     ES_METRIC = 'loss'
+    ES_MAXIMIZE = False
+    ES_PATIENCE = 20 # * checkpoint_freq steps
+    
     num_classes = 2
     input_shape = None
-    ES_PATIENCE = 7 # * checkpoint_freq steps
     
     HPARAM_SPEC = [
         # Data

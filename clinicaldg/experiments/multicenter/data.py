@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-import multiprocessing
-from functools import partial
+import multiprocessing as mp
 
 from torch.utils.data import Dataset
 
@@ -10,88 +9,90 @@ from . import Constants
 PAD_VALUE = 2
 MAX_LEN = 193
 
-def count_features(df):
-    return len(df.drop(columns=['label', 'fold']).columns)
+def load_data(db, outcome, debug=False):
+    # Get the hourly data preprocessed with the R package ``ricu``
+    data = pd.read_csv(
+        f'{Constants.ts_paths[db]}/{outcome}.csv', 
+        index_col=['stay_id', 'time'], 
+        nrows=10000 if debug else None,
+        dtype=np.float32
+    )
+    data.rename(columns={outcome: 'label'}, inplace=True)
+    return data
 
-class MultiCenterDataset():
-    def __init__(self, outcome='sepsis', train_pct = 0.7, val_pct = 0.1, seed=None):        
-        # self.dfs = {
-        #     db: MultiCenterDataset.prepare_dataset(db, outcome, train_pct, val_pct, seed)
-        #     for db in Constants.ts_paths.keys()
-        # }
-
-        # Hack to avoid pandas/python unnecessarily hanging on to memory. Start
-        # reading in subprocesses which are terminated afterwards, releasing 
-        # their resources. 
-        # See https://stackoverflow.com/questions/39100971/how-do-i-release-memory-used-by-a-pandas-dataframe 
-        df_names = Constants.ts_paths.keys()
-        fun = partial(MultiCenterDataset.prepare_dataset, outcome=outcome, train_pct=train_pct, val_pct=val_pct, seed=seed)
-        res = multiprocessing.Pool(1).map(fun, df_names)
-        self.dfs = dict(zip(df_names, res))
-
-        num_features = [count_features(df) for df in self.dfs.values()]
-        assert(len(np.unique(num_features)) == 1)
+def preprocess_data(data, train_pct, val_pct, seed=None):
+    features = data.columns[data.columns != 'label']
     
+    # Randomly shuffle the patients
+    pats = data.index.levels[0]
+    pats = np.random.RandomState(seed).permutation(pats)
+    num_pats = len(pats)
+    
+    # Split into train / val / test
+    bounds = np.cumsum([num_pats*train_pct, num_pats*val_pct], dtype=int)
+    data.loc[:, 'fold'] = ''
+    data.loc[pats[:bounds[0]], 'fold'] = 'train'
+    data.loc[pats[bounds[0]:bounds[1]], 'fold'] = 'val'
+    data.loc[pats[bounds[1]:], 'fold'] = 'test'
+
+    # Normalise
+    means = data[data.fold == 'train'][features].mean()
+    stds = data[data.fold == 'train'][features].std()
+    data = pd.concat((data[['fold', 'label']], (data[features] - means) / stds), axis=1)
+
+    # Fill missing values
+    data = data.groupby('stay_id').ffill()  # start with forward fill
+    data = data.fillna(value=0)             # fill any remaining NAs with 0
+
+    return data
+
+
+class Environment():
+    def __init__(self, db, outcome):
+        self.db = db
+        self.outcome = outcome
+                
+    def prepare(self, train_pct=0.7, val_pct=0.1, seed=42, debug=False):
+        data = load_data(self.db, self.outcome, debug)
+        # Hack to avoid pandas/python unnecessarily hanging on to memory. Start
+        # subprocess which is terminated afterwards, releasing all resources. 
+        # See https://stackoverflow.com/questions/39100971/how-do-i-release-memory-used-by-a-pandas-dataframe 
+        data = mp.Pool(1).apply(preprocess_data, args=[data, train_pct, val_pct, seed])
+        self.data = data
+        self.pats = data.index.get_level_values(0).unique()
+
+    @property
+    def loaded(self):
+        return hasattr(self, 'data')
+
+    def ascertain_loaded(self):
+        if not self.loaded:
+            raise RuntimeError(f'Data for {self.db}:{self.outcome} accessed before loading.')
+
     @property
     def num_inputs(self):
-        return count_features(list(self.dfs.values())[0])
+        self.ascertain_loaded()
+        return len(self.data.drop(columns=['label', 'fold']).columns)
 
-    def __getitem__(self, idx):
-        return self.dfs[idx]
+    def __getitem__(self, fold):
+        self.ascertain_loaded()
+        if not fold in ['train', 'val', 'test']:
+            raise ValueError(f'fold must be one of ["train", "val", "test"], got {fold}')
+        return Fold(self.data, fold)
 
-    def prepare_dataset(db, outcome, train_pct, val_pct, seed=None):
-        """_summary_
 
-        Args:
-            db (_type_): _description_
-            outcome (_type_): _description_
-            train_pct (_type_): _description_
-            val_pct (_type_): _description_
+class Fold(Dataset):
+    def __init__(self, data, fold):
+        self.fold = fold
+        self.data = data.query(f'fold == "{fold}"').drop(['fold'], axis=1)
+        self.pats = self.data.index.get_level_values(0).unique()
 
-        Returns:
-            _type_: _description_
-        """
-        # Get the hourly data preprocessed with the R package ``ricu``
-        path = f'{Constants.ts_paths[db]}/{outcome}.csv'
-        df = pd.read_csv(path, index_col=['stay_id', 'time'], dtype=np.float32)
-        df.rename(columns={outcome: 'label'}, inplace=True)
-        features = df.columns[df.columns != 'label']
-
-        # Randomly shuffle the patients
-        pats = df.index.levels[0]
-        pats = np.random.RandomState(seed).permutation(pats)
-        num_pats = len(pats)
-        
-        # Split into train / val / test
-        bounds = np.cumsum([num_pats*train_pct, num_pats*val_pct], dtype=int)
-        df.loc[:, 'fold'] = ''
-        df.loc[pats[:bounds[0]], 'fold'] = 'train'
-        df.loc[pats[bounds[0]:bounds[1]], 'fold'] = 'val'
-        df.loc[pats[bounds[1]:], 'fold'] = 'test'
-
-        # Normalise
-        means = df[df.fold == 'train'][features].mean()
-        stds = df[df.fold == 'train'][features].std()
-        df = pd.concat((df[['fold', 'label']], (df[features] - means) / stds), axis=1)
-
-        # Fill missing values
-        df = df.groupby('stay_id').ffill()  # start with forward fill
-        df = df.fillna(value=0)             # fill any remaining NAs with 0
-
-        return df.copy()
-           
-class SingleCenter(Dataset):
-    def __init__(self, df):
-        self.fold = df['fold'].unique()
-        self.df = df.drop(['fold'], axis=1)
-        self.pats = df.index.get_level_values(0).unique()
-    
     def __len__(self):
         return len(self.pats)
     
     def __getitem__(self, idx):
         pat_id = self.pats[idx]
-        pat_data = self.df.loc[pat_id]
+        pat_data = self.data.loc[pat_id]
         
         # Get features and labels
         num_time_steps = pat_data.shape[0]

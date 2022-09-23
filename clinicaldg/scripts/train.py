@@ -45,6 +45,8 @@ if __name__ == "__main__":
     parser.add_argument('--output_dir', type=str, default="train_output")
     parser.add_argument('--delete_model', action = 'store_true', 
         help = 'delete model weights after training to save disk space')
+    parser.add_argument('--debug', action = 'store_true', 
+        help = 'flag to debug model with small sample size')
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -104,6 +106,7 @@ if __name__ == "__main__":
     
     # Instantiate experiment
     experiment = experiment_class(hparams, args)
+    experiment.setup()
 
     # Confirm environment assignment (envs differ for Oracle runs)
     if args.algorithm == 'ERMID': # ERM trained on the training subset of the test env

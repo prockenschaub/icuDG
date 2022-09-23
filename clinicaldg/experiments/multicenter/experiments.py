@@ -2,7 +2,6 @@ from functools import partial
 import numpy as np
 import pandas as pd
 
-import torch
 import torch.nn.functional as F
 from torch.utils.data import ConcatDataset
 
@@ -77,12 +76,9 @@ class MultiCenter(base.Experiment):
     ]
 
     def __init__(self, hparams, args):
-        self.d = data.MultiCenterDataset(
-            hparams['outcome'], 
-            self.TRAIN_PCT,
-            self.VAL_PCT,
-            args.seed
-        )
+        self.args = args
+        self.hparams = hparams
+        self.envs = {e: data.Environment(e, hparams['outcome']) for e in self.ENVIRONMENTS}
 
         # Assign environments to train / val / test
         self.TRAIN_ENVS = _not(self.ENVIRONMENTS, [hparams['val_env']] + [hparams['test_env']])
@@ -92,20 +88,34 @@ class MultiCenter(base.Experiment):
             self.VAL_ENVS = [hparams['val_env']]
         self.TEST_ENVS = [hparams['test_env']]
 
-        # Calculate case weights based on train fold of train envs
-        train_data = pd.concat(self.get_datasets(self.TRAIN_ENVS, 'train'))
-        prop_cases = np.mean(train_data.label)
-        self.case_weight = (1 - prop_cases) / prop_cases
+    def add_environment(self, name):
+        self.envs[name] = data.Environment(name, self.hparams['outcome'])
 
-    def get_datasets(self, envs, dset):
-        datasets = []
-        for r in envs:
-            ds = self.d[r][self.d[r]['fold'] == dset]
-            datasets.append(ds)
-        return datasets
+    def setup(self, envs=None, use_weight=True):
+        """Perform actual data loading and preprocessing"""
+        if envs is None:
+            envs = [e for e in self.envs.keys()]
+
+        for name, obj in self.envs.items():
+            if name in envs:
+                obj.prepare(self.TRAIN_PCT, self.VAL_PCT, self.args.seed, self.args.debug)
+        
+        # Check that all have the same number of inputs
+        input_dims = np.unique([e.num_inputs for e in self.envs.values() if e.loaded])
+        if len(input_dims) > 1:
+            raise ValueError(f'Different input dimensions in envs: {input_dims}')
+        self.num_inputs = int(input_dims)
+
+        # Calculate case weights based on train fold of train envs
+        if use_weight:
+            train_data = pd.concat([self.envs[e]['train'].data for e in self.TRAIN_ENVS])
+            prop_cases = np.mean(train_data.label)
+            self.case_weight = (1 - prop_cases) / prop_cases
+        else:
+            self.case_weight = None
 
     def get_torch_dataset(self, envs, dset):
-        return ConcatDataset([data.SingleCenter(d) for d in self.get_datasets(envs, dset)])
+        return ConcatDataset([self.envs[e][dset] for e in envs])
 
     def get_loss_fn(self):
         return partial(bce_loss, pos_weight=self.case_weight)
@@ -117,7 +127,7 @@ class MultiCenter(base.Experiment):
     def get_featurizer(self, hparams):
         if hparams['architecture'] == "tcn":
             return featurizer.TCNet(
-                self.d.num_inputs,
+                self.num_inputs,
                 hparams['hidden_dims'],
                 hparams['num_layers'],
                 hparams['kernel_size'],
@@ -125,7 +135,7 @@ class MultiCenter(base.Experiment):
             )
         elif hparams['architecture'] == "transformer":
             return featurizer.TransformerNet(
-                self.d.num_inputs,
+                self.num_inputs,
                 hparams['hidden_dims'],
                 hparams['num_layers'],
                 hparams['heads'],

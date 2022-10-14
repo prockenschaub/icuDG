@@ -1,4 +1,5 @@
 
+from turtle import forward
 import torch.nn as nn
 
 from clinicaldg import networks
@@ -34,3 +35,16 @@ class TransformerNet(nn.Module):
 
     def forward(self, x):
         return self.tf(x)
+
+
+class LastStep(nn.Module):
+    def __init__(self, featurizer):
+        super().__init__()
+        self.featurizer = featurizer
+    
+    @property
+    def n_outputs(self):
+        return self.featurizer.n_outputs
+    
+    def forward(self, x):
+        return self.featurizer(x)[:, -1, :]

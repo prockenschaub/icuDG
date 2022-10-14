@@ -14,7 +14,7 @@ import torch
 import torchvision
 import torch.utils.data
 
-from clinicaldg import experiments
+from clinicaldg import tasks
 from clinicaldg import algorithms
 from clinicaldg.lib import misc
 from clinicaldg.lib.hparams_registry import HparamRegistry
@@ -27,9 +27,9 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 if __name__ == "__main__":
     # Define command line arguments
     parser = argparse.ArgumentParser(description='Domain generalization')
-    parser.add_argument('--experiment', type=str, default="ColoredMNIST")
+    parser.add_argument('--task', type=str, default="ColoredMNIST")
     parser.add_argument('--algorithm', type=str, default="ERM")
-    parser.add_argument('--es_method', choices = ['train', 'val', 'test'])
+    
     parser.add_argument('--hparams', type=str,
         help='JSON-serialized hparams dict')
     parser.add_argument('--hparams_seed', type=int, default=0,
@@ -38,15 +38,25 @@ if __name__ == "__main__":
         help='Trial number (used for seeding random_hparams).')
     parser.add_argument('--seed', type=int, default=0,
         help='Seed for everything else')
-    parser.add_argument('--max_steps', type=int, default=None,
-        help='Number of steps. Default is dataset-dependent.')
-    parser.add_argument('--checkpoint_freq', type=int, default=None,
-        help='Checkpoint every N steps. Default is dataset-dependent.')
+
+    parser.add_argument('--es_method', choices = ['train', 'val', 'test'])
+    parser.add_argument('--es_metric', type=str, default='loss')
+    parser.add_argument('--es_patience', type=int, default=10)
+    parser.add_argument('--es_maximize', type=bool, default=False)
+
+    parser.add_argument('--train_pct', type=float, default=0.7)
+    parser.add_argument('--val_pct', type=float, default=0.1)
+    parser.add_argument('--max_steps', type=int, default=1000,
+        help='Number of steps.')
+    parser.add_argument('--checkpoint_freq', type=int, default=10,
+        help='Checkpoint every N steps.')
     parser.add_argument('--output_dir', type=str, default="train_output")
     parser.add_argument('--delete_model', action = 'store_true', 
         help = 'delete model weights after training to save disk space')
     parser.add_argument('--debug', action = 'store_true', 
         help = 'flag to debug model with small sample size')
+    parser.add_argument('--num_workers', type=int, default=1,
+        help = 'number of workers for data loader')
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -66,14 +76,14 @@ if __name__ == "__main__":
     for k, v in sorted(vars(args).items()):
         print('\t{}: {}'.format(k, v))
 
-    # Load the selected algorithm and experiment classes
+    # Load the selected algorithm and task classes
     algorithm_class = vars(algorithms)[args.algorithm]
-    experiment_class = vars(experiments)[args.experiment]     
+    task_class = vars(tasks)[args.task]     
 
-    # Choose hyperparameters based on algorithm and experiment
+    # Choose hyperparameters based on algorithm and task
     hparam_registry = HparamRegistry()
     hparam_registry.register(algorithm_class.HPARAM_SPEC)
-    hparam_registry.register(experiment_class.HPARAM_SPEC)
+    hparam_registry.register(task_class.HPARAM_SPEC)
 
     if args.hparams_seed == 0:
         hparams = hparam_registry.get_defaults()
@@ -104,69 +114,64 @@ if __name__ == "__main__":
     else:
         device = "cpu"               
     
-    # Instantiate experiment
-    experiment = experiment_class(hparams, args)
-    experiment.setup()
+    # Instantiate task
+    task = task_class(hparams, args)
+    task.setup()
 
     # Confirm environment assignment (envs differ for Oracle runs)
     if args.algorithm == 'ERMID': # ERM trained on the training subset of the test env
-        TRAIN_ENVS = experiment.TEST_ENVS
-        VAL_ENVS = experiment.TEST_ENVS
-        TEST_ENVS = experiment.TEST_ENVS
+        TRAIN_ENVS = task.TEST_ENVS
+        VAL_ENVS = task.TEST_ENVS
+        TEST_ENVS = task.TEST_ENVS
     elif args.algorithm == 'ERMMerged': # ERM trained on merged training subsets of all envs
-        TRAIN_ENVS = experiment.ENVIRONMENTS
-        VAL_ENVS = experiment.ENVIRONMENTS 
-        TEST_ENVS = experiment.ENVIRONMENTS
+        TRAIN_ENVS = task.ENVIRONMENTS
+        VAL_ENVS = task.ENVIRONMENTS 
+        TEST_ENVS = task.ENVIRONMENTS
     else:
-        TRAIN_ENVS = experiment.TRAIN_ENVS
-        VAL_ENVS = experiment.VAL_ENVS
-        TEST_ENVS = experiment.TEST_ENVS
+        TRAIN_ENVS = task.TRAIN_ENVS
+        VAL_ENVS = task.VAL_ENVS
+        TEST_ENVS = task.TEST_ENVS
         
     print("Training Environments: " + str(TRAIN_ENVS))
     print("Validation Environments: " + str(VAL_ENVS))
     print("Test Environments: " + str(TEST_ENVS))    
   
     # Instantiate algorithm
-    algorithm = algorithm_class(experiment, len(TRAIN_ENVS), hparams).to(device)
+    algorithm = algorithm_class(task, len(TRAIN_ENVS), hparams).to(device)
 
     # Get the datasets for each environment and split them into train/val/test
-    train_dss = [experiment.get_torch_dataset([env], 'train') for env in TRAIN_ENVS]
+    train_dss = [task.get_torch_dataset([env], 'train') for env in TRAIN_ENVS]
     
     train_loaders = [
         InfiniteDataLoader(
             dataset=i,
             weights=None,
             batch_size=hparams['batch_size'],
-            num_workers=experiment.N_WORKERS
+            num_workers=args.num_workers
         )
         for i in train_dss
         ]
     
     if args.es_method == 'train':
-        val_ds = experiment.get_torch_dataset(TRAIN_ENVS, 'val')
+        val_ds = task.get_torch_dataset(TRAIN_ENVS, 'val')
     elif args.es_method == 'val':
-        val_ds = experiment.get_torch_dataset(VAL_ENVS, 'val')
+        val_ds = task.get_torch_dataset(VAL_ENVS, 'val')
     elif args.es_method == 'test':
-        val_ds = experiment.get_torch_dataset(TEST_ENVS, 'val')
+        val_ds = task.get_torch_dataset(TEST_ENVS, 'val')
         
-    if hasattr(experiment, 'NUM_SAMPLES_VAL'):
-        num_samples_val = min(experiment.NUM_SAMPLES_VAL, len(val_ds))
-        val_idx = np.random.choice(np.arange(len(val_ds)), num_samples_val, replace = False)
-        val_ds = torch.utils.data.Subset(val_ds, val_idx)
-
     val_loader = FastDataLoader(
         dataset=val_ds,
         batch_size=hparams['batch_size']*4,
-        num_workers=experiment.N_WORKERS
+        num_workers=args.num_workers
     )
     
     test_loaders = {env:
         FastDataLoader(
-            dataset=experiment.get_torch_dataset([env], 'test'),
+            dataset=task.get_torch_dataset([env], 'test'),
             batch_size=hparams['batch_size']*4,
-            num_workers=experiment.N_WORKERS
+            num_workers=args.num_workers
         )
-        for env in experiment.ENVIRONMENTS   
+        for env in task.ENVIRONMENTS   
     }
     
     print("Number of parameters: %s" % sum([np.prod(p.size()) for p in algorithm.parameters()]))
@@ -196,10 +201,10 @@ if __name__ == "__main__":
 
     steps_per_epoch = min([len(i)/hparams['batch_size'] for i in train_dss])
 
-    n_steps = args.max_steps or experiment.MAX_STEPS
-    checkpoint_freq = args.checkpoint_freq or experiment.CHECKPOINT_FREQ
+    n_steps = args.max_steps
+    checkpoint_freq = args.checkpoint_freq
     
-    es = EarlyStopping(patience=experiment.ES_PATIENCE, maximize=experiment.ES_MAXIMIZE)    
+    es = EarlyStopping(patience=args.es_patience, maximize=args.es_maximize)    
     last_results_keys = None
 
     # Main training loop -------------------------------------------------------
@@ -230,7 +235,7 @@ if __name__ == "__main__":
             for key, val in checkpoint_vals.items():
                 results[key] = np.mean(val)
 
-            val_metrics = experiment.eval_metrics(algorithm, val_loader, device=device)
+            val_metrics = task.eval_metrics(algorithm, val_loader, device=device)
             results.update(val_metrics)                        
                 
             results_keys = sorted(results.keys())
@@ -256,7 +261,7 @@ if __name__ == "__main__":
             
             checkpoint_vals = collections.defaultdict(lambda: [])
             
-            es(-results[experiment.ES_METRIC], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
+            es(-results[args.es_metric], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
 
 
     # Testing ------------------------------------------------------------------
@@ -265,19 +270,19 @@ if __name__ == "__main__":
     
     save_dict = {
         "args": vars(args),
-        "model_input_shape": experiment.input_shape,
-        "model_num_classes": experiment.num_classes,
+        "model_input_shape": task.input_shape,
+        "model_num_classes": task.num_classes,
         "model_train_domains": TRAIN_ENVS,
         "model_val_domains": VAL_ENVS,
         "model_test_domains": TEST_ENVS,
         "model_hparams": hparams,
         "es_step": es.step,
-        'es_' + experiment.ES_METRIC: es.best_score
+        'es_' + args.es_metric: es.best_score
     }
     
     final_results = {}         
     for name, loader in test_loaders.items():
-        test_metrics = experiment.eval_metrics(algorithm, loader, device=device)
+        test_metrics = task.eval_metrics(algorithm, loader, device=device)
         test_metrics = misc.add_prefix(test_metrics, name)
         final_results.update(test_metrics)
         

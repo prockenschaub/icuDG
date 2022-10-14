@@ -5,7 +5,7 @@ import os
 import torch
 import torch.utils.data
 
-from clinicaldg import experiments
+from clinicaldg import tasks
 from clinicaldg import algorithms
 from clinicaldg.lib.fast_data_loader import FastDataLoader
 
@@ -22,21 +22,21 @@ if __name__ == '__main__':
 
     train_args.debug = False # FIXME: remove after this feature is included in the results
 
-    experiment_class = vars(experiments)[train_args.experiment]
-    experiment = experiment_class(train_hparams, train_args)
-    experiment.TRAIN_PCT = 1. # label everything as train to normalisation based on entire dataset
-    experiment.VAL_PCT = 0.
-    experiment.setup(envs=['mimic'], use_weight=False)
+    task_class = vars(tasks)[train_args.task]
+    task = task_class(train_hparams, train_args)
+    task.TRAIN_PCT = 1. # label everything as train to normalisation based on entire dataset
+    task.VAL_PCT = 0.
+    task.setup(envs=['mimic'], use_weight=False)
 
     algorithm_class = vars(algorithms)[train_args.algorithm]
-    algorithm = algorithm_class(experiment, None, train_hparams)
+    algorithm = algorithm_class(task, None, train_hparams)
     algorithm.load_state_dict(
         torch.load(os.path.join(args.input_dir, "model.pkl"))
     )
 
     test_loader = FastDataLoader(
-        dataset=experiment.get_torch_dataset(['mimic'], 'train'),  
+        dataset=task.get_torch_dataset(['mimic'], 'train'),  
         batch_size=train_hparams['batch_size']*4,
-        num_workers=experiment.N_WORKERS
+        num_workers=args.num_workers
     )
-    experiment.eval_metrics(algorithm, test_loader, device='cpu')    
+    task.eval_metrics(algorithm, test_loader, device='cpu')    

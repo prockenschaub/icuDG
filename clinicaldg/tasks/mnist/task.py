@@ -3,13 +3,13 @@ from torch.utils.data import TensorDataset, ConcatDataset
 from clinicaldg.lib.hparams_registry import HparamSpec
 from clinicaldg.lib.misc import predict_on_set
 from clinicaldg.lib.metrics import cross_entropy
-from clinicaldg.experiments import base
+from clinicaldg.tasks import base
 from clinicaldg.networks import MLP
 
 from .data import ColoredMNISTDataset
 
 
-class ColoredMNIST(base.Experiment):
+class ColoredMNIST(base.Task):
     '''
     Hyperparameters:
     cmnist_eta

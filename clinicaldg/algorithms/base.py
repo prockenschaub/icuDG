@@ -17,7 +17,7 @@ class Algorithm(torch.nn.Module, HparamMixin):
         HparamSpec('weight_decay', 0., lambda r: r.choice([0.] + (10.**np.arange(-7, -0)).tolist()))
     ]
     
-    def __init__(self, experiment, num_domains, hparams):
+    def __init__(self, task, num_domains, hparams):
         super(Algorithm, self).__init__()
         self.hparams = hparams
 

@@ -27,21 +27,21 @@ class AbstractDANN(Algorithm):
         HparamSpec('ann_lr_d', 5e-5, lambda r: 10**r.uniform(-5, -3.5)),
     ]
 
-    def __init__(self, experiment, num_domains, hparams, conditional, 
+    def __init__(self, task, num_domains, hparams, conditional, 
                     class_balance):
-        super(AbstractDANN, self).__init__(experiment, num_domains, hparams)
+        super(AbstractDANN, self).__init__(task, num_domains, hparams)
 
         self.register_buffer('update_count', torch.tensor([0]))
         self.conditional = conditional
         self.class_balance = class_balance
 
-        self.experiment = experiment
-        self.loss_fn = experiment.get_loss_fn()
+        self.task = task
+        self.loss_fn = task.get_loss_fn()
 
         # Algorithms
-        self.featurizer = experiment.get_featurizer(hparams)
+        self.featurizer = task.get_featurizer(hparams)
         self.classifier = nn.Linear(self.featurizer.n_outputs, 
-            experiment.num_classes)
+            task.num_classes)
         self.discriminator = MLP(
             self.featurizer.n_outputs,
             hparams['ann_mlp_width'],
@@ -50,9 +50,9 @@ class AbstractDANN(Algorithm):
             hparams['ann_mlp_dropout']
         )
         self.class_embeddings = nn.Embedding(
-            experiment.num_classes+1,  
+            task.num_classes+1,  
             self.featurizer.n_outputs, 
-            padding_idx=experiment.num_classes # allow embedding of masked steps
+            padding_idx=task.num_classes # allow embedding of masked steps
         )
 
         # Optimizers
@@ -77,7 +77,7 @@ class AbstractDANN(Algorithm):
         self.update_count += 1
         all_x = cat([x for x, y in minibatches])
         all_y = cat([y for x, y in minibatches])
-        all_masks = cat([self.experiment.get_mask(batch) for batch in minibatches])
+        all_masks = cat([self.task.get_mask(batch) for batch in minibatches])
         all_z = self.featurizer(all_x)
         if self.conditional:
             disc_input = all_z + self.class_embeddings(all_y.long())
@@ -91,7 +91,7 @@ class AbstractDANN(Algorithm):
 
         if self.class_balance:
             y_counts = F.one_hot(all_y.long().flatten()).sum(dim=0)
-            weights = 1. / (y_counts[all_y.long().flatten()] * self.experiment.num_classes).float()
+            weights = 1. / (y_counts[all_y.long().flatten()] * self.task.num_classes).float()
         else:
             weights = torch.ones_like(all_y.flatten())
         disc_loss = F.cross_entropy(disc_out.flatten(end_dim=-2), disc_labels.flatten(), reduction='none')
@@ -126,13 +126,13 @@ class AbstractDANN(Algorithm):
 
 class DANN(AbstractDANN):
     """Unconditional DANN"""
-    def __init__(self, experiment, num_domains, hparams):
-        super(DANN, self).__init__(experiment, num_domains,
+    def __init__(self, task, num_domains, hparams):
+        super(DANN, self).__init__(task, num_domains,
             hparams, conditional=False, class_balance=False)
 
 
 class CDANN(AbstractDANN):
     """Conditional DANN"""
-    def __init__(self, experiment, num_domains, hparams):
-        super(CDANN, self).__init__(experiment, num_domains,
+    def __init__(self, task, num_domains, hparams):
+        super(CDANN, self).__init__(task, num_domains,
             hparams, conditional=True, class_balance=True)

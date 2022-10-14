@@ -15,8 +15,8 @@ class SD(ERM):
         HparamSpec('sd_reg', 0.1, lambda r: 10**r.uniform(-5, -1)),
     ]
     
-    def __init__(self, experiment, num_domains, hparams):
-        super(SD, self).__init__(experiment, num_domains, hparams)
+    def __init__(self, task, num_domains, hparams):
+        super(SD, self).__init__(task, num_domains, hparams)
         self.sd_reg = hparams["sd_reg"] 
 
     def update(self, minibatches, device):

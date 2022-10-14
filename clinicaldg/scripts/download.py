@@ -3,7 +3,7 @@
 from torchvision.datasets import MNIST
 from pathlib import Path
 
-from clinicaldg.experiments.mnist import Constants as mnistConstants
+from clinicaldg.tasks.mnist import Constants as mnistConstants
 
 # MNIST #######################################################################
 

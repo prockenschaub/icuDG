@@ -13,8 +13,8 @@ class AbstractMMD(ERM):
         HparamSpec('mmd_gamma', 1., lambda r: 10**r.uniform(-1, 1)),
     ]
 
-    def __init__(self, experiment, num_domains, hparams, gaussian):
-        super(AbstractMMD, self).__init__(experiment, num_domains, hparams)
+    def __init__(self, task, num_domains, hparams, gaussian):
+        super(AbstractMMD, self).__init__(task, num_domains, hparams)
         if gaussian: 
             self.kernel_type = "gaussian"
         else:
@@ -65,7 +65,7 @@ class AbstractMMD(ERM):
         features = [self.featurizer(xi) for xi, _ in minibatches]
         classifs = [self.classifier(fi) for fi in features]
         targets = [yi for _, yi in minibatches]
-        masks = [self.experiment.get_mask(batchi) for batchi in minibatches]
+        masks = [self.task.get_mask(batchi) for batchi in minibatches]
 
         for i in range(nmb):
             objective += self.loss_fn(classifs[i], targets[i], masks[i])
@@ -94,8 +94,8 @@ class MMD(AbstractMMD):
     MMD using Gaussian kernel
     """
 
-    def __init__(self, experiment, num_domains, hparams):
-        super(MMD, self).__init__(experiment, num_domains, hparams, gaussian=True)
+    def __init__(self, task, num_domains, hparams):
+        super(MMD, self).__init__(task, num_domains, hparams, gaussian=True)
 
 
 class CORAL(AbstractMMD):
@@ -103,5 +103,5 @@ class CORAL(AbstractMMD):
     MMD using mean and covariance difference 
     """
 
-    def __init__(self, experiment, num_domains, hparams):
-        super(CORAL, self).__init__(experiment, num_domains, hparams, gaussian=False)
+    def __init__(self, task, num_domains, hparams):
+        super(CORAL, self).__init__(task, num_domains, hparams, gaussian=False)

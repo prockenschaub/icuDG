@@ -15,8 +15,8 @@ class GroupDRO(ERM):
         HparamSpec('groupdro_eta', 1e-2, lambda r: 10**r.uniform(-3, -1)),
     ]
 
-    def __init__(self, experiment, num_domains, hparams):
-        super(GroupDRO, self).__init__(experiment, num_domains, hparams)
+    def __init__(self, task, num_domains, hparams):
+        super(GroupDRO, self).__init__(task, num_domains, hparams)
         self.register_buffer("q", torch.ones(num_domains))
 
     def update(self, minibatches, device):
@@ -28,7 +28,7 @@ class GroupDRO(ERM):
 
         for m in range(len(minibatches)):
             x, y = minibatches[m]
-            mask = self.experiment.get_mask((x, y))
+            mask = self.task.get_mask((x, y))
             losses[m] = self.loss_fn(self.predict(x), y, mask)
             self.q[m] *= (self.hparams["groupdro_eta"] * losses[m].data).exp()
 

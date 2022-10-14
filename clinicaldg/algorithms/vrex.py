@@ -13,8 +13,8 @@ class VREx(ERM):
         HparamSpec('vrex_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
     ]
     
-    def __init__(self, experiment, num_domains, hparams):
-        super(VREx, self).__init__(experiment, num_domains, hparams)
+    def __init__(self, task, num_domains, hparams):
+        super(VREx, self).__init__(task, num_domains, hparams)
         self.register_buffer('update_count', torch.tensor([0]))
 
     def update(self, minibatches, device):
@@ -30,7 +30,7 @@ class VREx(ERM):
         all_logits_idx = 0
         losses = torch.zeros(len(minibatches))
         for i, (x, y) in enumerate(minibatches):
-            mask = self.experiment.get_mask((x, y))
+            mask = self.task.get_mask((x, y))
             logits = all_logits[all_logits_idx:all_logits_idx + y.shape[0]]
             all_logits_idx += y.shape[0]
             nll = self.loss_fn(logits, y, mask)

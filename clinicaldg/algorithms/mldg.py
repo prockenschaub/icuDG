@@ -20,8 +20,8 @@ class MLDG(ERM):
         HparamSpec('mldg_beta', 1., lambda r: 10**r.uniform(-1, 1)),
     ]
 
-    def __init__(self, experiment, num_domains, hparams):
-        super(MLDG, self).__init__(experiment, num_domains, hparams)
+    def __init__(self, task, num_domains, hparams):
+        super(MLDG, self).__init__(task, num_domains, hparams)
 
     def update(self, minibatches, device):
         """
@@ -57,7 +57,7 @@ class MLDG(ERM):
                 weight_decay=self.hparams['weight_decay']
             )
 
-            maski = self.experiment.get_mask((xi, yi))
+            maski = self.task.get_mask((xi, yi))
             inner_obj = self.loss_fn(inner_net(xi), yi, maski)
 
             inner_opt.zero_grad()
@@ -75,7 +75,7 @@ class MLDG(ERM):
             objective += inner_obj.item()
 
             # this computes Gj on the clone-network
-            maskj = self.experiment.get_mask((xj, yj))
+            maskj = self.task.get_mask((xj, yj))
             loss_inner_j = self.loss_fn(inner_net(xj), yj, maskj)
             grad_inner_j = autograd.grad(loss_inner_j, inner_net.parameters(),
                 allow_unused=True)

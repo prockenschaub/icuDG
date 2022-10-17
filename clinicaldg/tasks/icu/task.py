@@ -67,8 +67,8 @@ class MulticenterICU(base.Task):
         for name, obj in self.envs.items():
             if name in envs:
                 obj.prepare(
-                    self.args.train_pct, 
-                    self.args.val_pct, 
+                    self.args.trial, 
+                    self.args.n_splits, 
                     self.args.seed, 
                     self.args.debug
                 )

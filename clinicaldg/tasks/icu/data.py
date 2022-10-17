@@ -1,14 +1,16 @@
-from ftplib import MAXLINE
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 import multiprocessing as mp
+
+from sklearn.model_selection import KFold
 
 from torch.utils.data import Dataset
 
 from . import Constants
 
 PAD_VALUE = 2
+
 
 def load_data(db, outcome, debug=False):
     # Get the hourly data preprocessed with the R package ``ricu``
@@ -29,30 +31,38 @@ def load_data(db, outcome, debug=False):
 
     return data
 
-def make_single_split(data, train_pct=0.7, val_pct=0.1, seed=42):
-    stays = data['sta'].index.values
-    stays = np.random.RandomState(seed).permutation(stays)
 
-    num_stays = len(stays)
-    delims = (num_stays * np.array([0, train_pct, train_pct + val_pct, 1])).astype(int)
+def get_cv_split(data, i=0, n_splits=5, seed=42):
+    seeds = np.random.RandomState(seed).randint(low=0, high=2**32-1, size=(2, ))
+    outer = KFold(n_splits, shuffle=True, random_state=seeds[0])
+    inner = KFold(n_splits, shuffle=True, random_state=seeds[1])
+    
+    count = 0
+    all_stays = data['sta'].index
+    split = {"train": {}, "val": {}, "test": {}}
+    for dev, test in outer.split(all_stays):
+        for train, val in inner.split(dev):
+            if count == i:
+                split['train']['stays'] = all_stays[train]
+                split['val']['stays'] = all_stays[val]
+                split['test']['stays'] = all_stays[test]
 
-    splits = {"train": {}, "val": {}, "test": {}}
-    for i, fold in enumerate(splits.keys()):
-        # Loop through train / val / test
-        stays_in_fold = stays[delims[i] : delims[i + 1]]
-        for type in data.keys():
-            # Loop through dyn / sta / outc
-            splits[fold][type] = data[type].loc[stays_in_fold, :]
+                for s in split.keys():    # train / val / test 
+                    for d in data.keys(): # sta / dyn / outc
+                        split[s][d] = data[d].loc[split[s]['stays'], :]
 
-    return splits
+                break
+            count += 1
+    
+    return split
 
 
-def preprocess_data(data, train_pct, val_pct, seed=None):
+def preprocess_data(data, trial, n_splits, seed=None):
     # Encode sex into 0/1
     data['sta']['sex'] = (data['sta']['sex'] == "Female").astype(float)
     
     # Create train / val / test splits
-    data = make_single_split(data, train_pct, val_pct, seed)
+    data = get_cv_split(data, trial, n_splits, seed)
     
     for part in ['sta', 'dyn']:
         # Calculate metrics from training split
@@ -86,12 +96,12 @@ class Environment():
         self.outcome = outcome
         self.pad_to = pad_to
                 
-    def prepare(self, train_pct=0.7, val_pct=0.1, seed=42, debug=False):
+    def prepare(self, trial, n_splits, seed=42, debug=False):
         data = load_data(self.db, self.outcome, debug)
         # Hack to avoid pandas/python unnecessarily hanging on to memory. Start
         # subprocess which is terminated afterwards, releasing all resources. 
         # See https://stackoverflow.com/questions/39100971/how-do-i-release-memory-used-by-a-pandas-dataframe 
-        data = mp.Pool(1).apply(preprocess_data, args=[data, train_pct, val_pct, seed])
+        data = mp.Pool(1).apply(preprocess_data, args=[data, trial, n_splits, seed])
         self.data = data
 
     @property

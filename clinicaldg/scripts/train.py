@@ -34,8 +34,10 @@ if __name__ == "__main__":
         help='JSON-serialized hparams dict')
     parser.add_argument('--hparams_seed', type=int, default=0,
         help='Seed for random hparams (0 means "default hparams")')
-    parser.add_argument('--trial_seed', type=int, default=0,
-        help='Trial number (used for seeding random_hparams).')
+    parser.add_argument('--n_splits', type=int, default=5,
+        help='Number of resampling folds in cross-validation.')
+    parser.add_argument('--trial', type=int, default=0,
+        help='Trial number used to identify resampling fold. If > `n_splits`, then repeated cross-validation is used')
     parser.add_argument('--seed', type=int, default=0,
         help='Seed for everything else')
 
@@ -44,8 +46,6 @@ if __name__ == "__main__":
     parser.add_argument('--es_patience', type=int, default=10)
     parser.add_argument('--es_maximize', type=bool, default=False)
 
-    parser.add_argument('--train_pct', type=float, default=0.7)
-    parser.add_argument('--val_pct', type=float, default=0.1)
     parser.add_argument('--max_steps', type=int, default=1000,
         help='Number of steps.')
     parser.add_argument('--checkpoint_freq', type=int, default=10,
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         hparams = hparam_registry.get_defaults()
     else:
         hparams = hparam_registry.get_random_instance(
-            misc.seed_hash(args.hparams_seed, args.trial_seed)
+            misc.seed_hash(args.hparams_seed)
         )
     if args.hparams:
         hparams.update(json.loads(args.hparams))

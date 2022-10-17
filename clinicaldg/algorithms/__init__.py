@@ -9,3 +9,4 @@ from .vrex import VREx
 from .sd import SD
 from .rvp import RVP
 from .iga import IGA
+from .fishr import Fishr

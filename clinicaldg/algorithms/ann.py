@@ -35,9 +35,6 @@ class AbstractDANN(Algorithm):
         self.conditional = conditional
         self.class_balance = class_balance
 
-        self.task = task
-        self.loss_fn = task.get_loss_fn()
-
         # Algorithms
         self.featurizer = task.get_featurizer(hparams)
         self.classifier = nn.Linear(self.featurizer.n_outputs, 

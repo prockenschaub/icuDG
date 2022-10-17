@@ -3,7 +3,7 @@ import torch
 
 from clinicaldg.lib.misc import predict_on_set
 from clinicaldg.lib.metrics import roc_auc_score
-from clinicaldg.lib.losses import ts_bce_loss, seq2seq_bce_loss
+from clinicaldg.lib.losses import masked_bce_with_logits
 
 
 class BinaryClassificationMixin:
@@ -21,13 +21,4 @@ class BinaryTSClassficationMixin(BinaryClassificationMixin):
             pos_weight = self.case_weight
         else:
             pos_weight = None
-        return partial(ts_bce_loss, pos_weight=pos_weight)
-
-
-class BinarySeq2SeqClassificationMixin(BinaryClassificationMixin):
-    def get_loss_fn(self):
-        if hasattr(self, "case_weight"):
-            pos_weight = self.case_weight
-        else:
-            pos_weight = None
-        return partial(seq2seq_bce_loss, pos_weight=pos_weight)
+        return partial(masked_bce_with_logits, pos_weight=pos_weight)

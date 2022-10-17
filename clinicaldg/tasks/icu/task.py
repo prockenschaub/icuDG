@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
+import torch
 from torch.utils.data import ConcatDataset
-
 
 from clinicaldg.lib.hparams_registry import HparamSpec
 from clinicaldg.lib.misc import predict_on_set, cat
@@ -83,7 +83,7 @@ class MulticenterICU(base.Task):
         if use_weight:
             train_data = pd.concat([self.envs[e]['train'].data['outc'] for e in self.TRAIN_ENVS])
             prop_cases = np.mean(train_data.label)
-            self.case_weight = (1 - prop_cases) / prop_cases
+            self.case_weight = torch.tensor((1 - prop_cases) / prop_cases)
         else:
             self.case_weight = None
 
@@ -133,7 +133,7 @@ class Mortality24(MulticenterICU, types.BinaryTSClassficationMixin):
         return featurizer.LastStep(super(Mortality24, self).get_featurizer(hparams))
 
 
-class Sepsis(MulticenterICU, types.BinarySeq2SeqClassificationMixin):
+class Sepsis(MulticenterICU, types.BinaryTSClassficationMixin):
     def __init__(self, hparams, args):
         self.pad_to = 193
         super().__init__("sepsis", hparams, args)

@@ -12,6 +12,7 @@ import numpy as np
 import torch
 from collections import Counter
 
+
 def make_weights_for_balanced_classes(dataset):
     counts = Counter()
     classes = []
@@ -32,11 +33,13 @@ def make_weights_for_balanced_classes(dataset):
 
     return weights
 
+
 def pdb():
     sys.stdout = sys.__stdout__
     import pdb
     print("Launching PDB, enter 'n' to step to parent function.")
     pdb.set_trace()
+
 
 def seed_hash(*args):
     """
@@ -45,8 +48,10 @@ def seed_hash(*args):
     args_str = str(args)
     return int(hashlib.md5(args_str.encode("utf-8")).hexdigest(), 16) % (2**31)
 
+
 def print_separator():
     print("="*80)
+
 
 def print_row(row, colwidth=10, latex=False):
     if latex:
@@ -62,6 +67,7 @@ def print_row(row, colwidth=10, latex=False):
         return str(x).ljust(colwidth)[:colwidth]
     print(sep.join([format_val(x) for x in row]), end_)
 
+
 class _SplitDataset(torch.utils.data.Dataset):
     """Used by split_dataset"""
     def __init__(self, underlying_dataset, keys):
@@ -72,6 +78,7 @@ class _SplitDataset(torch.utils.data.Dataset):
         return self.underlying_dataset[self.keys[key]]
     def __len__(self):
         return len(self.keys)
+
 
 def split_dataset(dataset, n, seed=0):
     """
@@ -86,6 +93,7 @@ def split_dataset(dataset, n, seed=0):
     keys_2 = keys[n:]
     return _SplitDataset(dataset, keys_1), _SplitDataset(dataset, keys_2)
 
+
 def slice_to(obj, ind):
     if torch.is_tensor(obj) or isinstance(obj, (list, tuple, np.ndarray)):
         return obj[:ind]
@@ -93,6 +101,7 @@ def slice_to(obj, ind):
         return {i: obj[i][:ind] for i in obj}    
     else:
         raise ValueError()
+
 
 def random_pairs_of_minibatches(minibatches):
     perm = torch.randperm(len(minibatches)).tolist()
@@ -110,6 +119,7 @@ def random_pairs_of_minibatches(minibatches):
 
     return pairs
 
+
 class Tee:
     def __init__(self, fname, mode="a"):
         self.stdout = sys.stdout
@@ -124,6 +134,7 @@ class Tee:
         self.stdout.flush()
         self.file.flush()
 
+
 def to_device(obj, device):
     if torch.is_tensor(obj) or isinstance(obj, torch.nn.Module):
         return obj.to(device)
@@ -134,10 +145,12 @@ def to_device(obj, device):
     else:
         raise ValueError("invalid object type passed to to_device")
 
+
 def list_classes(module):
     classes = inspect.getmembers(module, inspect.isclass)
     names = list(dict(classes).keys())
     return names
+
 
 def cat(lst):
     # Is this a list of tensors?
@@ -156,6 +169,7 @@ def cat(lst):
         f'Can only concatenate lists of tensors, lists, or dicts. '
         f'Got {np.unique([str(i.__class__) for i in lst])}.'
     )
+
 
 def predict_on_set(algorithm, loader, device, aux_fn=None):
     all_preds, all_targets, all_aux = [], [], []
@@ -181,5 +195,45 @@ def predict_on_set(algorithm, loader, device, aux_fn=None):
     
     return cat(all_preds), cat(all_targets), all_aux
 
+
 def add_prefix(dictionary, prefix):
     return {f'{prefix}_{str(key)}': val for key, val in dictionary.items()}
+
+
+class MovingAverage:
+    def __init__(self, ema, oneminusema_correction=True):
+        self.ema = ema
+        self.ema_data = {}
+        self._updates = 0
+        self._oneminusema_correction = oneminusema_correction
+
+    def update(self, dict_data):
+        ema_dict_data = {}
+        for name, data in dict_data.items():
+            data = data.view(1, -1)
+            if self._updates == 0:
+                previous_data = torch.zeros_like(data)
+            else:
+                previous_data = self.ema_data[name]
+
+            ema_data = self.ema * previous_data + (1 - self.ema) * data
+            if self._oneminusema_correction:
+                # correction by 1/(1 - self.ema)
+                # so that the gradients amplitude backpropagated in data is independent of self.ema
+                ema_dict_data[name] = ema_data / (1 - self.ema)
+            else:
+                ema_dict_data[name] = ema_data
+            self.ema_data[name] = ema_data.clone().detach()
+
+        self._updates += 1
+        return ema_dict_data
+
+
+def l2_between_dicts(dict_1, dict_2):
+    assert len(dict_1) == len(dict_2)
+    dict_1_values = [dict_1[key] for key in sorted(dict_1.keys())]
+    dict_2_values = [dict_2[key] for key in sorted(dict_1.keys())]
+    return (
+        torch.cat(tuple([t.view(-1) for t in dict_1_values])) -
+        torch.cat(tuple([t.view(-1) for t in dict_2_values]))
+    ).pow(2).mean()

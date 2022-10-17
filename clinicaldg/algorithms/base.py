@@ -19,6 +19,9 @@ class Algorithm(torch.nn.Module, HparamMixin):
     
     def __init__(self, task, num_domains, hparams):
         super(Algorithm, self).__init__()
+        self.task = task
+        self.loss_fn = task.get_loss_fn()
+        self.num_domains = num_domains
         self.hparams = hparams
 
     @abc.abstractmethod

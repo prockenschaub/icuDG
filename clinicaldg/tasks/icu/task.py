@@ -18,7 +18,7 @@ def _not(lst, excl):
 
 class MulticenterICU(base.Task):
     
-    ENVIRONMENTS = ['mimic', 'eicu', 'hirid', 'aumc']
+    ENVIRONMENTS = ['miiv', 'eicu', 'hirid', 'aumc']
     
     num_classes = 2
     input_shape = None
@@ -26,7 +26,7 @@ class MulticenterICU(base.Task):
     HPARAM_SPEC = [
         # Data
         HparamSpec('val_env', None),
-        HparamSpec('test_env', 'mimic'),
+        HparamSpec('test_env', 'miiv'),
 
         # Training
         HparamSpec('lr', 1e-3, lambda r: float(np.exp(r.uniform(low=-10, high=-3)))),

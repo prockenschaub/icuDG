@@ -16,7 +16,7 @@ hparams_seed = np.arange(n_hparams)
 col_names = ['algorithm', 'test_env', 'val_env', 'trial', 'hparams_seed']
 merge_grid = product(['ERMMerged'], ['all'], ['train'], trials, hparams_seed)
 id_grid = product(['ERMID'], envs, ['train'], trials, hparams_seed)
-dg_grid = product(algorithms, envs, ['train'] + envs, trials, hparams_seed)
+dg_grid = product(algorithms, envs, ['train'], trials, hparams_seed)
 
 grid = pd.concat((
     pd.DataFrame(merge_grid, columns=col_names),

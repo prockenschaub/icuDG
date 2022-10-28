@@ -155,6 +155,7 @@ class Fold(Dataset):
             if len(Y.shape) > 1:
                 Y = pad_to_len(Y, self.pad_to)   # pad_to x 1
                 Y = Y[:, -1] 
+            Y = pad_missing(Y)
 
         return X, Y
 
@@ -163,3 +164,7 @@ def pad_to_len(x, len):
     x_pad = np.full((len, x.shape[1]), PAD_VALUE, dtype=np.float32)
     x_pad[:orig_len, :] = x
     return x_pad
+
+def pad_missing(x):
+    x[np.isnan(x)] = PAD_VALUE
+    return x

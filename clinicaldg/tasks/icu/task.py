@@ -133,9 +133,20 @@ class Mortality24(MulticenterICU, types.BinaryTSClassficationMixin):
         return featurizer.LastStep(super(Mortality24, self).get_featurizer(hparams))
 
 
+class AKI(MulticenterICU, types.BinaryTSClassficationMixin):
+    def __init__(self, hparams, args):
+        self.pad_to = 169
+        super().__init__("aki", hparams, args)
+
+    def get_mask(self, batch):
+        # batch: x, y, ...
+        y = batch[1]
+        return y != data.PAD_VALUE
+
+
 class Sepsis(MulticenterICU, types.BinaryTSClassficationMixin):
     def __init__(self, hparams, args):
-        self.pad_to = 193
+        self.pad_to = 169
         super().__init__("sepsis", hparams, args)
 
     def get_mask(self, batch):

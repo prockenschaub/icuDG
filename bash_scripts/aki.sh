@@ -2,7 +2,7 @@
 
 #SBATCH --output=logs/%x-%A-%a.log
 #SBATCH --ntasks=2
-#SBATCH --mem=15G
+#SBATCH --mem=25G
 #SBATCH --partition=medium
 #SBATCH --time=24:00:00
 
@@ -18,14 +18,17 @@ do
     date 
 
     python -m clinicaldg.scripts.train \
-        --experiment MultiCenter \
+        --task AKI \
         --algorithm ${algo} \
-        --es_method val \
         --hparams "{\"test_env\": \"${t}\", \"val_env\": \"${v}\", \"mc_architecture\": \"tcn\"}" \
         --hparams_seed ${hs} \
         --trial_seed ${ts} \
         --seed ${seed} \
-        --output_dir "outputs/mc/${t}/run${SLURM_ARRAY_TASK_ID}" \
+        --es_method val \
+        --es_metric loss \
+        --es_patience 20 \
+        --checkpoint_freq 10 \
+        --output_dir "outputs/aki/${t}/run${SLURM_ARRAY_TASK_ID}" \
         --delete_model
 
     date

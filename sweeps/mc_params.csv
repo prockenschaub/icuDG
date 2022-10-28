@@ -1,5 +1,4 @@
 algorithm,test_env,val_env,trial,hparams_seed,seed
-ERMMerged,all,train,0,0,1229121832
 ERMMerged,all,train,0,1,504771191
 ERMMerged,all,train,0,2,687326293
 ERMMerged,all,train,0,3,1687118244
@@ -9,7 +8,7 @@ ERMMerged,all,train,0,6,1672859330
 ERMMerged,all,train,0,7,1129602922
 ERMMerged,all,train,0,8,1281424355
 ERMMerged,all,train,0,9,1915224484
-ERMMerged,all,train,1,0,1310239275
+ERMMerged,all,train,0,10,1307671981
 ERMMerged,all,train,1,1,423095857
 ERMMerged,all,train,1,2,276516834
 ERMMerged,all,train,1,3,638786009
@@ -19,7 +18,7 @@ ERMMerged,all,train,1,6,705930420
 ERMMerged,all,train,1,7,853147642
 ERMMerged,all,train,1,8,725780466
 ERMMerged,all,train,1,9,671308532
-ERMMerged,all,train,2,0,1744637875
+ERMMerged,all,train,1,10,606447341
 ERMMerged,all,train,2,1,809671759
 ERMMerged,all,train,2,2,876420386
 ERMMerged,all,train,2,3,1473104633
@@ -29,7 +28,7 @@ ERMMerged,all,train,2,6,1640868570
 ERMMerged,all,train,2,7,181658585
 ERMMerged,all,train,2,8,2146156123
 ERMMerged,all,train,2,9,1740174281
-ERMMerged,all,train,3,0,1304736161
+ERMMerged,all,train,2,10,626224131
 ERMMerged,all,train,3,1,1475357133
 ERMMerged,all,train,3,2,124969191
 ERMMerged,all,train,3,3,1124116402
@@ -39,7 +38,7 @@ ERMMerged,all,train,3,6,8946528
 ERMMerged,all,train,3,7,1251729789
 ERMMerged,all,train,3,8,1708041596
 ERMMerged,all,train,3,9,888849962
-ERMMerged,all,train,4,0,82314784
+ERMMerged,all,train,3,10,1975060088
 ERMMerged,all,train,4,1,2088982194
 ERMMerged,all,train,4,2,1302068490
 ERMMerged,all,train,4,3,501602719
@@ -49,7 +48,7 @@ ERMMerged,all,train,4,6,1655482770
 ERMMerged,all,train,4,7,1866397037
 ERMMerged,all,train,4,8,707545377
 ERMMerged,all,train,4,9,1450027067
-ERMID,miiv,train,0,0,342725169
+ERMMerged,all,train,4,10,1685466711
 ERMID,miiv,train,0,1,163979309
 ERMID,miiv,train,0,2,845514792
 ERMID,miiv,train,0,3,1816622508
@@ -59,7 +58,7 @@ ERMID,miiv,train,0,6,1307600028
 ERMID,miiv,train,0,7,1338960745
 ERMID,miiv,train,0,8,1444972776
 ERMID,miiv,train,0,9,2122545972
-ERMID,miiv,train,1,0,1730026884
+ERMID,miiv,train,0,10,1664417389
 ERMID,miiv,train,1,1,942286762
 ERMID,miiv,train,1,2,2068265031
 ERMID,miiv,train,1,3,619611345
@@ -69,7 +68,7 @@ ERMID,miiv,train,1,6,1544956914
 ERMID,miiv,train,1,7,389048332
 ERMID,miiv,train,1,8,448059496
 ERMID,miiv,train,1,9,340358640
-ERMID,miiv,train,2,0,673871636
+ERMID,miiv,train,1,10,70232090
 ERMID,miiv,train,2,1,1098591272
 ERMID,miiv,train,2,2,1592380268
 ERMID,miiv,train,2,3,1379391039
@@ -79,7 +78,7 @@ ERMID,miiv,train,2,6,1032574688
 ERMID,miiv,train,2,7,2969072
 ERMID,miiv,train,2,8,1966849933
 ERMID,miiv,train,2,9,1507167475
-ERMID,miiv,train,3,0,190140931
+ERMID,miiv,train,2,10,837914458
 ERMID,miiv,train,3,1,860189847
 ERMID,miiv,train,3,2,555350552
 ERMID,miiv,train,3,3,57760725
@@ -89,7 +88,7 @@ ERMID,miiv,train,3,6,2009441117
 ERMID,miiv,train,3,7,1149970223
 ERMID,miiv,train,3,8,1113770822
 ERMID,miiv,train,3,9,1823407508
-ERMID,miiv,train,4,0,1900519355
+ERMID,miiv,train,3,10,633712320
 ERMID,miiv,train,4,1,551403380
 ERMID,miiv,train,4,2,897698672
 ERMID,miiv,train,4,3,692947800
@@ -99,7 +98,7 @@ ERMID,miiv,train,4,6,1072601607
 ERMID,miiv,train,4,7,105662905
 ERMID,miiv,train,4,8,300214257
 ERMID,miiv,train,4,9,1400994146
-ERMID,eicu,train,0,0,342725169
+ERMID,miiv,train,4,10,811228553
 ERMID,eicu,train,0,1,163979309
 ERMID,eicu,train,0,2,845514792
 ERMID,eicu,train,0,3,1816622508
@@ -109,7 +108,7 @@ ERMID,eicu,train,0,6,1307600028
 ERMID,eicu,train,0,7,1338960745
 ERMID,eicu,train,0,8,1444972776
 ERMID,eicu,train,0,9,2122545972
-ERMID,eicu,train,1,0,1730026884
+ERMID,eicu,train,0,10,1664417389
 ERMID,eicu,train,1,1,942286762
 ERMID,eicu,train,1,2,2068265031
 ERMID,eicu,train,1,3,619611345
@@ -119,7 +118,7 @@ ERMID,eicu,train,1,6,1544956914
 ERMID,eicu,train,1,7,389048332
 ERMID,eicu,train,1,8,448059496
 ERMID,eicu,train,1,9,340358640
-ERMID,eicu,train,2,0,673871636
+ERMID,eicu,train,1,10,70232090
 ERMID,eicu,train,2,1,1098591272
 ERMID,eicu,train,2,2,1592380268
 ERMID,eicu,train,2,3,1379391039
@@ -129,7 +128,7 @@ ERMID,eicu,train,2,6,1032574688
 ERMID,eicu,train,2,7,2969072
 ERMID,eicu,train,2,8,1966849933
 ERMID,eicu,train,2,9,1507167475
-ERMID,eicu,train,3,0,190140931
+ERMID,eicu,train,2,10,837914458
 ERMID,eicu,train,3,1,860189847
 ERMID,eicu,train,3,2,555350552
 ERMID,eicu,train,3,3,57760725
@@ -139,7 +138,7 @@ ERMID,eicu,train,3,6,2009441117
 ERMID,eicu,train,3,7,1149970223
 ERMID,eicu,train,3,8,1113770822
 ERMID,eicu,train,3,9,1823407508
-ERMID,eicu,train,4,0,1900519355
+ERMID,eicu,train,3,10,633712320
 ERMID,eicu,train,4,1,551403380
 ERMID,eicu,train,4,2,897698672
 ERMID,eicu,train,4,3,692947800
@@ -149,7 +148,7 @@ ERMID,eicu,train,4,6,1072601607
 ERMID,eicu,train,4,7,105662905
 ERMID,eicu,train,4,8,300214257
 ERMID,eicu,train,4,9,1400994146
-ERMID,hirid,train,0,0,342725169
+ERMID,eicu,train,4,10,811228553
 ERMID,hirid,train,0,1,163979309
 ERMID,hirid,train,0,2,845514792
 ERMID,hirid,train,0,3,1816622508
@@ -159,7 +158,7 @@ ERMID,hirid,train,0,6,1307600028
 ERMID,hirid,train,0,7,1338960745
 ERMID,hirid,train,0,8,1444972776
 ERMID,hirid,train,0,9,2122545972
-ERMID,hirid,train,1,0,1730026884
+ERMID,hirid,train,0,10,1664417389
 ERMID,hirid,train,1,1,942286762
 ERMID,hirid,train,1,2,2068265031
 ERMID,hirid,train,1,3,619611345
@@ -169,7 +168,7 @@ ERMID,hirid,train,1,6,1544956914
 ERMID,hirid,train,1,7,389048332
 ERMID,hirid,train,1,8,448059496
 ERMID,hirid,train,1,9,340358640
-ERMID,hirid,train,2,0,673871636
+ERMID,hirid,train,1,10,70232090
 ERMID,hirid,train,2,1,1098591272
 ERMID,hirid,train,2,2,1592380268
 ERMID,hirid,train,2,3,1379391039
@@ -179,7 +178,7 @@ ERMID,hirid,train,2,6,1032574688
 ERMID,hirid,train,2,7,2969072
 ERMID,hirid,train,2,8,1966849933
 ERMID,hirid,train,2,9,1507167475
-ERMID,hirid,train,3,0,190140931
+ERMID,hirid,train,2,10,837914458
 ERMID,hirid,train,3,1,860189847
 ERMID,hirid,train,3,2,555350552
 ERMID,hirid,train,3,3,57760725
@@ -189,7 +188,7 @@ ERMID,hirid,train,3,6,2009441117
 ERMID,hirid,train,3,7,1149970223
 ERMID,hirid,train,3,8,1113770822
 ERMID,hirid,train,3,9,1823407508
-ERMID,hirid,train,4,0,1900519355
+ERMID,hirid,train,3,10,633712320
 ERMID,hirid,train,4,1,551403380
 ERMID,hirid,train,4,2,897698672
 ERMID,hirid,train,4,3,692947800
@@ -199,7 +198,7 @@ ERMID,hirid,train,4,6,1072601607
 ERMID,hirid,train,4,7,105662905
 ERMID,hirid,train,4,8,300214257
 ERMID,hirid,train,4,9,1400994146
-ERMID,aumc,train,0,0,342725169
+ERMID,hirid,train,4,10,811228553
 ERMID,aumc,train,0,1,163979309
 ERMID,aumc,train,0,2,845514792
 ERMID,aumc,train,0,3,1816622508
@@ -209,7 +208,7 @@ ERMID,aumc,train,0,6,1307600028
 ERMID,aumc,train,0,7,1338960745
 ERMID,aumc,train,0,8,1444972776
 ERMID,aumc,train,0,9,2122545972
-ERMID,aumc,train,1,0,1730026884
+ERMID,aumc,train,0,10,1664417389
 ERMID,aumc,train,1,1,942286762
 ERMID,aumc,train,1,2,2068265031
 ERMID,aumc,train,1,3,619611345
@@ -219,7 +218,7 @@ ERMID,aumc,train,1,6,1544956914
 ERMID,aumc,train,1,7,389048332
 ERMID,aumc,train,1,8,448059496
 ERMID,aumc,train,1,9,340358640
-ERMID,aumc,train,2,0,673871636
+ERMID,aumc,train,1,10,70232090
 ERMID,aumc,train,2,1,1098591272
 ERMID,aumc,train,2,2,1592380268
 ERMID,aumc,train,2,3,1379391039
@@ -229,7 +228,7 @@ ERMID,aumc,train,2,6,1032574688
 ERMID,aumc,train,2,7,2969072
 ERMID,aumc,train,2,8,1966849933
 ERMID,aumc,train,2,9,1507167475
-ERMID,aumc,train,3,0,190140931
+ERMID,aumc,train,2,10,837914458
 ERMID,aumc,train,3,1,860189847
 ERMID,aumc,train,3,2,555350552
 ERMID,aumc,train,3,3,57760725
@@ -239,7 +238,7 @@ ERMID,aumc,train,3,6,2009441117
 ERMID,aumc,train,3,7,1149970223
 ERMID,aumc,train,3,8,1113770822
 ERMID,aumc,train,3,9,1823407508
-ERMID,aumc,train,4,0,1900519355
+ERMID,aumc,train,3,10,633712320
 ERMID,aumc,train,4,1,551403380
 ERMID,aumc,train,4,2,897698672
 ERMID,aumc,train,4,3,692947800
@@ -249,7 +248,7 @@ ERMID,aumc,train,4,6,1072601607
 ERMID,aumc,train,4,7,105662905
 ERMID,aumc,train,4,8,300214257
 ERMID,aumc,train,4,9,1400994146
-ERM,miiv,train,0,0,307754317
+ERMID,aumc,train,4,10,811228553
 ERM,miiv,train,0,1,2065297644
 ERM,miiv,train,0,2,1333179696
 ERM,miiv,train,0,3,932943101
@@ -259,7 +258,7 @@ ERM,miiv,train,0,6,1426199862
 ERM,miiv,train,0,7,112065487
 ERM,miiv,train,0,8,207467349
 ERM,miiv,train,0,9,1886097239
-ERM,miiv,train,1,0,1014569294
+ERM,miiv,train,0,10,2081311938
 ERM,miiv,train,1,1,301832041
 ERM,miiv,train,1,2,868829475
 ERM,miiv,train,1,3,501229906
@@ -269,7 +268,7 @@ ERM,miiv,train,1,6,450936608
 ERM,miiv,train,1,7,2138217422
 ERM,miiv,train,1,8,1148909203
 ERM,miiv,train,1,9,140933732
-ERM,miiv,train,2,0,1027128168
+ERM,miiv,train,1,10,751105854
 ERM,miiv,train,2,1,1404871283
 ERM,miiv,train,2,2,147031187
 ERM,miiv,train,2,3,1175700775
@@ -279,7 +278,7 @@ ERM,miiv,train,2,6,1887578392
 ERM,miiv,train,2,7,1807955457
 ERM,miiv,train,2,8,198576704
 ERM,miiv,train,2,9,2144413130
-ERM,miiv,train,3,0,1919338276
+ERM,miiv,train,2,10,2062775320
 ERM,miiv,train,3,1,2141485529
 ERM,miiv,train,3,2,806968843
 ERM,miiv,train,3,3,1329279922
@@ -289,7 +288,7 @@ ERM,miiv,train,3,6,310070236
 ERM,miiv,train,3,7,1336002298
 ERM,miiv,train,3,8,1306695897
 ERM,miiv,train,3,9,2660168
-ERM,miiv,train,4,0,43269344
+ERM,miiv,train,3,10,1156650404
 ERM,miiv,train,4,1,1481524535
 ERM,miiv,train,4,2,1679435613
 ERM,miiv,train,4,3,38463462
@@ -299,7 +298,7 @@ ERM,miiv,train,4,6,1820036480
 ERM,miiv,train,4,7,837350611
 ERM,miiv,train,4,8,280060267
 ERM,miiv,train,4,9,757548038
-ERM,eicu,train,0,0,307754317
+ERM,miiv,train,4,10,573789301
 ERM,eicu,train,0,1,2065297644
 ERM,eicu,train,0,2,1333179696
 ERM,eicu,train,0,3,932943101
@@ -309,7 +308,7 @@ ERM,eicu,train,0,6,1426199862
 ERM,eicu,train,0,7,112065487
 ERM,eicu,train,0,8,207467349
 ERM,eicu,train,0,9,1886097239
-ERM,eicu,train,1,0,1014569294
+ERM,eicu,train,0,10,2081311938
 ERM,eicu,train,1,1,301832041
 ERM,eicu,train,1,2,868829475
 ERM,eicu,train,1,3,501229906
@@ -319,7 +318,7 @@ ERM,eicu,train,1,6,450936608
 ERM,eicu,train,1,7,2138217422
 ERM,eicu,train,1,8,1148909203
 ERM,eicu,train,1,9,140933732
-ERM,eicu,train,2,0,1027128168
+ERM,eicu,train,1,10,751105854
 ERM,eicu,train,2,1,1404871283
 ERM,eicu,train,2,2,147031187
 ERM,eicu,train,2,3,1175700775
@@ -329,7 +328,7 @@ ERM,eicu,train,2,6,1887578392
 ERM,eicu,train,2,7,1807955457
 ERM,eicu,train,2,8,198576704
 ERM,eicu,train,2,9,2144413130
-ERM,eicu,train,3,0,1919338276
+ERM,eicu,train,2,10,2062775320
 ERM,eicu,train,3,1,2141485529
 ERM,eicu,train,3,2,806968843
 ERM,eicu,train,3,3,1329279922
@@ -339,7 +338,7 @@ ERM,eicu,train,3,6,310070236
 ERM,eicu,train,3,7,1336002298
 ERM,eicu,train,3,8,1306695897
 ERM,eicu,train,3,9,2660168
-ERM,eicu,train,4,0,43269344
+ERM,eicu,train,3,10,1156650404
 ERM,eicu,train,4,1,1481524535
 ERM,eicu,train,4,2,1679435613
 ERM,eicu,train,4,3,38463462
@@ -349,7 +348,7 @@ ERM,eicu,train,4,6,1820036480
 ERM,eicu,train,4,7,837350611
 ERM,eicu,train,4,8,280060267
 ERM,eicu,train,4,9,757548038
-ERM,hirid,train,0,0,307754317
+ERM,eicu,train,4,10,573789301
 ERM,hirid,train,0,1,2065297644
 ERM,hirid,train,0,2,1333179696
 ERM,hirid,train,0,3,932943101
@@ -359,7 +358,7 @@ ERM,hirid,train,0,6,1426199862
 ERM,hirid,train,0,7,112065487
 ERM,hirid,train,0,8,207467349
 ERM,hirid,train,0,9,1886097239
-ERM,hirid,train,1,0,1014569294
+ERM,hirid,train,0,10,2081311938
 ERM,hirid,train,1,1,301832041
 ERM,hirid,train,1,2,868829475
 ERM,hirid,train,1,3,501229906
@@ -369,7 +368,7 @@ ERM,hirid,train,1,6,450936608
 ERM,hirid,train,1,7,2138217422
 ERM,hirid,train,1,8,1148909203
 ERM,hirid,train,1,9,140933732
-ERM,hirid,train,2,0,1027128168
+ERM,hirid,train,1,10,751105854
 ERM,hirid,train,2,1,1404871283
 ERM,hirid,train,2,2,147031187
 ERM,hirid,train,2,3,1175700775
@@ -379,7 +378,7 @@ ERM,hirid,train,2,6,1887578392
 ERM,hirid,train,2,7,1807955457
 ERM,hirid,train,2,8,198576704
 ERM,hirid,train,2,9,2144413130
-ERM,hirid,train,3,0,1919338276
+ERM,hirid,train,2,10,2062775320
 ERM,hirid,train,3,1,2141485529
 ERM,hirid,train,3,2,806968843
 ERM,hirid,train,3,3,1329279922
@@ -389,7 +388,7 @@ ERM,hirid,train,3,6,310070236
 ERM,hirid,train,3,7,1336002298
 ERM,hirid,train,3,8,1306695897
 ERM,hirid,train,3,9,2660168
-ERM,hirid,train,4,0,43269344
+ERM,hirid,train,3,10,1156650404
 ERM,hirid,train,4,1,1481524535
 ERM,hirid,train,4,2,1679435613
 ERM,hirid,train,4,3,38463462
@@ -399,7 +398,7 @@ ERM,hirid,train,4,6,1820036480
 ERM,hirid,train,4,7,837350611
 ERM,hirid,train,4,8,280060267
 ERM,hirid,train,4,9,757548038
-ERM,aumc,train,0,0,307754317
+ERM,hirid,train,4,10,573789301
 ERM,aumc,train,0,1,2065297644
 ERM,aumc,train,0,2,1333179696
 ERM,aumc,train,0,3,932943101
@@ -409,7 +408,7 @@ ERM,aumc,train,0,6,1426199862
 ERM,aumc,train,0,7,112065487
 ERM,aumc,train,0,8,207467349
 ERM,aumc,train,0,9,1886097239
-ERM,aumc,train,1,0,1014569294
+ERM,aumc,train,0,10,2081311938
 ERM,aumc,train,1,1,301832041
 ERM,aumc,train,1,2,868829475
 ERM,aumc,train,1,3,501229906
@@ -419,7 +418,7 @@ ERM,aumc,train,1,6,450936608
 ERM,aumc,train,1,7,2138217422
 ERM,aumc,train,1,8,1148909203
 ERM,aumc,train,1,9,140933732
-ERM,aumc,train,2,0,1027128168
+ERM,aumc,train,1,10,751105854
 ERM,aumc,train,2,1,1404871283
 ERM,aumc,train,2,2,147031187
 ERM,aumc,train,2,3,1175700775
@@ -429,7 +428,7 @@ ERM,aumc,train,2,6,1887578392
 ERM,aumc,train,2,7,1807955457
 ERM,aumc,train,2,8,198576704
 ERM,aumc,train,2,9,2144413130
-ERM,aumc,train,3,0,1919338276
+ERM,aumc,train,2,10,2062775320
 ERM,aumc,train,3,1,2141485529
 ERM,aumc,train,3,2,806968843
 ERM,aumc,train,3,3,1329279922
@@ -439,7 +438,7 @@ ERM,aumc,train,3,6,310070236
 ERM,aumc,train,3,7,1336002298
 ERM,aumc,train,3,8,1306695897
 ERM,aumc,train,3,9,2660168
-ERM,aumc,train,4,0,43269344
+ERM,aumc,train,3,10,1156650404
 ERM,aumc,train,4,1,1481524535
 ERM,aumc,train,4,2,1679435613
 ERM,aumc,train,4,3,38463462
@@ -449,7 +448,7 @@ ERM,aumc,train,4,6,1820036480
 ERM,aumc,train,4,7,837350611
 ERM,aumc,train,4,8,280060267
 ERM,aumc,train,4,9,757548038
-CORAL,miiv,train,0,0,29163115
+ERM,aumc,train,4,10,573789301
 CORAL,miiv,train,0,1,378150343
 CORAL,miiv,train,0,2,773016108
 CORAL,miiv,train,0,3,1408003588
@@ -459,7 +458,7 @@ CORAL,miiv,train,0,6,196833013
 CORAL,miiv,train,0,7,371409534
 CORAL,miiv,train,0,8,1620587895
 CORAL,miiv,train,0,9,818175081
-CORAL,miiv,train,1,0,1744472482
+CORAL,miiv,train,0,10,757673685
 CORAL,miiv,train,1,1,1644074173
 CORAL,miiv,train,1,2,850551073
 CORAL,miiv,train,1,3,1185411149
@@ -469,7 +468,7 @@ CORAL,miiv,train,1,6,287019328
 CORAL,miiv,train,1,7,613912811
 CORAL,miiv,train,1,8,918501609
 CORAL,miiv,train,1,9,1733522985
-CORAL,miiv,train,2,0,759613704
+CORAL,miiv,train,1,10,186455605
 CORAL,miiv,train,2,1,108185247
 CORAL,miiv,train,2,2,1743601332
 CORAL,miiv,train,2,3,1202519532
@@ -479,7 +478,7 @@ CORAL,miiv,train,2,6,191325752
 CORAL,miiv,train,2,7,1858031570
 CORAL,miiv,train,2,8,1268127137
 CORAL,miiv,train,2,9,1274338148
-CORAL,miiv,train,3,0,1282228432
+CORAL,miiv,train,2,10,675248159
 CORAL,miiv,train,3,1,923069247
 CORAL,miiv,train,3,2,507579779
 CORAL,miiv,train,3,3,1758779393
@@ -489,7 +488,7 @@ CORAL,miiv,train,3,6,1115089207
 CORAL,miiv,train,3,7,2027481919
 CORAL,miiv,train,3,8,1587703369
 CORAL,miiv,train,3,9,299516871
-CORAL,miiv,train,4,0,1092294574
+CORAL,miiv,train,3,10,1488607430
 CORAL,miiv,train,4,1,1915266254
 CORAL,miiv,train,4,2,1045200913
 CORAL,miiv,train,4,3,969744773
@@ -499,7 +498,7 @@ CORAL,miiv,train,4,6,104515735
 CORAL,miiv,train,4,7,1177229856
 CORAL,miiv,train,4,8,405493944
 CORAL,miiv,train,4,9,1838622913
-CORAL,eicu,train,0,0,29163115
+CORAL,miiv,train,4,10,1211942259
 CORAL,eicu,train,0,1,378150343
 CORAL,eicu,train,0,2,773016108
 CORAL,eicu,train,0,3,1408003588
@@ -509,7 +508,7 @@ CORAL,eicu,train,0,6,196833013
 CORAL,eicu,train,0,7,371409534
 CORAL,eicu,train,0,8,1620587895
 CORAL,eicu,train,0,9,818175081
-CORAL,eicu,train,1,0,1744472482
+CORAL,eicu,train,0,10,757673685
 CORAL,eicu,train,1,1,1644074173
 CORAL,eicu,train,1,2,850551073
 CORAL,eicu,train,1,3,1185411149
@@ -519,7 +518,7 @@ CORAL,eicu,train,1,6,287019328
 CORAL,eicu,train,1,7,613912811
 CORAL,eicu,train,1,8,918501609
 CORAL,eicu,train,1,9,1733522985
-CORAL,eicu,train,2,0,759613704
+CORAL,eicu,train,1,10,186455605
 CORAL,eicu,train,2,1,108185247
 CORAL,eicu,train,2,2,1743601332
 CORAL,eicu,train,2,3,1202519532
@@ -529,7 +528,7 @@ CORAL,eicu,train,2,6,191325752
 CORAL,eicu,train,2,7,1858031570
 CORAL,eicu,train,2,8,1268127137
 CORAL,eicu,train,2,9,1274338148
-CORAL,eicu,train,3,0,1282228432
+CORAL,eicu,train,2,10,675248159
 CORAL,eicu,train,3,1,923069247
 CORAL,eicu,train,3,2,507579779
 CORAL,eicu,train,3,3,1758779393
@@ -539,7 +538,7 @@ CORAL,eicu,train,3,6,1115089207
 CORAL,eicu,train,3,7,2027481919
 CORAL,eicu,train,3,8,1587703369
 CORAL,eicu,train,3,9,299516871
-CORAL,eicu,train,4,0,1092294574
+CORAL,eicu,train,3,10,1488607430
 CORAL,eicu,train,4,1,1915266254
 CORAL,eicu,train,4,2,1045200913
 CORAL,eicu,train,4,3,969744773
@@ -549,7 +548,7 @@ CORAL,eicu,train,4,6,104515735
 CORAL,eicu,train,4,7,1177229856
 CORAL,eicu,train,4,8,405493944
 CORAL,eicu,train,4,9,1838622913
-CORAL,hirid,train,0,0,29163115
+CORAL,eicu,train,4,10,1211942259
 CORAL,hirid,train,0,1,378150343
 CORAL,hirid,train,0,2,773016108
 CORAL,hirid,train,0,3,1408003588
@@ -559,7 +558,7 @@ CORAL,hirid,train,0,6,196833013
 CORAL,hirid,train,0,7,371409534
 CORAL,hirid,train,0,8,1620587895
 CORAL,hirid,train,0,9,818175081
-CORAL,hirid,train,1,0,1744472482
+CORAL,hirid,train,0,10,757673685
 CORAL,hirid,train,1,1,1644074173
 CORAL,hirid,train,1,2,850551073
 CORAL,hirid,train,1,3,1185411149
@@ -569,7 +568,7 @@ CORAL,hirid,train,1,6,287019328
 CORAL,hirid,train,1,7,613912811
 CORAL,hirid,train,1,8,918501609
 CORAL,hirid,train,1,9,1733522985
-CORAL,hirid,train,2,0,759613704
+CORAL,hirid,train,1,10,186455605
 CORAL,hirid,train,2,1,108185247
 CORAL,hirid,train,2,2,1743601332
 CORAL,hirid,train,2,3,1202519532
@@ -579,7 +578,7 @@ CORAL,hirid,train,2,6,191325752
 CORAL,hirid,train,2,7,1858031570
 CORAL,hirid,train,2,8,1268127137
 CORAL,hirid,train,2,9,1274338148
-CORAL,hirid,train,3,0,1282228432
+CORAL,hirid,train,2,10,675248159
 CORAL,hirid,train,3,1,923069247
 CORAL,hirid,train,3,2,507579779
 CORAL,hirid,train,3,3,1758779393
@@ -589,7 +588,7 @@ CORAL,hirid,train,3,6,1115089207
 CORAL,hirid,train,3,7,2027481919
 CORAL,hirid,train,3,8,1587703369
 CORAL,hirid,train,3,9,299516871
-CORAL,hirid,train,4,0,1092294574
+CORAL,hirid,train,3,10,1488607430
 CORAL,hirid,train,4,1,1915266254
 CORAL,hirid,train,4,2,1045200913
 CORAL,hirid,train,4,3,969744773
@@ -599,7 +598,7 @@ CORAL,hirid,train,4,6,104515735
 CORAL,hirid,train,4,7,1177229856
 CORAL,hirid,train,4,8,405493944
 CORAL,hirid,train,4,9,1838622913
-CORAL,aumc,train,0,0,29163115
+CORAL,hirid,train,4,10,1211942259
 CORAL,aumc,train,0,1,378150343
 CORAL,aumc,train,0,2,773016108
 CORAL,aumc,train,0,3,1408003588
@@ -609,7 +608,7 @@ CORAL,aumc,train,0,6,196833013
 CORAL,aumc,train,0,7,371409534
 CORAL,aumc,train,0,8,1620587895
 CORAL,aumc,train,0,9,818175081
-CORAL,aumc,train,1,0,1744472482
+CORAL,aumc,train,0,10,757673685
 CORAL,aumc,train,1,1,1644074173
 CORAL,aumc,train,1,2,850551073
 CORAL,aumc,train,1,3,1185411149
@@ -619,7 +618,7 @@ CORAL,aumc,train,1,6,287019328
 CORAL,aumc,train,1,7,613912811
 CORAL,aumc,train,1,8,918501609
 CORAL,aumc,train,1,9,1733522985
-CORAL,aumc,train,2,0,759613704
+CORAL,aumc,train,1,10,186455605
 CORAL,aumc,train,2,1,108185247
 CORAL,aumc,train,2,2,1743601332
 CORAL,aumc,train,2,3,1202519532
@@ -629,7 +628,7 @@ CORAL,aumc,train,2,6,191325752
 CORAL,aumc,train,2,7,1858031570
 CORAL,aumc,train,2,8,1268127137
 CORAL,aumc,train,2,9,1274338148
-CORAL,aumc,train,3,0,1282228432
+CORAL,aumc,train,2,10,675248159
 CORAL,aumc,train,3,1,923069247
 CORAL,aumc,train,3,2,507579779
 CORAL,aumc,train,3,3,1758779393
@@ -639,7 +638,7 @@ CORAL,aumc,train,3,6,1115089207
 CORAL,aumc,train,3,7,2027481919
 CORAL,aumc,train,3,8,1587703369
 CORAL,aumc,train,3,9,299516871
-CORAL,aumc,train,4,0,1092294574
+CORAL,aumc,train,3,10,1488607430
 CORAL,aumc,train,4,1,1915266254
 CORAL,aumc,train,4,2,1045200913
 CORAL,aumc,train,4,3,969744773
@@ -649,7 +648,7 @@ CORAL,aumc,train,4,6,104515735
 CORAL,aumc,train,4,7,1177229856
 CORAL,aumc,train,4,8,405493944
 CORAL,aumc,train,4,9,1838622913
-VREx,miiv,train,0,0,1020791003
+CORAL,aumc,train,4,10,1211942259
 VREx,miiv,train,0,1,2110949766
 VREx,miiv,train,0,2,1802424463
 VREx,miiv,train,0,3,2127319893
@@ -659,7 +658,7 @@ VREx,miiv,train,0,6,1431626649
 VREx,miiv,train,0,7,167269320
 VREx,miiv,train,0,8,919130464
 VREx,miiv,train,0,9,1186967609
-VREx,miiv,train,1,0,1454164557
+VREx,miiv,train,0,10,534156468
 VREx,miiv,train,1,1,2085470484
 VREx,miiv,train,1,2,641019023
 VREx,miiv,train,1,3,830621937
@@ -669,7 +668,7 @@ VREx,miiv,train,1,6,1596977837
 VREx,miiv,train,1,7,1519162510
 VREx,miiv,train,1,8,513692584
 VREx,miiv,train,1,9,370986936
-VREx,miiv,train,2,0,896359692
+VREx,miiv,train,1,10,414426501
 VREx,miiv,train,2,1,1506199391
 VREx,miiv,train,2,2,1335261963
 VREx,miiv,train,2,3,369402151
@@ -679,7 +678,7 @@ VREx,miiv,train,2,6,1794866282
 VREx,miiv,train,2,7,1115001544
 VREx,miiv,train,2,8,1616056788
 VREx,miiv,train,2,9,2102755935
-VREx,miiv,train,3,0,1322132130
+VREx,miiv,train,2,10,739449721
 VREx,miiv,train,3,1,1740095041
 VREx,miiv,train,3,2,101496406
 VREx,miiv,train,3,3,887911761
@@ -689,7 +688,7 @@ VREx,miiv,train,3,6,2002394142
 VREx,miiv,train,3,7,1059711317
 VREx,miiv,train,3,8,668235008
 VREx,miiv,train,3,9,1123485047
-VREx,miiv,train,4,0,161673192
+VREx,miiv,train,3,10,1031678955
 VREx,miiv,train,4,1,338671165
 VREx,miiv,train,4,2,394167506
 VREx,miiv,train,4,3,24843400
@@ -699,7 +698,7 @@ VREx,miiv,train,4,6,892125167
 VREx,miiv,train,4,7,570730009
 VREx,miiv,train,4,8,1820913824
 VREx,miiv,train,4,9,1247874419
-VREx,eicu,train,0,0,1020791003
+VREx,miiv,train,4,10,1148390614
 VREx,eicu,train,0,1,2110949766
 VREx,eicu,train,0,2,1802424463
 VREx,eicu,train,0,3,2127319893
@@ -709,7 +708,7 @@ VREx,eicu,train,0,6,1431626649
 VREx,eicu,train,0,7,167269320
 VREx,eicu,train,0,8,919130464
 VREx,eicu,train,0,9,1186967609
-VREx,eicu,train,1,0,1454164557
+VREx,eicu,train,0,10,534156468
 VREx,eicu,train,1,1,2085470484
 VREx,eicu,train,1,2,641019023
 VREx,eicu,train,1,3,830621937
@@ -719,7 +718,7 @@ VREx,eicu,train,1,6,1596977837
 VREx,eicu,train,1,7,1519162510
 VREx,eicu,train,1,8,513692584
 VREx,eicu,train,1,9,370986936
-VREx,eicu,train,2,0,896359692
+VREx,eicu,train,1,10,414426501
 VREx,eicu,train,2,1,1506199391
 VREx,eicu,train,2,2,1335261963
 VREx,eicu,train,2,3,369402151
@@ -729,7 +728,7 @@ VREx,eicu,train,2,6,1794866282
 VREx,eicu,train,2,7,1115001544
 VREx,eicu,train,2,8,1616056788
 VREx,eicu,train,2,9,2102755935
-VREx,eicu,train,3,0,1322132130
+VREx,eicu,train,2,10,739449721
 VREx,eicu,train,3,1,1740095041
 VREx,eicu,train,3,2,101496406
 VREx,eicu,train,3,3,887911761
@@ -739,7 +738,7 @@ VREx,eicu,train,3,6,2002394142
 VREx,eicu,train,3,7,1059711317
 VREx,eicu,train,3,8,668235008
 VREx,eicu,train,3,9,1123485047
-VREx,eicu,train,4,0,161673192
+VREx,eicu,train,3,10,1031678955
 VREx,eicu,train,4,1,338671165
 VREx,eicu,train,4,2,394167506
 VREx,eicu,train,4,3,24843400
@@ -749,7 +748,7 @@ VREx,eicu,train,4,6,892125167
 VREx,eicu,train,4,7,570730009
 VREx,eicu,train,4,8,1820913824
 VREx,eicu,train,4,9,1247874419
-VREx,hirid,train,0,0,1020791003
+VREx,eicu,train,4,10,1148390614
 VREx,hirid,train,0,1,2110949766
 VREx,hirid,train,0,2,1802424463
 VREx,hirid,train,0,3,2127319893
@@ -759,7 +758,7 @@ VREx,hirid,train,0,6,1431626649
 VREx,hirid,train,0,7,167269320
 VREx,hirid,train,0,8,919130464
 VREx,hirid,train,0,9,1186967609
-VREx,hirid,train,1,0,1454164557
+VREx,hirid,train,0,10,534156468
 VREx,hirid,train,1,1,2085470484
 VREx,hirid,train,1,2,641019023
 VREx,hirid,train,1,3,830621937
@@ -769,7 +768,7 @@ VREx,hirid,train,1,6,1596977837
 VREx,hirid,train,1,7,1519162510
 VREx,hirid,train,1,8,513692584
 VREx,hirid,train,1,9,370986936
-VREx,hirid,train,2,0,896359692
+VREx,hirid,train,1,10,414426501
 VREx,hirid,train,2,1,1506199391
 VREx,hirid,train,2,2,1335261963
 VREx,hirid,train,2,3,369402151
@@ -779,7 +778,7 @@ VREx,hirid,train,2,6,1794866282
 VREx,hirid,train,2,7,1115001544
 VREx,hirid,train,2,8,1616056788
 VREx,hirid,train,2,9,2102755935
-VREx,hirid,train,3,0,1322132130
+VREx,hirid,train,2,10,739449721
 VREx,hirid,train,3,1,1740095041
 VREx,hirid,train,3,2,101496406
 VREx,hirid,train,3,3,887911761
@@ -789,7 +788,7 @@ VREx,hirid,train,3,6,2002394142
 VREx,hirid,train,3,7,1059711317
 VREx,hirid,train,3,8,668235008
 VREx,hirid,train,3,9,1123485047
-VREx,hirid,train,4,0,161673192
+VREx,hirid,train,3,10,1031678955
 VREx,hirid,train,4,1,338671165
 VREx,hirid,train,4,2,394167506
 VREx,hirid,train,4,3,24843400
@@ -799,7 +798,7 @@ VREx,hirid,train,4,6,892125167
 VREx,hirid,train,4,7,570730009
 VREx,hirid,train,4,8,1820913824
 VREx,hirid,train,4,9,1247874419
-VREx,aumc,train,0,0,1020791003
+VREx,hirid,train,4,10,1148390614
 VREx,aumc,train,0,1,2110949766
 VREx,aumc,train,0,2,1802424463
 VREx,aumc,train,0,3,2127319893
@@ -809,7 +808,7 @@ VREx,aumc,train,0,6,1431626649
 VREx,aumc,train,0,7,167269320
 VREx,aumc,train,0,8,919130464
 VREx,aumc,train,0,9,1186967609
-VREx,aumc,train,1,0,1454164557
+VREx,aumc,train,0,10,534156468
 VREx,aumc,train,1,1,2085470484
 VREx,aumc,train,1,2,641019023
 VREx,aumc,train,1,3,830621937
@@ -819,7 +818,7 @@ VREx,aumc,train,1,6,1596977837
 VREx,aumc,train,1,7,1519162510
 VREx,aumc,train,1,8,513692584
 VREx,aumc,train,1,9,370986936
-VREx,aumc,train,2,0,896359692
+VREx,aumc,train,1,10,414426501
 VREx,aumc,train,2,1,1506199391
 VREx,aumc,train,2,2,1335261963
 VREx,aumc,train,2,3,369402151
@@ -829,7 +828,7 @@ VREx,aumc,train,2,6,1794866282
 VREx,aumc,train,2,7,1115001544
 VREx,aumc,train,2,8,1616056788
 VREx,aumc,train,2,9,2102755935
-VREx,aumc,train,3,0,1322132130
+VREx,aumc,train,2,10,739449721
 VREx,aumc,train,3,1,1740095041
 VREx,aumc,train,3,2,101496406
 VREx,aumc,train,3,3,887911761
@@ -839,7 +838,7 @@ VREx,aumc,train,3,6,2002394142
 VREx,aumc,train,3,7,1059711317
 VREx,aumc,train,3,8,668235008
 VREx,aumc,train,3,9,1123485047
-VREx,aumc,train,4,0,161673192
+VREx,aumc,train,3,10,1031678955
 VREx,aumc,train,4,1,338671165
 VREx,aumc,train,4,2,394167506
 VREx,aumc,train,4,3,24843400
@@ -849,7 +848,7 @@ VREx,aumc,train,4,6,892125167
 VREx,aumc,train,4,7,570730009
 VREx,aumc,train,4,8,1820913824
 VREx,aumc,train,4,9,1247874419
-Fishr,miiv,train,0,0,496079233
+VREx,aumc,train,4,10,1148390614
 Fishr,miiv,train,0,1,1971458540
 Fishr,miiv,train,0,2,2140049775
 Fishr,miiv,train,0,3,135491057
@@ -859,7 +858,7 @@ Fishr,miiv,train,0,6,201865633
 Fishr,miiv,train,0,7,869478496
 Fishr,miiv,train,0,8,1005195202
 Fishr,miiv,train,0,9,1263487097
-Fishr,miiv,train,1,0,755192257
+Fishr,miiv,train,0,10,1842955173
 Fishr,miiv,train,1,1,2006672051
 Fishr,miiv,train,1,2,1766367523
 Fishr,miiv,train,1,3,876986229
@@ -869,7 +868,7 @@ Fishr,miiv,train,1,6,14335098
 Fishr,miiv,train,1,7,1754675643
 Fishr,miiv,train,1,8,1783797066
 Fishr,miiv,train,1,9,1030598446
-Fishr,miiv,train,2,0,402972290
+Fishr,miiv,train,1,10,198880300
 Fishr,miiv,train,2,1,480963236
 Fishr,miiv,train,2,2,1767454626
 Fishr,miiv,train,2,3,623644540
@@ -879,7 +878,7 @@ Fishr,miiv,train,2,6,581520174
 Fishr,miiv,train,2,7,662186261
 Fishr,miiv,train,2,8,1505234023
 Fishr,miiv,train,2,9,301040560
-Fishr,miiv,train,3,0,698151609
+Fishr,miiv,train,2,10,146566561
 Fishr,miiv,train,3,1,1184985762
 Fishr,miiv,train,3,2,1442239563
 Fishr,miiv,train,3,3,65050596
@@ -889,7 +888,7 @@ Fishr,miiv,train,3,6,1988575232
 Fishr,miiv,train,3,7,826284464
 Fishr,miiv,train,3,8,430069791
 Fishr,miiv,train,3,9,102506017
-Fishr,miiv,train,4,0,1361398316
+Fishr,miiv,train,3,10,719395247
 Fishr,miiv,train,4,1,619046343
 Fishr,miiv,train,4,2,531976216
 Fishr,miiv,train,4,3,310060327
@@ -899,7 +898,7 @@ Fishr,miiv,train,4,6,780354547
 Fishr,miiv,train,4,7,1602466789
 Fishr,miiv,train,4,8,1010013022
 Fishr,miiv,train,4,9,650023606
-Fishr,eicu,train,0,0,496079233
+Fishr,miiv,train,4,10,53498768
 Fishr,eicu,train,0,1,1971458540
 Fishr,eicu,train,0,2,2140049775
 Fishr,eicu,train,0,3,135491057
@@ -909,7 +908,7 @@ Fishr,eicu,train,0,6,201865633
 Fishr,eicu,train,0,7,869478496
 Fishr,eicu,train,0,8,1005195202
 Fishr,eicu,train,0,9,1263487097
-Fishr,eicu,train,1,0,755192257
+Fishr,eicu,train,0,10,1842955173
 Fishr,eicu,train,1,1,2006672051
 Fishr,eicu,train,1,2,1766367523
 Fishr,eicu,train,1,3,876986229
@@ -919,7 +918,7 @@ Fishr,eicu,train,1,6,14335098
 Fishr,eicu,train,1,7,1754675643
 Fishr,eicu,train,1,8,1783797066
 Fishr,eicu,train,1,9,1030598446
-Fishr,eicu,train,2,0,402972290
+Fishr,eicu,train,1,10,198880300
 Fishr,eicu,train,2,1,480963236
 Fishr,eicu,train,2,2,1767454626
 Fishr,eicu,train,2,3,623644540
@@ -929,7 +928,7 @@ Fishr,eicu,train,2,6,581520174
 Fishr,eicu,train,2,7,662186261
 Fishr,eicu,train,2,8,1505234023
 Fishr,eicu,train,2,9,301040560
-Fishr,eicu,train,3,0,698151609
+Fishr,eicu,train,2,10,146566561
 Fishr,eicu,train,3,1,1184985762
 Fishr,eicu,train,3,2,1442239563
 Fishr,eicu,train,3,3,65050596
@@ -939,7 +938,7 @@ Fishr,eicu,train,3,6,1988575232
 Fishr,eicu,train,3,7,826284464
 Fishr,eicu,train,3,8,430069791
 Fishr,eicu,train,3,9,102506017
-Fishr,eicu,train,4,0,1361398316
+Fishr,eicu,train,3,10,719395247
 Fishr,eicu,train,4,1,619046343
 Fishr,eicu,train,4,2,531976216
 Fishr,eicu,train,4,3,310060327
@@ -949,7 +948,7 @@ Fishr,eicu,train,4,6,780354547
 Fishr,eicu,train,4,7,1602466789
 Fishr,eicu,train,4,8,1010013022
 Fishr,eicu,train,4,9,650023606
-Fishr,hirid,train,0,0,496079233
+Fishr,eicu,train,4,10,53498768
 Fishr,hirid,train,0,1,1971458540
 Fishr,hirid,train,0,2,2140049775
 Fishr,hirid,train,0,3,135491057
@@ -959,7 +958,7 @@ Fishr,hirid,train,0,6,201865633
 Fishr,hirid,train,0,7,869478496
 Fishr,hirid,train,0,8,1005195202
 Fishr,hirid,train,0,9,1263487097
-Fishr,hirid,train,1,0,755192257
+Fishr,hirid,train,0,10,1842955173
 Fishr,hirid,train,1,1,2006672051
 Fishr,hirid,train,1,2,1766367523
 Fishr,hirid,train,1,3,876986229
@@ -969,7 +968,7 @@ Fishr,hirid,train,1,6,14335098
 Fishr,hirid,train,1,7,1754675643
 Fishr,hirid,train,1,8,1783797066
 Fishr,hirid,train,1,9,1030598446
-Fishr,hirid,train,2,0,402972290
+Fishr,hirid,train,1,10,198880300
 Fishr,hirid,train,2,1,480963236
 Fishr,hirid,train,2,2,1767454626
 Fishr,hirid,train,2,3,623644540
@@ -979,7 +978,7 @@ Fishr,hirid,train,2,6,581520174
 Fishr,hirid,train,2,7,662186261
 Fishr,hirid,train,2,8,1505234023
 Fishr,hirid,train,2,9,301040560
-Fishr,hirid,train,3,0,698151609
+Fishr,hirid,train,2,10,146566561
 Fishr,hirid,train,3,1,1184985762
 Fishr,hirid,train,3,2,1442239563
 Fishr,hirid,train,3,3,65050596
@@ -989,7 +988,7 @@ Fishr,hirid,train,3,6,1988575232
 Fishr,hirid,train,3,7,826284464
 Fishr,hirid,train,3,8,430069791
 Fishr,hirid,train,3,9,102506017
-Fishr,hirid,train,4,0,1361398316
+Fishr,hirid,train,3,10,719395247
 Fishr,hirid,train,4,1,619046343
 Fishr,hirid,train,4,2,531976216
 Fishr,hirid,train,4,3,310060327
@@ -999,7 +998,7 @@ Fishr,hirid,train,4,6,780354547
 Fishr,hirid,train,4,7,1602466789
 Fishr,hirid,train,4,8,1010013022
 Fishr,hirid,train,4,9,650023606
-Fishr,aumc,train,0,0,496079233
+Fishr,hirid,train,4,10,53498768
 Fishr,aumc,train,0,1,1971458540
 Fishr,aumc,train,0,2,2140049775
 Fishr,aumc,train,0,3,135491057
@@ -1009,7 +1008,7 @@ Fishr,aumc,train,0,6,201865633
 Fishr,aumc,train,0,7,869478496
 Fishr,aumc,train,0,8,1005195202
 Fishr,aumc,train,0,9,1263487097
-Fishr,aumc,train,1,0,755192257
+Fishr,aumc,train,0,10,1842955173
 Fishr,aumc,train,1,1,2006672051
 Fishr,aumc,train,1,2,1766367523
 Fishr,aumc,train,1,3,876986229
@@ -1019,7 +1018,7 @@ Fishr,aumc,train,1,6,14335098
 Fishr,aumc,train,1,7,1754675643
 Fishr,aumc,train,1,8,1783797066
 Fishr,aumc,train,1,9,1030598446
-Fishr,aumc,train,2,0,402972290
+Fishr,aumc,train,1,10,198880300
 Fishr,aumc,train,2,1,480963236
 Fishr,aumc,train,2,2,1767454626
 Fishr,aumc,train,2,3,623644540
@@ -1029,7 +1028,7 @@ Fishr,aumc,train,2,6,581520174
 Fishr,aumc,train,2,7,662186261
 Fishr,aumc,train,2,8,1505234023
 Fishr,aumc,train,2,9,301040560
-Fishr,aumc,train,3,0,698151609
+Fishr,aumc,train,2,10,146566561
 Fishr,aumc,train,3,1,1184985762
 Fishr,aumc,train,3,2,1442239563
 Fishr,aumc,train,3,3,65050596
@@ -1039,7 +1038,7 @@ Fishr,aumc,train,3,6,1988575232
 Fishr,aumc,train,3,7,826284464
 Fishr,aumc,train,3,8,430069791
 Fishr,aumc,train,3,9,102506017
-Fishr,aumc,train,4,0,1361398316
+Fishr,aumc,train,3,10,719395247
 Fishr,aumc,train,4,1,619046343
 Fishr,aumc,train,4,2,531976216
 Fishr,aumc,train,4,3,310060327
@@ -1049,7 +1048,7 @@ Fishr,aumc,train,4,6,780354547
 Fishr,aumc,train,4,7,1602466789
 Fishr,aumc,train,4,8,1010013022
 Fishr,aumc,train,4,9,650023606
-GroupDRO,miiv,train,0,0,1135589989
+Fishr,aumc,train,4,10,53498768
 GroupDRO,miiv,train,0,1,1008242802
 GroupDRO,miiv,train,0,2,714191859
 GroupDRO,miiv,train,0,3,1943151150
@@ -1059,7 +1058,7 @@ GroupDRO,miiv,train,0,6,1222661554
 GroupDRO,miiv,train,0,7,577548398
 GroupDRO,miiv,train,0,8,1337532755
 GroupDRO,miiv,train,0,9,866327704
-GroupDRO,miiv,train,1,0,194922864
+GroupDRO,miiv,train,0,10,1229687280
 GroupDRO,miiv,train,1,1,1948907437
 GroupDRO,miiv,train,1,2,653220245
 GroupDRO,miiv,train,1,3,615695110
@@ -1069,7 +1068,7 @@ GroupDRO,miiv,train,1,6,597243866
 GroupDRO,miiv,train,1,7,1991822485
 GroupDRO,miiv,train,1,8,2045981164
 GroupDRO,miiv,train,1,9,1912698475
-GroupDRO,miiv,train,2,0,118336256
+GroupDRO,miiv,train,1,10,136895749
 GroupDRO,miiv,train,2,1,1079732049
 GroupDRO,miiv,train,2,2,1171410467
 GroupDRO,miiv,train,2,3,815488089
@@ -1079,7 +1078,7 @@ GroupDRO,miiv,train,2,6,1474987052
 GroupDRO,miiv,train,2,7,1320615189
 GroupDRO,miiv,train,2,8,1681491460
 GroupDRO,miiv,train,2,9,1381502491
-GroupDRO,miiv,train,3,0,1574343872
+GroupDRO,miiv,train,2,10,1790751511
 GroupDRO,miiv,train,3,1,1830448000
 GroupDRO,miiv,train,3,2,861714057
 GroupDRO,miiv,train,3,3,1650064459
@@ -1089,7 +1088,7 @@ GroupDRO,miiv,train,3,6,1441065781
 GroupDRO,miiv,train,3,7,1136009281
 GroupDRO,miiv,train,3,8,1403902510
 GroupDRO,miiv,train,3,9,586579887
-GroupDRO,miiv,train,4,0,286130702
+GroupDRO,miiv,train,3,10,243678500
 GroupDRO,miiv,train,4,1,2061078253
 GroupDRO,miiv,train,4,2,982171936
 GroupDRO,miiv,train,4,3,813231492
@@ -1099,7 +1098,7 @@ GroupDRO,miiv,train,4,6,502483752
 GroupDRO,miiv,train,4,7,1992567426
 GroupDRO,miiv,train,4,8,2076756116
 GroupDRO,miiv,train,4,9,898357289
-GroupDRO,eicu,train,0,0,1135589989
+GroupDRO,miiv,train,4,10,1680418713
 GroupDRO,eicu,train,0,1,1008242802
 GroupDRO,eicu,train,0,2,714191859
 GroupDRO,eicu,train,0,3,1943151150
@@ -1109,7 +1108,7 @@ GroupDRO,eicu,train,0,6,1222661554
 GroupDRO,eicu,train,0,7,577548398
 GroupDRO,eicu,train,0,8,1337532755
 GroupDRO,eicu,train,0,9,866327704
-GroupDRO,eicu,train,1,0,194922864
+GroupDRO,eicu,train,0,10,1229687280
 GroupDRO,eicu,train,1,1,1948907437
 GroupDRO,eicu,train,1,2,653220245
 GroupDRO,eicu,train,1,3,615695110
@@ -1119,7 +1118,7 @@ GroupDRO,eicu,train,1,6,597243866
 GroupDRO,eicu,train,1,7,1991822485
 GroupDRO,eicu,train,1,8,2045981164
 GroupDRO,eicu,train,1,9,1912698475
-GroupDRO,eicu,train,2,0,118336256
+GroupDRO,eicu,train,1,10,136895749
 GroupDRO,eicu,train,2,1,1079732049
 GroupDRO,eicu,train,2,2,1171410467
 GroupDRO,eicu,train,2,3,815488089
@@ -1129,7 +1128,7 @@ GroupDRO,eicu,train,2,6,1474987052
 GroupDRO,eicu,train,2,7,1320615189
 GroupDRO,eicu,train,2,8,1681491460
 GroupDRO,eicu,train,2,9,1381502491
-GroupDRO,eicu,train,3,0,1574343872
+GroupDRO,eicu,train,2,10,1790751511
 GroupDRO,eicu,train,3,1,1830448000
 GroupDRO,eicu,train,3,2,861714057
 GroupDRO,eicu,train,3,3,1650064459
@@ -1139,7 +1138,7 @@ GroupDRO,eicu,train,3,6,1441065781
 GroupDRO,eicu,train,3,7,1136009281
 GroupDRO,eicu,train,3,8,1403902510
 GroupDRO,eicu,train,3,9,586579887
-GroupDRO,eicu,train,4,0,286130702
+GroupDRO,eicu,train,3,10,243678500
 GroupDRO,eicu,train,4,1,2061078253
 GroupDRO,eicu,train,4,2,982171936
 GroupDRO,eicu,train,4,3,813231492
@@ -1149,7 +1148,7 @@ GroupDRO,eicu,train,4,6,502483752
 GroupDRO,eicu,train,4,7,1992567426
 GroupDRO,eicu,train,4,8,2076756116
 GroupDRO,eicu,train,4,9,898357289
-GroupDRO,hirid,train,0,0,1135589989
+GroupDRO,eicu,train,4,10,1680418713
 GroupDRO,hirid,train,0,1,1008242802
 GroupDRO,hirid,train,0,2,714191859
 GroupDRO,hirid,train,0,3,1943151150
@@ -1159,7 +1158,7 @@ GroupDRO,hirid,train,0,6,1222661554
 GroupDRO,hirid,train,0,7,577548398
 GroupDRO,hirid,train,0,8,1337532755
 GroupDRO,hirid,train,0,9,866327704
-GroupDRO,hirid,train,1,0,194922864
+GroupDRO,hirid,train,0,10,1229687280
 GroupDRO,hirid,train,1,1,1948907437
 GroupDRO,hirid,train,1,2,653220245
 GroupDRO,hirid,train,1,3,615695110
@@ -1169,7 +1168,7 @@ GroupDRO,hirid,train,1,6,597243866
 GroupDRO,hirid,train,1,7,1991822485
 GroupDRO,hirid,train,1,8,2045981164
 GroupDRO,hirid,train,1,9,1912698475
-GroupDRO,hirid,train,2,0,118336256
+GroupDRO,hirid,train,1,10,136895749
 GroupDRO,hirid,train,2,1,1079732049
 GroupDRO,hirid,train,2,2,1171410467
 GroupDRO,hirid,train,2,3,815488089
@@ -1179,7 +1178,7 @@ GroupDRO,hirid,train,2,6,1474987052
 GroupDRO,hirid,train,2,7,1320615189
 GroupDRO,hirid,train,2,8,1681491460
 GroupDRO,hirid,train,2,9,1381502491
-GroupDRO,hirid,train,3,0,1574343872
+GroupDRO,hirid,train,2,10,1790751511
 GroupDRO,hirid,train,3,1,1830448000
 GroupDRO,hirid,train,3,2,861714057
 GroupDRO,hirid,train,3,3,1650064459
@@ -1189,7 +1188,7 @@ GroupDRO,hirid,train,3,6,1441065781
 GroupDRO,hirid,train,3,7,1136009281
 GroupDRO,hirid,train,3,8,1403902510
 GroupDRO,hirid,train,3,9,586579887
-GroupDRO,hirid,train,4,0,286130702
+GroupDRO,hirid,train,3,10,243678500
 GroupDRO,hirid,train,4,1,2061078253
 GroupDRO,hirid,train,4,2,982171936
 GroupDRO,hirid,train,4,3,813231492
@@ -1199,7 +1198,7 @@ GroupDRO,hirid,train,4,6,502483752
 GroupDRO,hirid,train,4,7,1992567426
 GroupDRO,hirid,train,4,8,2076756116
 GroupDRO,hirid,train,4,9,898357289
-GroupDRO,aumc,train,0,0,1135589989
+GroupDRO,hirid,train,4,10,1680418713
 GroupDRO,aumc,train,0,1,1008242802
 GroupDRO,aumc,train,0,2,714191859
 GroupDRO,aumc,train,0,3,1943151150
@@ -1209,7 +1208,7 @@ GroupDRO,aumc,train,0,6,1222661554
 GroupDRO,aumc,train,0,7,577548398
 GroupDRO,aumc,train,0,8,1337532755
 GroupDRO,aumc,train,0,9,866327704
-GroupDRO,aumc,train,1,0,194922864
+GroupDRO,aumc,train,0,10,1229687280
 GroupDRO,aumc,train,1,1,1948907437
 GroupDRO,aumc,train,1,2,653220245
 GroupDRO,aumc,train,1,3,615695110
@@ -1219,7 +1218,7 @@ GroupDRO,aumc,train,1,6,597243866
 GroupDRO,aumc,train,1,7,1991822485
 GroupDRO,aumc,train,1,8,2045981164
 GroupDRO,aumc,train,1,9,1912698475
-GroupDRO,aumc,train,2,0,118336256
+GroupDRO,aumc,train,1,10,136895749
 GroupDRO,aumc,train,2,1,1079732049
 GroupDRO,aumc,train,2,2,1171410467
 GroupDRO,aumc,train,2,3,815488089
@@ -1229,7 +1228,7 @@ GroupDRO,aumc,train,2,6,1474987052
 GroupDRO,aumc,train,2,7,1320615189
 GroupDRO,aumc,train,2,8,1681491460
 GroupDRO,aumc,train,2,9,1381502491
-GroupDRO,aumc,train,3,0,1574343872
+GroupDRO,aumc,train,2,10,1790751511
 GroupDRO,aumc,train,3,1,1830448000
 GroupDRO,aumc,train,3,2,861714057
 GroupDRO,aumc,train,3,3,1650064459
@@ -1239,7 +1238,7 @@ GroupDRO,aumc,train,3,6,1441065781
 GroupDRO,aumc,train,3,7,1136009281
 GroupDRO,aumc,train,3,8,1403902510
 GroupDRO,aumc,train,3,9,586579887
-GroupDRO,aumc,train,4,0,286130702
+GroupDRO,aumc,train,3,10,243678500
 GroupDRO,aumc,train,4,1,2061078253
 GroupDRO,aumc,train,4,2,982171936
 GroupDRO,aumc,train,4,3,813231492
@@ -1249,7 +1248,7 @@ GroupDRO,aumc,train,4,6,502483752
 GroupDRO,aumc,train,4,7,1992567426
 GroupDRO,aumc,train,4,8,2076756116
 GroupDRO,aumc,train,4,9,898357289
-MLDG,miiv,train,0,0,408371914
+GroupDRO,aumc,train,4,10,1680418713
 MLDG,miiv,train,0,1,1335006880
 MLDG,miiv,train,0,2,1952065999
 MLDG,miiv,train,0,3,796690470
@@ -1259,7 +1258,7 @@ MLDG,miiv,train,0,6,1854129105
 MLDG,miiv,train,0,7,697740265
 MLDG,miiv,train,0,8,916814446
 MLDG,miiv,train,0,9,491024726
-MLDG,miiv,train,1,0,553044039
+MLDG,miiv,train,0,10,992176101
 MLDG,miiv,train,1,1,1454132562
 MLDG,miiv,train,1,2,1625099828
 MLDG,miiv,train,1,3,534259364
@@ -1269,7 +1268,7 @@ MLDG,miiv,train,1,6,1776232761
 MLDG,miiv,train,1,7,1896601206
 MLDG,miiv,train,1,8,586451745
 MLDG,miiv,train,1,9,383341395
-MLDG,miiv,train,2,0,1318199167
+MLDG,miiv,train,1,10,1005971577
 MLDG,miiv,train,2,1,1216403747
 MLDG,miiv,train,2,2,566970427
 MLDG,miiv,train,2,3,631081218
@@ -1279,7 +1278,7 @@ MLDG,miiv,train,2,6,433125958
 MLDG,miiv,train,2,7,1463136981
 MLDG,miiv,train,2,8,1158012604
 MLDG,miiv,train,2,9,1228878835
-MLDG,miiv,train,3,0,1480834329
+MLDG,miiv,train,2,10,188025538
 MLDG,miiv,train,3,1,1503504219
 MLDG,miiv,train,3,2,552515956
 MLDG,miiv,train,3,3,1298748811
@@ -1289,7 +1288,7 @@ MLDG,miiv,train,3,6,30182119
 MLDG,miiv,train,3,7,1755114516
 MLDG,miiv,train,3,8,2137857302
 MLDG,miiv,train,3,9,765382106
-MLDG,miiv,train,4,0,1749582333
+MLDG,miiv,train,3,10,1162304976
 MLDG,miiv,train,4,1,67686677
 MLDG,miiv,train,4,2,1179185308
 MLDG,miiv,train,4,3,1994550856
@@ -1299,7 +1298,7 @@ MLDG,miiv,train,4,6,1931902388
 MLDG,miiv,train,4,7,372276460
 MLDG,miiv,train,4,8,843892333
 MLDG,miiv,train,4,9,1865136974
-MLDG,eicu,train,0,0,408371914
+MLDG,miiv,train,4,10,1663600153
 MLDG,eicu,train,0,1,1335006880
 MLDG,eicu,train,0,2,1952065999
 MLDG,eicu,train,0,3,796690470
@@ -1309,7 +1308,7 @@ MLDG,eicu,train,0,6,1854129105
 MLDG,eicu,train,0,7,697740265
 MLDG,eicu,train,0,8,916814446
 MLDG,eicu,train,0,9,491024726
-MLDG,eicu,train,1,0,553044039
+MLDG,eicu,train,0,10,992176101
 MLDG,eicu,train,1,1,1454132562
 MLDG,eicu,train,1,2,1625099828
 MLDG,eicu,train,1,3,534259364
@@ -1319,7 +1318,7 @@ MLDG,eicu,train,1,6,1776232761
 MLDG,eicu,train,1,7,1896601206
 MLDG,eicu,train,1,8,586451745
 MLDG,eicu,train,1,9,383341395
-MLDG,eicu,train,2,0,1318199167
+MLDG,eicu,train,1,10,1005971577
 MLDG,eicu,train,2,1,1216403747
 MLDG,eicu,train,2,2,566970427
 MLDG,eicu,train,2,3,631081218
@@ -1329,7 +1328,7 @@ MLDG,eicu,train,2,6,433125958
 MLDG,eicu,train,2,7,1463136981
 MLDG,eicu,train,2,8,1158012604
 MLDG,eicu,train,2,9,1228878835
-MLDG,eicu,train,3,0,1480834329
+MLDG,eicu,train,2,10,188025538
 MLDG,eicu,train,3,1,1503504219
 MLDG,eicu,train,3,2,552515956
 MLDG,eicu,train,3,3,1298748811
@@ -1339,7 +1338,7 @@ MLDG,eicu,train,3,6,30182119
 MLDG,eicu,train,3,7,1755114516
 MLDG,eicu,train,3,8,2137857302
 MLDG,eicu,train,3,9,765382106
-MLDG,eicu,train,4,0,1749582333
+MLDG,eicu,train,3,10,1162304976
 MLDG,eicu,train,4,1,67686677
 MLDG,eicu,train,4,2,1179185308
 MLDG,eicu,train,4,3,1994550856
@@ -1349,7 +1348,7 @@ MLDG,eicu,train,4,6,1931902388
 MLDG,eicu,train,4,7,372276460
 MLDG,eicu,train,4,8,843892333
 MLDG,eicu,train,4,9,1865136974
-MLDG,hirid,train,0,0,408371914
+MLDG,eicu,train,4,10,1663600153
 MLDG,hirid,train,0,1,1335006880
 MLDG,hirid,train,0,2,1952065999
 MLDG,hirid,train,0,3,796690470
@@ -1359,7 +1358,7 @@ MLDG,hirid,train,0,6,1854129105
 MLDG,hirid,train,0,7,697740265
 MLDG,hirid,train,0,8,916814446
 MLDG,hirid,train,0,9,491024726
-MLDG,hirid,train,1,0,553044039
+MLDG,hirid,train,0,10,992176101
 MLDG,hirid,train,1,1,1454132562
 MLDG,hirid,train,1,2,1625099828
 MLDG,hirid,train,1,3,534259364
@@ -1369,7 +1368,7 @@ MLDG,hirid,train,1,6,1776232761
 MLDG,hirid,train,1,7,1896601206
 MLDG,hirid,train,1,8,586451745
 MLDG,hirid,train,1,9,383341395
-MLDG,hirid,train,2,0,1318199167
+MLDG,hirid,train,1,10,1005971577
 MLDG,hirid,train,2,1,1216403747
 MLDG,hirid,train,2,2,566970427
 MLDG,hirid,train,2,3,631081218
@@ -1379,7 +1378,7 @@ MLDG,hirid,train,2,6,433125958
 MLDG,hirid,train,2,7,1463136981
 MLDG,hirid,train,2,8,1158012604
 MLDG,hirid,train,2,9,1228878835
-MLDG,hirid,train,3,0,1480834329
+MLDG,hirid,train,2,10,188025538
 MLDG,hirid,train,3,1,1503504219
 MLDG,hirid,train,3,2,552515956
 MLDG,hirid,train,3,3,1298748811
@@ -1389,7 +1388,7 @@ MLDG,hirid,train,3,6,30182119
 MLDG,hirid,train,3,7,1755114516
 MLDG,hirid,train,3,8,2137857302
 MLDG,hirid,train,3,9,765382106
-MLDG,hirid,train,4,0,1749582333
+MLDG,hirid,train,3,10,1162304976
 MLDG,hirid,train,4,1,67686677
 MLDG,hirid,train,4,2,1179185308
 MLDG,hirid,train,4,3,1994550856
@@ -1399,7 +1398,7 @@ MLDG,hirid,train,4,6,1931902388
 MLDG,hirid,train,4,7,372276460
 MLDG,hirid,train,4,8,843892333
 MLDG,hirid,train,4,9,1865136974
-MLDG,aumc,train,0,0,408371914
+MLDG,hirid,train,4,10,1663600153
 MLDG,aumc,train,0,1,1335006880
 MLDG,aumc,train,0,2,1952065999
 MLDG,aumc,train,0,3,796690470
@@ -1409,7 +1408,7 @@ MLDG,aumc,train,0,6,1854129105
 MLDG,aumc,train,0,7,697740265
 MLDG,aumc,train,0,8,916814446
 MLDG,aumc,train,0,9,491024726
-MLDG,aumc,train,1,0,553044039
+MLDG,aumc,train,0,10,992176101
 MLDG,aumc,train,1,1,1454132562
 MLDG,aumc,train,1,2,1625099828
 MLDG,aumc,train,1,3,534259364
@@ -1419,7 +1418,7 @@ MLDG,aumc,train,1,6,1776232761
 MLDG,aumc,train,1,7,1896601206
 MLDG,aumc,train,1,8,586451745
 MLDG,aumc,train,1,9,383341395
-MLDG,aumc,train,2,0,1318199167
+MLDG,aumc,train,1,10,1005971577
 MLDG,aumc,train,2,1,1216403747
 MLDG,aumc,train,2,2,566970427
 MLDG,aumc,train,2,3,631081218
@@ -1429,7 +1428,7 @@ MLDG,aumc,train,2,6,433125958
 MLDG,aumc,train,2,7,1463136981
 MLDG,aumc,train,2,8,1158012604
 MLDG,aumc,train,2,9,1228878835
-MLDG,aumc,train,3,0,1480834329
+MLDG,aumc,train,2,10,188025538
 MLDG,aumc,train,3,1,1503504219
 MLDG,aumc,train,3,2,552515956
 MLDG,aumc,train,3,3,1298748811
@@ -1439,7 +1438,7 @@ MLDG,aumc,train,3,6,30182119
 MLDG,aumc,train,3,7,1755114516
 MLDG,aumc,train,3,8,2137857302
 MLDG,aumc,train,3,9,765382106
-MLDG,aumc,train,4,0,1749582333
+MLDG,aumc,train,3,10,1162304976
 MLDG,aumc,train,4,1,67686677
 MLDG,aumc,train,4,2,1179185308
 MLDG,aumc,train,4,3,1994550856
@@ -1449,3 +1448,4 @@ MLDG,aumc,train,4,6,1931902388
 MLDG,aumc,train,4,7,372276460
 MLDG,aumc,train,4,8,843892333
 MLDG,aumc,train,4,9,1865136974
+MLDG,aumc,train,4,10,1663600153

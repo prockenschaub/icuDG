@@ -9,7 +9,7 @@ n_trials = 5
 n_hparams = 10
 envs = ['miiv', 'eicu', 'hirid', 'aumc']
 trials = np.arange(n_trials)
-hparams_seed = np.arange(n_hparams)
+hparams_seed = np.arange(n_hparams) + 1
 
 # Generate grid ----------------------------------------------------------------
 

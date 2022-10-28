@@ -22,7 +22,7 @@ do
         --algorithm ${algo} \
         --hparams "{\"test_env\": \"${t}\", \"val_env\": \"${v}\", \"mc_architecture\": \"tcn\"}" \
         --hparams_seed ${hs} \
-        --trial_seed ${ts} \
+        --trial ${ts} \
         --seed ${seed} \
         --es_method val \
         --es_metric loss \

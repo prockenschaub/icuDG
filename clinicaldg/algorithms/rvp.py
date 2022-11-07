@@ -14,6 +14,10 @@ class RVP(ERM):
         HparamSpec('rvp_penalty_anneal_iters', 500, lambda r: int(10**r.uniform(0, 4))),
     ]
     
+    @property
+    def warmup(self):
+        return self.update_count < self.hparams["rvp_penalty_anneal_iters"]
+
     def __init__(self, task, num_domains, hparams):
         super(RVP, self).__init__(task, num_domains, hparams)
         self.register_buffer('update_count', torch.tensor([0]))

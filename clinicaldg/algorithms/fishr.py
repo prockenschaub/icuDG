@@ -53,6 +53,10 @@ class Fishr(Algorithm):
             weight_decay=self.hparams["weight_decay"],
         )
 
+    @property
+    def warmup(self):
+        return self.update_count < self.hparams["fishr_penalty_anneal_iters"]
+
     def update(self, minibatches, device):
         assert len(minibatches) == self.num_domains
         all_x = torch.cat([x for x, y in minibatches])

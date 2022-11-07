@@ -35,3 +35,7 @@ class Algorithm(torch.nn.Module, HparamMixin):
     @abc.abstractmethod
     def predict(self, x):
         pass
+
+    @property
+    def warmup(self):
+        return False

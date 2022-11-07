@@ -20,6 +20,10 @@ class IRM(ERM):
         super(IRM, self).__init__(task, num_domains, hparams)
         self.register_buffer('update_count', torch.tensor([0]))
 
+    @property
+    def warmup(self):
+        return self.update_count < self.hparams["irm_penalty_anneal_iters"]
+
     def _irm_penalty(self, logits, y, mask):
         device = logits.device
         scale = torch.tensor(1.).to(device).requires_grad_()
@@ -29,6 +33,7 @@ class IRM(ERM):
         grad_2 = autograd.grad(loss_2, [scale], create_graph=True)[0]
         result = torch.sum(grad_1 * grad_2)
         return result
+
 
     def update(self, minibatches, device):
         penalty_weight = (self.hparams['irm_lambda'] if self.update_count

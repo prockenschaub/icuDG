@@ -42,7 +42,7 @@ if __name__ == "__main__":
         help='Seed for everything else')
 
     parser.add_argument('--es_method', choices = ['train', 'val', 'test'])
-    parser.add_argument('--es_metric', type=str, default='loss')
+    parser.add_argument('--es_metric', type=str, default='val_loss')
     parser.add_argument('--es_patience', type=int, default=10)
     parser.add_argument('--es_maximize', type=bool, default=False)
 
@@ -261,7 +261,8 @@ if __name__ == "__main__":
             
             checkpoint_vals = collections.defaultdict(lambda: [])
             
-            es(-results[args.es_metric], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
+            if not algorithm.warmup:
+                es(-results[args.es_metric], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
 
 
     # Testing ------------------------------------------------------------------
@@ -290,7 +291,7 @@ if __name__ == "__main__":
     
     print("Test performance:")
     misc.print_row(sorted(final_results.keys()), colwidth=12)
-    misc.print_row([final_results[key] for key in final_results], colwidth=12)   
+    misc.print_row([final_results[key] for key in sorted(final_results.keys())], colwidth=12)   
         
     torch.save(save_dict, os.path.join(args.output_dir, "stats.pkl"))    
 

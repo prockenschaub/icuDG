@@ -114,14 +114,18 @@ class MulticenterICU(base.Task):
 
     def eval_metrics(self, algorithm, loader, device, **kwargs):
         logits, y, mask = predict_on_set(algorithm, loader, device, self.get_mask)
-        logits = logits[..., -1]
         mask = cat(mask)
         
-        # Get the "normal" masked logits for each time step
+        # Get the loss function
+        loss = algorithm.loss_fn(logits, y, mask)
+
+        # Get the AUROC
+        logits = logits[..., -1]
         logits = logits.view(-1)[mask.view(-1)].numpy()
         y = y.view(-1)[mask.view(-1)].long().numpy()
+        auroc = roc_auc_score(y, logits)
 
-        return {'roc': roc_auc_score(y, logits)}
+        return {'val_loss': loss.item(), 'val_auroc': auroc}
 
 
 class Mortality24(MulticenterICU, types.BinaryTSClassficationMixin):

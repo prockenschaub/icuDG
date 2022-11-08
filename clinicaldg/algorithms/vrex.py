@@ -55,3 +55,7 @@ class VREx(ERM):
         self.update_count += 1
         return {'loss': loss.item(), 'nll': nll.item(),
                 'penalty': penalty.item()}
+
+    @property
+    def warmup(self):
+        return self.update_count < self.hparams["vrex_penalty_anneal_iters"]

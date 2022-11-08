@@ -25,7 +25,7 @@ do
         --trial ${ts} \
         --seed ${seed} \
         --es_method val \
-        --es_metric loss \
+        --es_metric val_loss \
         --es_patience 20 \
         --checkpoint_freq 10 \
         --output_dir "outputs/icu-mortality/${t}/run${SLURM_ARRAY_TASK_ID}" \

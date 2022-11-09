@@ -1,5 +1,4 @@
 import abc
-import torch
 from clinicaldg.lib.hparams_registry import HparamMixin
 
 class Task(HparamMixin):

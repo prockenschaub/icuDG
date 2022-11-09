@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from typing import List, Callable
+from functools import partial
 
 import torch
 from torch.utils.data import ConcatDataset
@@ -7,7 +9,9 @@ from torch.utils.data import ConcatDataset
 from clinicaldg.lib.hparams_registry import HparamSpec
 from clinicaldg.lib.misc import predict_on_set, cat
 from clinicaldg.lib.metrics import roc_auc_score
-from clinicaldg.tasks import base, types
+from clinicaldg.lib.losses import masked_bce_with_logits
+from clinicaldg.tasks import base
+from clinicaldg.algorithms.base import Algorithm
 
 from . import data, featurizer
 
@@ -17,7 +21,20 @@ def _not(lst, excl):
 
 
 class MulticenterICU(base.Task):
-    
+    """Basic task setup for experiments using multicenter ICU data.
+
+    Args:
+        outcome (str): the outcome to predict ("mortality24", "aki", or "sepsis")
+        hparams (dict): a dictionary with all relevant hyperparameters
+        args (dict): additional training arguments passed via the command line
+
+    Environments: 
+        'miiv' : MIMIC IV (US)
+        'eicu' : eICU (US)
+        'hirid': HiRID (Switzerland)
+        'aumc' : Amsterdam UMC (Netherlands)
+    """
+
     ENVIRONMENTS = ['miiv', 'eicu', 'hirid', 'aumc']
     
     num_classes = 2
@@ -56,21 +73,25 @@ class MulticenterICU(base.Task):
             self.VAL_ENVS = [hparams['val_env']]
         self.TEST_ENVS = [hparams['test_env']]
 
-    def add_environment(self, name):
-        self.envs[name] = data.Environment(name, self.hparams['outcome'])
+    def setup(self, envs: List[str] = None, use_weight: bool = True) -> None:
+        """Perform actual data loading and preprocessing
+        
+        Args:
+            envs (List[str]): names of the environments to set up. Defaults to `self.ENVIRONMENTS`.
+            use_weight (bool): flag indicating whether the loss should be weighed to account for class 
+                class imbalance. Defaults to True.
+        """
 
-    def setup(self, envs=None, use_weight=True):
-        """Perform actual data loading and preprocessing"""
         if envs is None:
             envs = [e for e in self.envs.keys()]
 
         for name, obj in self.envs.items():
             if name in envs:
                 obj.prepare(
-                    self.args.trial, 
-                    self.args.n_splits, 
-                    self.args.seed, 
-                    self.args.debug
+                    self.args['trial'], 
+                    self.args['n_splits'], 
+                    self.args['seed'], 
+                    self.args['debug']
                 )
         
         # Check that all have the same number of inputs
@@ -87,37 +108,81 @@ class MulticenterICU(base.Task):
         else:
             self.case_weight = None
 
-    def get_torch_dataset(self, envs, dset):
-        return ConcatDataset([self.envs[e][dset] for e in envs])
+    def get_torch_dataset(self, envs: List[str], fold: str) -> ConcatDataset:
+        """Get one or more envs as a torch dataset
 
-    def get_featurizer(self, hparams):
-        if hparams['architecture'] == "tcn":
+        Args:
+            envs (List[str]): list of environment names to get
+            fold (str): fold to return ('train', 'val', 'test')
+
+        Returns:
+            ConcatDataset
+        """
+        return ConcatDataset([self.envs[e][fold] for e in envs])
+
+    def get_featurizer(self) -> torch.nn.Module:
+        """Get the torch module used to embed the preprocessed input
+
+        Returns:
+            torch.nn.Module
+        """
+        if self.hparams['architecture'] == "tcn":
             return featurizer.TCNet(
                 self.num_inputs,
-                hparams['hidden_dims'],
-                hparams['num_layers'],
-                hparams['kernel_size'],
-                hparams['dropout']
+                self.hparams['hidden_dims'],
+                self.hparams['num_layers'],
+                self.hparams['kernel_size'],
+                self.hparams['dropout']
             )
-        elif hparams['architecture'] == "attn":
+        elif self.hparams['architecture'] == "attn":
             return featurizer.TransformerNet(
                 self.num_inputs,
-                hparams['hidden_dims'],
-                hparams['num_layers'],
-                hparams['heads'],
-                hparams['dropout']
+                self.hparams['hidden_dims'],
+                self.hparams['num_layers'],
+                self.hparams['heads'],
+                self.hparams['dropout']
             )
         return NotImplementedError(
-            f"Architecture {hparams['architecture']} not available ",
+            f"Architecture {self.hparams['architecture']} not available ",
             f"as a featurizer for the MulticenterICU task."
         )
 
-    def eval_metrics(self, algorithm, loader, device, **kwargs):
+    def get_loss_fn(self) -> Callable:
+        """Return the loss function for this task, a (weighted) mask BCE loss
+
+        Returns:
+            Callable: loss function
+        """
+        if hasattr(self, "case_weight"):
+            pos_weight = self.case_weight
+        else:
+            pos_weight = None
+        return partial(masked_bce_with_logits, pos_weight=pos_weight)
+
+    def eval_metrics(
+        self, 
+        algorithm: Algorithm, 
+        loader: torch.utils.data.DataLoader, 
+        device: str, 
+        **kwargs
+    ):
+        """Calculate evaluation metrics for this task
+        
+        Args:
+            algorithm (Algorithm): the model used for prediction
+            loader (DataLoader): a data loader with the data used for evaluation
+            device (str): the device on which to run the model ('cpu' or 'cuda')
+
+        Returns:
+            Dict: 
+                loss: loss function on the validation data
+                auroc: area under the receiver operating characteristic
+        """
         logits, y, mask = predict_on_set(algorithm, loader, device, self.get_mask)
         mask = cat(mask)
         
         # Get the loss function
-        loss = algorithm.loss_fn(logits, y, mask)
+        loss = algorithm.loss_fn(logits, y, mask) # Loss is defined by Mixins below
 
         # Get the AUROC
         logits = logits[..., -1]
@@ -125,10 +190,10 @@ class MulticenterICU(base.Task):
         y = y.view(-1)[mask.view(-1)].long().numpy()
         auroc = roc_auc_score(y, logits)
 
-        return {'val_loss': loss.item(), 'val_auroc': auroc}
+        return {'loss': loss.item(), 'auroc': auroc}
 
 
-class Mortality24(MulticenterICU, types.BinaryTSClassficationMixin):
+class Mortality24(MulticenterICU):
     def __init__(self, hparams, args):
         self.pad_to = None
         super().__init__('mortality24', hparams, args)
@@ -137,9 +202,9 @@ class Mortality24(MulticenterICU, types.BinaryTSClassficationMixin):
         return featurizer.LastStep(super(Mortality24, self).get_featurizer(hparams))
 
 
-class AKI(MulticenterICU, types.BinaryTSClassficationMixin):
+class AKI(MulticenterICU):
     def __init__(self, hparams, args):
-        self.pad_to = 169
+        self.pad_to = 169 # one week of data
         super().__init__("aki", hparams, args)
 
     def get_mask(self, batch):
@@ -148,9 +213,9 @@ class AKI(MulticenterICU, types.BinaryTSClassficationMixin):
         return y != data.PAD_VALUE
 
 
-class Sepsis(MulticenterICU, types.BinaryTSClassficationMixin):
+class Sepsis(MulticenterICU):
     def __init__(self, hparams, args):
-        self.pad_to = 169
+        self.pad_to = 169 # one week of data
         super().__init__("sepsis", hparams, args)
 
     def get_mask(self, batch):

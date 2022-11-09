@@ -122,7 +122,7 @@ if __name__ == "__main__":
         device = "cpu"               
     
     # Instantiate task
-    task = task_class(hparams, args)
+    task = task_class(hparams, vars(args))
     task.setup()
 
     # Confirm environment assignment (envs differ for Oracle runs)
@@ -236,6 +236,7 @@ if __name__ == "__main__":
                 results[key] = np.mean(val)
 
             val_metrics = task.eval_metrics(algorithm, val_loader, device=device)
+            val_metrics = misc.add_prefix(val_metrics, 'val')
             results.update(val_metrics)                        
                 
             results_keys = sorted(results.keys())

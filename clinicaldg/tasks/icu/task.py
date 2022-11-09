@@ -99,7 +99,7 @@ class MulticenterICU(base.Task):
                 hparams['kernel_size'],
                 hparams['dropout']
             )
-        elif hparams['architecture'] == "transformer":
+        elif hparams['architecture'] == "attn":
             return featurizer.TransformerNet(
                 self.num_inputs,
                 hparams['hidden_dims'],
@@ -109,7 +109,7 @@ class MulticenterICU(base.Task):
             )
         return NotImplementedError(
             f"Architecture {hparams['architecture']} not available ",
-            f"as a featurizer for the MultiCenter task"
+            f"as a featurizer for the MulticenterICU task."
         )
 
     def eval_metrics(self, algorithm, loader, device, **kwargs):

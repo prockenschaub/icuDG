@@ -9,7 +9,7 @@ class EarlyStopping:
         self.early_stop = False
         self.maximize = maximize
 
-    def __call__(self, val_loss, step, state_dict, path):  # lower loss is better
+    def __call__(self, val_loss, step, state_dict, path): 
         score = -val_loss 
 
         if self.best_score is None:

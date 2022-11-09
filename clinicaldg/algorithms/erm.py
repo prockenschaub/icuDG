@@ -12,7 +12,7 @@ class ERM(Algorithm):
 
     def __init__(self, task, num_domains, hparams):
         super(ERM, self).__init__(task, num_domains, hparams)
-        self.featurizer = task.get_featurizer(self.hparams)
+        self.featurizer = task.get_featurizer()
         self.classifier = nn.Linear(self.featurizer.n_outputs, task.num_classes)
         self.network = nn.Sequential(self.featurizer, self.classifier)
         self.optimizer = torch.optim.Adam(

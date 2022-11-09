@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import List, Callable
+from typing import List, Dict, Callable
 from functools import partial
 
 import torch
@@ -85,20 +85,37 @@ class MulticenterICU(base.Task):
         if envs is None:
             envs = [e for e in self.envs.keys()]
 
+        # Load and split the data
         for name, obj in self.envs.items():
             if name in envs:
-                obj.prepare(
-                    self.args['trial'], 
-                    self.args['n_splits'], 
-                    self.args['seed'], 
-                    self.args['debug']
-                )
+                obj.load(self.args['debug'])
+                obj.encode_categorical()
+                obj.split(self.args['trial'], self.args['n_splits'], self.args['seed'])
         
-        # Check that all have the same number of inputs
+        # Normalise and impute based on training data
+        if not hasattr(self, "means") and not hasattr(self, "stds"):
+            loaded = [e.db for e in self.envs.values() if e.loaded]
+            if len(set(self.TRAIN_ENVS) - set(loaded)) > 0:
+                raise RuntimeError(
+                    f"If means and stds for are not prespecified, all training environments must be setup.",
+                    f"The following training environments are missing {set(self.TRAIN_ENVS) - set(loaded)}"
+                )
+            train_sta = pd.concat([e.data['train']['sta'] for e in self.envs.values() if e.loaded], axis=0)
+            train_dyn = pd.concat([e.data['train']['dyn'] for e in self.envs.values() if e.loaded], axis=0)
+            self.means = {'sta': train_sta.mean(), 'dyn': train_dyn.mean()}
+            self.stds = {'sta': train_sta.std(), 'dyn': train_dyn.std()}
+
+        for name, obj in self.envs.items():
+            if name in envs:
+                obj.normalise(self.means, self.stds)
+                obj.impute()
+
+        # Check that all have the same number of inputs after preprocessing
         input_dims = np.unique([e.num_inputs for e in self.envs.values() if e.loaded])
         if len(input_dims) > 1:
             raise ValueError(f'Different input dimensions in envs: {input_dims}')
         self.num_inputs = int(input_dims)
+
 
         # Calculate case weights based on train fold of train envs
         if use_weight:
@@ -107,6 +124,20 @@ class MulticenterICU(base.Task):
             self.case_weight = torch.tensor((1 - prop_cases) / prop_cases)
         else:
             self.case_weight = None
+
+    def set_means_and_stds(self, means: Dict[str, pd.Series], stds: Dict[str, pd.Series]):
+        """Specify means and standard devs for normalisation during setup, e.g., based on previous training
+
+        Args:
+            means (Dict[str, pd.Series]): dictionary with elements 'sta' and 'dyn' containing pd.Series
+                with a mean for each columns in the static respectively dynamic data
+            stds (Dict[str, pd.Series]): dictionary with elements 'sta' and 'dyn' containing pd.Series
+                with a standard deviation for each columns in the static respectively dynamic data
+
+        See also: `Environment.get_means_and_stds()`
+        """
+        self.means = means
+        self.stds = stds
 
     def get_torch_dataset(self, envs: List[str], fold: str) -> ConcatDataset:
         """Get one or more envs as a torch dataset
@@ -182,7 +213,7 @@ class MulticenterICU(base.Task):
         mask = cat(mask)
         
         # Get the loss function
-        loss = algorithm.loss_fn(logits, y, mask) # Loss is defined by Mixins below
+        loss = algorithm.loss_fn(logits, y, mask) # Loss is defined by task
 
         # Get the AUROC
         logits = logits[..., -1]
@@ -198,8 +229,13 @@ class Mortality24(MulticenterICU):
         self.pad_to = None
         super().__init__('mortality24', hparams, args)
 
-    def get_featurizer(self, hparams):
-        return featurizer.LastStep(super(Mortality24, self).get_featurizer(hparams))
+    def get_mask(self, batch):
+        # batch: x, y, ...
+        y = batch[1]
+        return torch.ones_like(y, dtype=torch.bool)
+
+    def get_featurizer(self):
+        return featurizer.LastStep(super(Mortality24, self).get_featurizer())
 
 
 class AKI(MulticenterICU):

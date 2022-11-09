@@ -26,7 +26,7 @@ class Fishr(Algorithm):
     def __init__(self, task, num_domains, hparams):
         super(Fishr, self).__init__(task, num_domains, hparams)
 
-        self.featurizer = task.get_featurizer(hparams)
+        self.featurizer = task.get_featurizer()
         emb_dim = self.featurizer.n_outputs
         self.classifier = extend(
             torch.nn.Sequential(

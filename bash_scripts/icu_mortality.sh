@@ -24,7 +24,6 @@ do
         --hparams_seed ${hs} \
         --trial ${ts} \
         --seed ${seed} \
-        --es_method val \
         --es_metric val_loss \
         --es_patience 20 \
         --checkpoint_freq 10 \

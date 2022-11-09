@@ -26,33 +26,40 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 if __name__ == "__main__":
     # Define command line arguments
-    parser = argparse.ArgumentParser(description='Domain generalization')
+    parser = argparse.ArgumentParser(description='Domain generalization for ICU prediction models')
     parser.add_argument('--task', type=str, default="ColoredMNIST")
     parser.add_argument('--algorithm', type=str, default="ERM")
     
+    # Hyperparameters and trial definition
     parser.add_argument('--hparams', type=str,
-        help='JSON-serialized hparams dict')
+        help='JSON-serialized hparams dictionary.')
     parser.add_argument('--hparams_seed', type=int, default=0,
-        help='Seed for random hparams (0 means "default hparams")')
+        help='Seed for random draw of unspecified hparams (0 means "default hparams").')
     parser.add_argument('--n_splits', type=int, default=5,
         help='Number of resampling folds in cross-validation.')
     parser.add_argument('--trial', type=int, default=0,
-        help='Trial number used to identify resampling fold. If > `n_splits`, then repeated cross-validation is used')
+        help='Trial number used to identify resampling fold for current run. If > `n_splits`, then repeated cross-validation is used.')
     parser.add_argument('--seed', type=int, default=0,
-        help='Seed for everything else')
+        help='Seed for everything else.')
 
-    parser.add_argument('--es_method', choices = ['train', 'val', 'test'])
-    parser.add_argument('--es_metric', type=str, default='val_loss')
-    parser.add_argument('--es_patience', type=int, default=10)
-    parser.add_argument('--es_maximize', type=bool, default=False)
-
+    # Early stopping and model selection within current run
     parser.add_argument('--max_steps', type=int, default=1000,
-        help='Number of steps.')
+        help='Maximum number of optimisation steps.')
+    parser.add_argument('--es_metric', type=str, default='val_loss',
+        help='Metric used to determine whether or not to stop training early.')
+    parser.add_argument('--es_maximize', type=bool, default=False, 
+        help='Flag to indicate if higher (=True) or lower (=False) values of `es_metric` are better.')
+    parser.add_argument('--es_patience', type=int, default=10,
+        help='Number of tries without improvements of `es_metric` after which to stop (in multiples of `checkpoint_freq`).')
+
+    
     parser.add_argument('--checkpoint_freq', type=int, default=10,
         help='Checkpoint every N steps.')
     parser.add_argument('--output_dir', type=str, default="train_output")
     parser.add_argument('--delete_model', action = 'store_true', 
         help = 'delete model weights after training to save disk space')
+    
+    # Misc training settings
     parser.add_argument('--debug', action = 'store_true', 
         help = 'flag to debug model with small sample size')
     parser.add_argument('--num_workers', type=int, default=1,
@@ -141,7 +148,6 @@ if __name__ == "__main__":
 
     # Get the datasets for each environment and split them into train/val/test
     train_dss = [task.get_torch_dataset([env], 'train') for env in TRAIN_ENVS]
-    
     train_loaders = [
         InfiniteDataLoader(
             dataset=i,
@@ -152,13 +158,7 @@ if __name__ == "__main__":
         for i in train_dss
         ]
     
-    if args.es_method == 'train':
-        val_ds = task.get_torch_dataset(TRAIN_ENVS, 'val')
-    elif args.es_method == 'val':
-        val_ds = task.get_torch_dataset(VAL_ENVS, 'val')
-    elif args.es_method == 'test':
-        val_ds = task.get_torch_dataset(TEST_ENVS, 'val')
-        
+    val_ds = task.get_torch_dataset(VAL_ENVS, 'val')
     val_loader = FastDataLoader(
         dataset=val_ds,
         batch_size=hparams['batch_size']*4,

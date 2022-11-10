@@ -42,7 +42,7 @@ class MulticenterICU(base.Task):
     
     HPARAM_SPEC = [
         # Data
-        HparamSpec('val_env', None),
+        HparamSpec('val_env', 'train'),
         HparamSpec('test_env', 'miiv'),
 
         # Training
@@ -100,8 +100,8 @@ class MulticenterICU(base.Task):
                     f"If means and stds for are not prespecified, all training environments must be setup.",
                     f"The following training environments are missing {set(self.TRAIN_ENVS) - set(loaded)}"
                 )
-            train_sta = pd.concat([e.data['train']['sta'] for e in self.envs.values() if e.loaded], axis=0)
-            train_dyn = pd.concat([e.data['train']['dyn'] for e in self.envs.values() if e.loaded], axis=0)
+            train_sta = pd.concat([e.data['train']['sta'] for e in self.envs.values() if e.loaded and e.db in self.TRAIN_ENVS], axis=0)
+            train_dyn = pd.concat([e.data['train']['dyn'] for e in self.envs.values() if e.loaded and e.db in self.TRAIN_ENVS], axis=0)
             self.means = {'sta': train_sta.mean(), 'dyn': train_dyn.mean()}
             self.stds = {'sta': train_sta.std(), 'dyn': train_dyn.std()}
 

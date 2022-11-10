@@ -123,31 +123,28 @@ if __name__ == "__main__":
     
     # Instantiate task
     task = task_class(hparams, vars(args))
-    task.setup()
 
     # Confirm environment assignment (envs differ for Oracle runs)
     if args.algorithm == 'ERMID': # ERM trained on the training subset of the test env
-        TRAIN_ENVS = task.TEST_ENVS
-        VAL_ENVS = task.TEST_ENVS
-        TEST_ENVS = task.TEST_ENVS
+        task.TRAIN_ENVS = task.TEST_ENVS
+        task.VAL_ENVS = task.TEST_ENVS
     elif args.algorithm == 'ERMMerged': # ERM trained on merged training subsets of all envs
-        TRAIN_ENVS = task.ENVIRONMENTS
-        VAL_ENVS = task.ENVIRONMENTS 
-        TEST_ENVS = task.ENVIRONMENTS
-    else:
-        TRAIN_ENVS = task.TRAIN_ENVS
-        VAL_ENVS = task.VAL_ENVS
-        TEST_ENVS = task.TEST_ENVS
-        
-    print("Training Environments: " + str(TRAIN_ENVS))
-    print("Validation Environments: " + str(VAL_ENVS))
-    print("Test Environments: " + str(TEST_ENVS))    
+        task.TRAIN_ENVS = task.ENVIRONMENTS
+        task.VAL_ENVS = task.ENVIRONMENTS 
+        task.TEST_ENVS = task.ENVIRONMENTS
+    
+    # Setup data with 
+    task.setup()
+
+    print("Training Environments: " + str(task.TRAIN_ENVS))
+    print("Validation Environments: " + str(task.VAL_ENVS))
+    print("Test Environments: " + str(task.TEST_ENVS))    
   
     # Instantiate algorithm
-    algorithm = algorithm_class(task, len(TRAIN_ENVS), hparams).to(device)
+    algorithm = algorithm_class(task, len(task.TRAIN_ENVS), hparams).to(device)
 
     # Get the datasets for each environment and split them into train/val/test
-    train_dss = [task.get_torch_dataset([env], 'train') for env in TRAIN_ENVS]
+    train_dss = [task.get_torch_dataset([env], 'train') for env in task.TRAIN_ENVS]
     train_loaders = [
         InfiniteDataLoader(
             dataset=i,
@@ -158,7 +155,7 @@ if __name__ == "__main__":
         for i in train_dss
         ]
     
-    val_ds = task.get_torch_dataset(VAL_ENVS, 'val')
+    val_ds = task.get_torch_dataset(task.VAL_ENVS, 'val')
     val_loader = FastDataLoader(
         dataset=val_ds,
         batch_size=hparams['batch_size']*4,
@@ -274,9 +271,9 @@ if __name__ == "__main__":
         "args": vars(args),
         "model_input_shape": task.input_shape,
         "model_num_classes": task.num_classes,
-        "model_train_domains": TRAIN_ENVS,
-        "model_val_domains": VAL_ENVS,
-        "model_test_domains": TEST_ENVS,
+        "model_train_domains": task.TRAIN_ENVS,
+        "model_val_domains": task.VAL_ENVS,
+        "model_test_domains": task.TEST_ENVS,
         "model_hparams": hparams,
         "es_step": es.step,
         'es_' + args.es_metric: es.best_score

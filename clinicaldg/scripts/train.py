@@ -135,6 +135,7 @@ if __name__ == "__main__":
     
     # Setup data with 
     task.setup()
+    task.save_task(os.path.join(args.output_dir, "task.pkl"))
 
     print("Training Environments: " + str(task.TRAIN_ENVS))
     print("Validation Environments: " + str(task.VAL_ENVS))

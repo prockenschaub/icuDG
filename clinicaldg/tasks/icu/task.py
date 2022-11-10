@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Callable
@@ -73,6 +74,10 @@ class MulticenterICU(base.Task):
             self.VAL_ENVS = [hparams['val_env']]
         self.TEST_ENVS = [hparams['test_env']]
 
+    @property
+    def envs_loaded(self) -> List[str]:
+        return [e.db for e in self.envs.values() if e.loaded]
+
     def setup(self, envs: List[str] = None, use_weight: bool = True) -> None:
         """Perform actual data loading and preprocessing
         
@@ -91,14 +96,14 @@ class MulticenterICU(base.Task):
                 obj.load(self.args['debug'])
                 obj.encode_categorical()
                 obj.split(self.args['trial'], self.args['n_splits'], self.args['seed'])
-        
+        all_train_loaded = len(set(self.TRAIN_ENVS) - set(self.envs_loaded)) == 0
+
         # Normalise and impute based on training data
         if not hasattr(self, "means") and not hasattr(self, "stds"):
-            loaded = [e.db for e in self.envs.values() if e.loaded]
-            if len(set(self.TRAIN_ENVS) - set(loaded)) > 0:
+            if not all_train_loaded:
                 raise RuntimeError(
-                    f"If means and stds for are not prespecified, all training environments must be setup.",
-                    f"The following training environments are missing {set(self.TRAIN_ENVS) - set(loaded)}"
+                    f"If means and stds for are not prespecified, all training envs must be setup.",
+                    f"The following training envs are missing: {set(self.TRAIN_ENVS) - set(self.envs_loaded)}"
                 )
             train_sta = pd.concat([e.data['train']['sta'] for e in self.envs.values() if e.loaded and e.db in self.TRAIN_ENVS], axis=0)
             train_dyn = pd.concat([e.data['train']['dyn'] for e in self.envs.values() if e.loaded and e.db in self.TRAIN_ENVS], axis=0)
@@ -118,11 +123,16 @@ class MulticenterICU(base.Task):
 
 
         # Calculate case weights based on train fold of train envs
-        if use_weight:
+        if use_weight and not hasattr(self, "case_weight"):
+            if not all_train_loaded:
+                raise RuntimeError(
+                    f"If `use_weight` but no `case_weight` is prespecified, all training envs must be "
+                    f"setup. The following training envs are missing: {set(self.TRAIN_ENVS) - set(self.envs_loaded)}"
+                )
             train_data = pd.concat([self.envs[e]['train'].data['outc'] for e in self.TRAIN_ENVS])
             prop_cases = np.mean(train_data.label)
             self.case_weight = torch.tensor((1 - prop_cases) / prop_cases)
-        else:
+        elif not use_weight:
             self.case_weight = None
 
     def set_means_and_stds(self, means: Dict[str, pd.Series], stds: Dict[str, pd.Series]):
@@ -138,6 +148,10 @@ class MulticenterICU(base.Task):
         """
         self.means = means
         self.stds = stds
+
+    def set_case_weight(self, weight: torch.Tensor):
+        """"""
+        self.case_weight = weight
 
     def get_torch_dataset(self, envs: List[str], fold: str) -> ConcatDataset:
         """Get one or more envs as a torch dataset
@@ -222,6 +236,21 @@ class MulticenterICU(base.Task):
         auroc = roc_auc_score(y, logits)
 
         return {'loss': loss.item(), 'auroc': auroc}
+
+    def save_task(self, file_path: str) -> None:
+        """Save the task state for reproducibility (splits and means)
+
+        Args:
+            file_path (str): file path specifying where to save the task
+        """
+        save_dict = {
+            'loaded': self.envs_loaded,
+            'splits': {n: e.splits for n, e in self.envs.items() if e.loaded},
+            'means': self.means,
+            'stds': self.stds
+        }
+        with open(file_path, "wb") as f:
+            pickle.dump(save_dict, f)
 
 
 class Mortality24(MulticenterICU):

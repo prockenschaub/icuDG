@@ -213,6 +213,10 @@ class Environment():
         """Has the environment data been loaded yet?"""
         return hasattr(self, 'data')
 
+    @property
+    def splits(self) -> Dict[str, pd.Index]:
+        return {f: v['sta'].index for f, v in self.data.items()}
+
     def ascertain_loaded(self):
         """Raise an error if data has not been loaded yet."""
         if not self.loaded:

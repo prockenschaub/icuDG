@@ -117,6 +117,9 @@ if __name__ == "__main__":
     # Instantiate task
     task = task_class(hparams, args)
     task.setup()
+    print(task.envs['aumc'].data['train']['sta'].index)
+    print(task.envs['aumc'].data['val']['sta'].index)
+    print(task.envs['aumc'].data['test']['sta'].index)
 
     # Confirm environment assignment (envs differ for Oracle runs)
     if args.algorithm == 'ERMID': # ERM trained on the training subset of the test env
@@ -137,6 +140,12 @@ if __name__ == "__main__":
     print("Test Environments: " + str(TEST_ENVS))    
   
     # Instantiate algorithm
+    random.seed(42)
+    np.random.seed(42)
+    torch.manual_seed(42)
+    print(torch.initial_seed())
+    print(np.random.randn(2, 2))
+    print(torch.randn(2, 2))
     algorithm = algorithm_class(task, len(TRAIN_ENVS), hparams).to(device)
 
     # Get the datasets for each environment and split them into train/val/test

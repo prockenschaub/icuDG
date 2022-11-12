@@ -40,8 +40,8 @@ def get_cv_split(data: Dict[str, pd.DataFrame], i: int = 0, n_splits: int = 5, s
     for dev, test in outer.split(all_stays):
         for train, val in inner.split(dev):
             if count == i:
-                split['train']['stays'] = all_stays[train]
-                split['val']['stays'] = all_stays[val]
+                split['train']['stays'] = all_stays[dev][train]
+                split['val']['stays'] = all_stays[dev][val]
                 split['test']['stays'] = all_stays[test]
 
                 for s in split.keys():    # train / val / test 

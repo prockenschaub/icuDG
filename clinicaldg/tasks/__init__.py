@@ -4,4 +4,4 @@
 # Patrick Rockenschaub. 
 
 from .mnist.task import ColoredMNIST
-from .icu.task import Mortality24, AKI, Sepsis
+from .multicenter.task import Mortality24, AKI, Sepsis

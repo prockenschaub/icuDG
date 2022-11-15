@@ -1,5 +1,4 @@
 
-from turtle import forward
 import torch.nn as nn
 
 from clinicaldg import networks

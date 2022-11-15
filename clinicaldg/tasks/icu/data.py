@@ -70,7 +70,7 @@ def pad_to_len(x: np.ndarray, length: int) -> np.ndarray:
     if not len(x.shape) == 2:
         raise ValueError(f'Only 2-dimensional arrays can be padded, got {len(x.shape)} dims.')
     copy_len = min(x.shape[0], length)
-    x_pad = np.full((len, x.shape[1]), PAD_VALUE, dtype=np.float32)
+    x_pad = np.full((length, x.shape[1]), PAD_VALUE, dtype=np.float32)
     x_pad[:copy_len, :] = x[:copy_len, :]
     return x_pad
 

@@ -27,7 +27,7 @@ do
         --es_metric val_loss \
         --es_patience 20 \
         --checkpoint_freq 10 \
-        --output_dir "outputs/aki/${t}/run${SLURM_ARRAY_TASK_ID}" \
+        --output_dir "outputs/sepsis/${t}/run${SLURM_ARRAY_TASK_ID}" \
         --delete_model
 
     date

@@ -237,3 +237,40 @@ def l2_between_dicts(dict_1, dict_2):
         torch.cat(tuple([t.view(-1) for t in dict_1_values])) -
         torch.cat(tuple([t.view(-1) for t in dict_2_values]))
     ).pow(2).mean()
+
+
+def pad_to_len(x: np.ndarray, length: int, value: float = 0.) -> np.ndarray:
+    """Pad the first dimension of an array to a given length using PAD_VALUE
+
+    Args:
+        x (np.ndarray): 2-dimensional array
+        length (int): maximum length to pad. If less than `x.shape[0]`, x is shortened.
+        value (float): value used as padding
+
+    Raises:
+        ValueError: if `x` does not have exactly 2 dimensions
+
+    Returns:
+        np.ndarray: padded array
+    """
+    if not len(x.shape) == 2:
+        raise ValueError(f'Only 2-dimensional arrays can be padded, got {len(x.shape)} dims.')
+    copy_len = min(x.shape[0], length)
+    x_pad = np.full((length, x.shape[1]), value, dtype=np.float32)
+    x_pad[:copy_len, :] = x[:copy_len, :]
+    return x_pad
+
+
+def pad_missing(x: np.ndarray, value: float = 0.) -> np.ndarray:
+    """Pad missing values using PAD_VALUE
+
+    Args:
+        x (np.ndarray)): numpy array with missing values
+        value (float): value used as padding
+
+    Returns:
+        np.ndarray: padded array
+    """
+    x[np.isnan(x)] = value
+    return x
+

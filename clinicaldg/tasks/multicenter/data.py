@@ -4,91 +4,16 @@ import pyarrow.parquet as pq
 import multiprocessing as mp
 from typing import Dict, Tuple, Type
 
-from sklearn.model_selection import KFold
 from torch.utils.data import Dataset
 
+from ...lib.resampling import get_cv_split
+from ...lib.misc import pad_to_len, pad_missing
 from . import Constants
 
 PAD_VALUE = 2
 
 
-def get_cv_split(data: Dict[str, pd.DataFrame], i: int = 0, n_splits: int = 5, seed: int = 42):
-    """Split the data into training, validation and test set
-
-    Note: this function returns a single split from a repeated cross-validation.
-          In order to get the full cross-validation, run with different values 
-          of `i`. For example, running this function 10-times with values of 
-          ranging from 0 to 9 will give 10 splits corresponding to a 2-times 
-          repeated 5-fold cross-validation. 
-
-    Args:
-        data (Dict[str, pd.DataFrame]): 
-        i (int, optional): _description_. Defaults to 0.
-        n_splits (int, optional): _description_. Defaults to 5.
-        seed (int, optional): _description_. Defaults to 42.
-
-    Returns:
-        _type_: _description_
-    """
-    seeds = np.random.RandomState(seed).randint(low=0, high=2**32-1, size=(2, ))
-    outer = KFold(n_splits, shuffle=True, random_state=seeds[0])
-    inner = KFold(n_splits, shuffle=True, random_state=seeds[1])
-    
-    count = 0
-    all_stays = data['sta'].index
-    split = {"train": {}, "val": {}, "test": {}}
-    for dev, test in outer.split(all_stays):
-        for train, val in inner.split(dev):
-            if count == i:
-                split['train']['stays'] = all_stays[dev][train]
-                split['val']['stays'] = all_stays[dev][val]
-                split['test']['stays'] = all_stays[test]
-
-                for s in split.keys():    # train / val / test 
-                    for d in data.keys(): # sta / dyn / outc
-                        split[s][d] = data[d].loc[split[s]['stays'], :]
-
-                break
-            count += 1
-    
-    return split
-
-
-def pad_to_len(x: np.ndarray, length: int) -> np.ndarray:
-    """Pad the first dimension of an array to a given length using PAD_VALUE
-
-    Args:
-        x (np.ndarray): 2-dimensional array
-        length (int): maximum length to pad. If less than `x.shape[0]`, x is shortened.
-
-    Raises:
-        ValueError: if `x` does not have exactly 2 dimensions
-
-    Returns:
-        np.ndarray: padded array
-    """
-    if not len(x.shape) == 2:
-        raise ValueError(f'Only 2-dimensional arrays can be padded, got {len(x.shape)} dims.')
-    copy_len = min(x.shape[0], length)
-    x_pad = np.full((length, x.shape[1]), PAD_VALUE, dtype=np.float32)
-    x_pad[:copy_len, :] = x[:copy_len, :]
-    return x_pad
-
-
-def pad_missing(x: np.ndarray) -> np.ndarray:
-    """Pad missing values using PAD_VALUE
-
-    Args:
-        x (np.ndarray)): numpy array with missing values
-
-    Returns:
-        np.ndarray: padded array
-    """
-    x[np.isnan(x)] = PAD_VALUE
-    return x
-
-
-class Environment():
+class ICUEnvironment():
     """Data for a single ICU database (e.g., MIMIC) and outcome (e.g., mortality24)
 
     Args:
@@ -99,14 +24,6 @@ class Environment():
         self.db = db
         self.outcome = outcome
         self.pad_to = pad_to
-                
-    # def prepare(self, trial, n_splits, seed=42, debug=False):
-    #     data = load_data(self.db, self.outcome, debug)
-    #     # Hack to avoid pandas/python unnecessarily hanging on to memory. Start
-    #     # subprocess which is terminated afterwards, releasing all resources. 
-    #     # See https://stackoverflow.com/questions/39100971/how-do-i-release-memory-used-by-a-pandas-dataframe 
-    #     data = mp.Pool(1).apply(preprocess_data, args=[data, trial, n_splits, seed])
-    #     self.data = data
 
     def load(self, debug=False) -> None:
         """Load hourly data processed with the R package ``ricu``
@@ -277,9 +194,9 @@ class Fold(Dataset):
 
         # Pad them to the right length (if necessary)
         if self.pad_to:
-            X = pad_to_len(X, self.pad_to)       # pad_to x P
+            X = pad_to_len(X, self.pad_to, PAD_VALUE)       # pad_to x P
             if len(Y.shape) == 2:
-                Y = pad_to_len(Y, self.pad_to)   # pad_to x 1
+                Y = pad_to_len(Y, self.pad_to, PAD_VALUE)   # pad_to x 1
                 Y = Y[:, -1] 
             Y = pad_missing(Y)
 

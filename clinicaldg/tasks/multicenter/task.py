@@ -17,9 +17,6 @@ from clinicaldg.algorithms.base import Algorithm
 from . import data, featurizer
 
 
-def _not(lst, excl):
-    return [x for x in lst if x not in excl]
-
 
 class MulticenterICU(base.Task):
     """Basic task setup for experiments using multicenter ICU data.
@@ -64,9 +61,12 @@ class MulticenterICU(base.Task):
         self.outcome = outcome
         self.args = args
         self.hparams = hparams
-        self.envs = {e: data.Environment(e, outcome, self.pad_to) for e in self.ENVIRONMENTS}
+        self.envs = {e: data.ICUEnvironment(e, outcome, self.pad_to) for e in self.ENVIRONMENTS}
 
         # Assign environments to train / val / test
+        def _not(lst, excl):
+            return [x for x in lst if x not in excl]
+        
         self.TRAIN_ENVS = _not(self.ENVIRONMENTS, [hparams['val_env']] + [hparams['test_env']])
         if hparams['val_env'] == 'train':
             self.VAL_ENVS = self.TRAIN_ENVS

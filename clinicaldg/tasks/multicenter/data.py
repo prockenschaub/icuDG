@@ -120,7 +120,7 @@ class ICUEnvironment():
                 df = pd.concat((df, inds), axis=1) 
 
                 # Fill missing values
-                df = df.groupby('stay_id').ffill()  # start with forward fill
+                df = df.groupby(level=0).ffill()  # start with forward fill
                 df = df.fillna(value=0)             # fill any remaining NAs with 0
 
                 self.data[fold][part] = df

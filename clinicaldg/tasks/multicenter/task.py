@@ -17,7 +17,6 @@ from clinicaldg.algorithms.base import Algorithm
 from . import data, featurizer
 
 
-
 class MulticenterICU(base.Task):
     """Basic task setup for experiments using multicenter ICU data.
 
@@ -130,7 +129,7 @@ class MulticenterICU(base.Task):
                     f"setup. The following training envs are missing: {set(self.TRAIN_ENVS) - set(self.envs_loaded)}"
                 )
             train_data = pd.concat([self.envs[e]['train'].data['outc'] for e in self.TRAIN_ENVS])
-            prop_cases = np.mean(train_data.label)
+            prop_cases = np.mean(train_data.iloc[:, 0])
             self.case_weight = torch.tensor((1 - prop_cases) / prop_cases)
         elif not use_weight:
             self.case_weight = None

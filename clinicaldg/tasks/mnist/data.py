@@ -11,7 +11,7 @@ from . import Constants
 
 class ColoredMNISTDataset():
     def __init__(self, hparams, args):        
-        mnist = MNIST(Constants.mnist_dir, train=True, download=True)
+        mnist = MNIST(Constants.data_dir, train=True, download=True)
         mnist_train = [mnist.data[:50000], mnist.targets[:50000]]
         mnist_val = [mnist.data[50000:], mnist.targets[50000:]]
         idx = np.random.permutation(range(len(mnist_train[1])))

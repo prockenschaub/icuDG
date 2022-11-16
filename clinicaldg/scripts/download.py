@@ -24,9 +24,9 @@ def safe_mkdir(path):
 
 def download_mnist():
     # Original URL: http://yann.lecun.com/exdb/mnist/
-    path = Path(mnistConstants.mnist_dir)
+    path = Path(mnistConstants.data_dir)
     safe_mkdir(path)
-    MNIST(mnistConstants.mnist_dir, download=True)
+    MNIST(mnistConstants.data_dir, download=True)
 
 
 # PhysioNet CinC Challenge 2019 ------------------------------------------------

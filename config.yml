@@ -1,9 +1,8 @@
 mnist: 
-  mnist_dir: '/path/to/mnist/folder'
+  data_dir: 'path/to/data'
 
 multicenter:
-  ts_paths: 
-    mimic: '/path/to/mimic/folder'
-    eicu: '/path/to/mimic/folder'
-    hirid: '/path/to/mimic/folder'
-    aumc: '/path/to/mimic/folder'
+  data_dir: 'path/to/data'
+
+physionet:
+  data_dir: 'path/to/data'

@@ -24,7 +24,7 @@ do
         --hparams_seed ${hs} \
         --trial ${ts} \
         --seed ${seed} \
-        --es_metric val_loss \
+        --es_metric val_nll \
         --es_patience 20 \
         --checkpoint_freq 10 \
         --output_dir "outputs/aki/${t}/run${SLURM_ARRAY_TASK_ID}" \

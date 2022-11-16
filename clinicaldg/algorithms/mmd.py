@@ -79,14 +79,16 @@ class AbstractMMD(ERM):
         if nmb > 1:
             penalty /= (nmb * (nmb - 1) / 2)
 
+        loss = objective + (self.hparams['mmd_gamma']*penalty)
+
         self.optimizer.zero_grad()
-        (objective + (self.hparams['mmd_gamma']*penalty)).backward()
+        loss.backward()
         self.optimizer.step()
 
         if torch.is_tensor(penalty):
             penalty = penalty.item()
 
-        return {'loss': objective.item(), 'penalty': penalty}
+        return {'loss': loss.item(), 'nll': objective.item(), 'penalty': penalty}
 
 
 class MMD(AbstractMMD):

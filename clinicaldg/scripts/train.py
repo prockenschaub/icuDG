@@ -45,7 +45,7 @@ if __name__ == "__main__":
     # Early stopping and model selection within current run
     parser.add_argument('--max_steps', type=int, default=1000,
         help='Maximum number of optimisation steps.')
-    parser.add_argument('--es_metric', type=str, default='val_loss',
+    parser.add_argument('--es_metric', type=str, default='val_nll',
         help='Metric used to determine whether or not to stop training early.')
     parser.add_argument('--es_maximize', type=bool, default=False, 
         help='Flag to indicate if higher (=True) or lower (=False) values of `es_metric` are better.')

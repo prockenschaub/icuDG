@@ -234,7 +234,7 @@ class MulticenterICU(base.Task):
         y = y.view(-1)[mask.view(-1)].long().numpy()
         auroc = roc_auc_score(y, logits)
 
-        return {'loss': loss.item(), 'auroc': auroc}
+        return {'nll': loss.item(), 'auroc': auroc}
 
     def save_task(self, file_path: str) -> None:
         """Save the task state for reproducibility (splits and means)

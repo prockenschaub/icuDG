@@ -7,8 +7,8 @@ import torch.nn.functional as F
 from backpack import backpack, extend
 from backpack.extensions import BatchGrad
 
-from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.misc import MovingAverage, l2_between_dicts
+from icudg.lib.hparams_registry import HparamSpec
+from icudg.lib.misc import MovingAverage, l2_between_dicts
 
 from .base import Algorithm
 

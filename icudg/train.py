@@ -14,13 +14,13 @@ import torch
 import torchvision
 import torch.utils.data
 
-from clinicaldg import tasks
-from clinicaldg import algorithms
-from clinicaldg.lib import misc
-from clinicaldg.lib.hparams_registry import HparamRegistry
-from clinicaldg.lib.fast_data_loader import InfiniteDataLoader, FastDataLoader
-from clinicaldg.lib.early_stopping import EarlyStopping
-from clinicaldg.lib.checkpoint import has_checkpoint, load_checkpoint, save_checkpoint
+from icudg import tasks
+from icudg import algorithms
+from icudg.lib import misc
+from icudg.lib.hparams_registry import HparamRegistry
+from icudg.lib.fast_data_loader import InfiniteDataLoader, FastDataLoader
+from icudg.lib.early_stopping import EarlyStopping
+from icudg.lib.checkpoint import has_checkpoint, load_checkpoint, save_checkpoint
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 

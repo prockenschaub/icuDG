@@ -7,12 +7,12 @@ from functools import partial
 import torch
 from torch.utils.data import ConcatDataset
 
-from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.misc import predict_on_set, cat
-from clinicaldg.lib.metrics import roc_auc_score
-from clinicaldg.lib.losses import masked_bce_with_logits
-from clinicaldg.tasks import base
-from clinicaldg.algorithms.base import Algorithm
+from icudg.lib.hparams_registry import HparamSpec
+from icudg.lib.misc import predict_on_set, cat
+from icudg.lib.metrics import roc_auc_score
+from icudg.lib.losses import masked_bce_with_logits
+from icudg.tasks import base
+from icudg.algorithms.base import Algorithm
 
 from . import data, featurizer
 

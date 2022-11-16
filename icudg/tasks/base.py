@@ -1,5 +1,5 @@
 import abc
-from clinicaldg.lib.hparams_registry import HparamMixin
+from icudg.lib.hparams_registry import HparamMixin
 
 class Task(HparamMixin):
     

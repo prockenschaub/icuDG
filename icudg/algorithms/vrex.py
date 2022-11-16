@@ -1,7 +1,7 @@
 import torch
 
-from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.misc import cat
+from icudg.lib.hparams_registry import HparamSpec
+from icudg.lib.misc import cat
 
 from .erm import ERM
 

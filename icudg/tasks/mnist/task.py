@@ -1,10 +1,10 @@
 from torch.utils.data import TensorDataset, ConcatDataset
 
-from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.misc import predict_on_set
-from clinicaldg.lib.metrics import cross_entropy
-from clinicaldg.tasks import base
-from clinicaldg.networks import MLP
+from icudg.lib.hparams_registry import HparamSpec
+from icudg.lib.misc import predict_on_set
+from icudg.lib.metrics import cross_entropy
+from icudg.tasks import base
+from icudg.networks import MLP
 
 from .data import ColoredMNISTDataset
 

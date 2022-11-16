@@ -3,8 +3,8 @@ import copy
 import torch
 import torch.autograd as autograd
 
-from clinicaldg.lib.hparams_registry import HparamSpec
-from clinicaldg.lib.misc import random_pairs_of_minibatches
+from icudg.lib.hparams_registry import HparamSpec
+from icudg.lib.misc import random_pairs_of_minibatches
 
 from .erm import ERM
 

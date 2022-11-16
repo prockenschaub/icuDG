@@ -1,7 +1,7 @@
 
 import torch.nn as nn
 
-from clinicaldg import networks
+from icudg import networks
 
 
 class TCNet(nn.Module):

@@ -9,8 +9,8 @@ import pandas as pd
 from tqdm import tqdm
 from torchvision.datasets import MNIST
 
-from clinicaldg.tasks.mnist import Constants as mnistConstants
-from clinicaldg.tasks.physionet import Constants as pnConstants
+from icudg.tasks.mnist import Constants as mnistConstants
+from icudg.tasks.physionet import Constants as pnConstants
 
 def safe_mkdir(path):
     if not path.exists():

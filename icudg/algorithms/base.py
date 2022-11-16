@@ -2,7 +2,7 @@ import abc
 import numpy as np
 import torch
 
-from clinicaldg.lib.hparams_registry import HparamSpec, HparamMixin
+from icudg.lib.hparams_registry import HparamSpec, HparamMixin
 
 
 class Algorithm(torch.nn.Module, HparamMixin):

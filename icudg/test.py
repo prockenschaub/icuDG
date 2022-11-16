@@ -5,9 +5,9 @@ import os
 import torch
 import torch.utils.data
 
-from clinicaldg import tasks
-from clinicaldg import algorithms
-from clinicaldg.lib.fast_data_loader import FastDataLoader
+from icudg import tasks
+from icudg import algorithms
+from icudg.lib.fast_data_loader import FastDataLoader
 
 
 if __name__ == '__main__':

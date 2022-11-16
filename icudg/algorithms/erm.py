@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from clinicaldg.lib.misc import cat
+from icudg.lib.misc import cat
 
 from .base import Algorithm
 

@@ -52,8 +52,14 @@ class MulticenterICU(base.Task):
         HparamSpec('num_layers', 1, lambda r: int(r.randint(low=1, high=10))),
         HparamSpec('kernel_size', 4, lambda r: int(r.randint(low=2, high=6))),
         HparamSpec('heads', 4, lambda r: int(r.randint(low=1, high=3))),
-        HparamSpec('dropout', 0.5, lambda r: float(r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7])))
+        HparamSpec('dropout', 0.5, lambda r: float(r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7]))),
 
+        # Task-specific algorithm hyperparams
+        HparamSpec('mmd_gamma', 1000., lambda r: 10**r.uniform(2., 4.)),
+        HparamSpec('vrex_lambda', 1e1, lambda r: 10**r.uniform(0, 3)),
+        HparamSpec('vrex_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
+        HparamSpec('fishr_lambda', 1000., lambda r: 10**r.uniform(2., 4.)),
+        HparamSpec('fishr_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
     ]
 
     def __init__(self, outcome, hparams, args):
@@ -278,6 +284,10 @@ class AKI(MulticenterICU):
 
 
 class Sepsis(MulticenterICU):
+    HPARAM_SPEC = MulticenterICU.HPARAM_SPEC + [
+        HparamSpec('mmd_beta', 1000., lambda r: 10**r.uniform(2., 5.))
+    ]
+
     def __init__(self, hparams, args):
         self.pad_to = 169 # one week of data
         super().__init__("sepsis", hparams, args)

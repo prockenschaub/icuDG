@@ -19,7 +19,7 @@ class Fishr(Algorithm):
 
     HPARAM_SPEC = Algorithm.HPARAM_SPEC + [
         HparamSpec('fishr_lambda', 1000., lambda r: 10**r.uniform(1., 4.)),
-        HparamSpec('fishr_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
+        HparamSpec('fishr_penalty_anneal_iters', 1500, lambda r: int(r.uniform(0., 5000.))),
         HparamSpec('fishr_ema', 0.95, lambda r: r.uniform(0.90, 0.99)),
     ]
 
@@ -39,7 +39,7 @@ class Fishr(Algorithm):
         self.network = nn.Sequential(self.featurizer, self.classifier)
 
         self.register_buffer("update_count", torch.tensor([0]))
-        self.bce_extended = extend(nn.CrossEntropyLoss(reduction='none')) 
+        self.bce_extended = extend(nn.CrossEntropyLoss(reduction='none')) # TODO: enable for masked
         self.ema_per_domain = [
             MovingAverage(ema=self.hparams["fishr_ema"], oneminusema_correction=True)
             for _ in range(self.num_domains)

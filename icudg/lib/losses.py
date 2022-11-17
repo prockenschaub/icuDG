@@ -58,6 +58,7 @@ class MaskedExtendedBCEWithLogitsLoss(nn.Module):
         self.extended_ce = extend(nn.CrossEntropyLoss(weights, reduction=reduction))
 
     def forward(self, input, target, mask):
+        # NOTE: currently only works when called with input.view(-1, num_classes), target.view(-1), mask.view(-1)
         masked_input = input[mask]
         masked_target = target[mask]
         return self.extended_ce(masked_input, masked_target)

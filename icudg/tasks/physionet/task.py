@@ -1,24 +1,7 @@
-import pickle
 import numpy as np
-import pandas as pd
-from typing import List, Dict, Callable
-from functools import partial
-
-import torch
-from torch.utils.data import ConcatDataset
-
 from icudg.lib.hparams_registry import HparamSpec
-from icudg.lib.misc import predict_on_set, cat
-from icudg.lib.metrics import roc_auc_score
-from icudg.lib.losses import masked_bce_with_logits
-from icudg.tasks import base
-from icudg.algorithms.base import Algorithm
-
-from . import data, featurizer
+from . import data
 from ..multicenter.task import MulticenterICU
-
-def _not(lst, excl):
-    return [x for x in lst if x not in excl]
 
 
 class PhysioNet2019(MulticenterICU):
@@ -64,6 +47,9 @@ class PhysioNet2019(MulticenterICU):
         self.envs = {e: data.PhysioNetEnvironment(e, self.pad_to) for e in self.ENVIRONMENTS}
 
         # Assign environments to train / val / test
+        def _not(lst, excl):
+            return [x for x in lst if x not in excl]
+
         self.TRAIN_ENVS = _not(self.ENVIRONMENTS, [hparams['val_env']] + [hparams['test_env']])
         if hparams['val_env'] == 'train':
             self.VAL_ENVS = self.TRAIN_ENVS

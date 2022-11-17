@@ -17,7 +17,7 @@ while IFS="," read -r hs algo t v ts seed
 do
     date 
 
-    python -m clinicaldg.train \
+    python -m icudg.train \
         --task AKI \
         --algorithm ${algo} \
         --hparams "{\"test_env\": \"${t}\", \"val_env\": \"${v}\", \"mc_architecture\": \"tcn\"}" \

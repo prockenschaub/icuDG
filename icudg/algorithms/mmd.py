@@ -68,7 +68,7 @@ class AbstractMMD(ERM):
         masks = [self.task.get_mask(batchi) for batchi in minibatches]
 
         for i in range(nmb):
-            objective += self.loss_fn(classifs[i], targets[i], masks[i])
+            objective += self.loss_fn(classifs[i].flatten(end_dim=-2), targets[i].flatten(), masks[i].flatten())
             for j in range(i + 1, nmb):
                 penalty += self.mmd(
                     features[i].flatten(end_dim=-2)[masks[i].flatten()], 

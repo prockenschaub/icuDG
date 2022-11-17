@@ -9,7 +9,7 @@ from torch.utils.data import ConcatDataset
 from icudg.lib.hparams_registry import HparamSpec
 from icudg.lib.misc import predict_on_set, cat
 from icudg.lib.metrics import roc_auc_score
-from icudg.lib.losses import MaskedBCEWithLogitsLoss, MaskedExtendedBCEWithLogitsLoss
+from icudg.lib.losses import MaskedBCEWithLogitsLoss
 from icudg.tasks import base
 from icudg.algorithms.base import Algorithm
 
@@ -55,7 +55,7 @@ class MulticenterICU(base.Task):
 
         # Task-specific algorithm hyperparams
         HparamSpec('mmd_gamma', 1000., lambda r: 10**r.uniform(2., 4.)),
-        HparamSpec('vrex_lambda', 1e1, lambda r: 10**r.uniform(0, 3)),
+        HparamSpec('vrex_lambda', 1000, lambda r: 10**r.uniform(2., 4.)),
         HparamSpec('vrex_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
         HparamSpec('fishr_lambda', 1000., lambda r: 10**r.uniform(2., 4.)),
         HparamSpec('fishr_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
@@ -135,9 +135,10 @@ class MulticenterICU(base.Task):
                 )
             train_data = pd.concat([self.envs[e]['train'].data['outc'] for e in self.TRAIN_ENVS])
             prop_cases = np.mean(train_data.iloc[:, 0])
-            self.case_weight = torch.tensor((1 - prop_cases) / prop_cases)
+            case_weight = (1. - prop_cases) / prop_cases
+            self.weights = torch.tensor([1., case_weight], dtype=torch.float32)
         elif not use_weight:
-            self.case_weight = None
+            self.weights = None
 
     def set_means_and_stds(self, means: Dict[str, pd.Series], stds: Dict[str, pd.Series]):
         """Specify means and standard devs for normalisation during setup, e.g., based on previous training
@@ -153,9 +154,9 @@ class MulticenterICU(base.Task):
         self.means = means
         self.stds = stds
 
-    def set_case_weight(self, weight: torch.Tensor):
+    def set_weights(self, weight: torch.Tensor):
         """"""
-        self.case_weight = weight
+        self.weights = weight
 
     def get_torch_dataset(self, envs: List[str], fold: str) -> ConcatDataset:
         """Get one or more envs as a torch dataset
@@ -202,7 +203,7 @@ class MulticenterICU(base.Task):
         Returns:
             Callable: loss function
         """
-        return MaskedBCEWithLogitsLoss(reduction, pos_weight=getattr(self, "case_weight", None))
+        return MaskedBCEWithLogitsLoss(getattr(self, "weights", None), reduction)
 
     def get_extended_loss_fn(self, reduction='mean') -> Callable:
         """Return a loss function with extended gradient calculations for Fishr
@@ -210,7 +211,7 @@ class MulticenterICU(base.Task):
         Returns:
             Callable: loss function
         """
-        return MaskedExtendedBCEWithLogitsLoss(reduction, pos_weight=getattr(self, "case_weight", None))
+        return MaskedBCEWithLogitsLoss(getattr(self, "weights", None), reduction, extend=True)
 
     def eval_metrics(
         self, 
@@ -235,7 +236,7 @@ class MulticenterICU(base.Task):
         mask = cat(mask)
         
         # Get the loss function
-        loss = algorithm.loss_fn(logits, y, mask) # Loss is defined by task
+        loss = algorithm.loss_fn(logits.flatten(end_dim=-2), y.flatten(), mask.flatten()) # Loss is defined by task
 
         # Get the AUROC
         logits = logits[..., -1]

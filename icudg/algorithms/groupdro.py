@@ -29,12 +29,12 @@ class GroupDRO(ERM):
         for m in range(len(minibatches)):
             x, y = minibatches[m]
             mask = self.task.get_mask((x, y))
-            losses[m] = self.loss_fn(self.predict(x), y, mask)
+            losses[m] = self.loss_fn(self.predict(x).flatten(end_dim=-2), y.flatten(), mask.flatten())
             self.q[m] *= (self.hparams["groupdro_eta"] * losses[m].data).exp()
 
         self.q /= self.q.sum()
 
-        loss = torch.dot(losses, self.q) / len(minibatches)
+        loss = torch.dot(losses, self.q)
 
         self.optimizer.zero_grad()
         loss.backward()

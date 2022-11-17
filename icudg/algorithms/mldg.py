@@ -18,7 +18,7 @@ class MLDG(ERM):
     
     HPARAM_SPEC = ERM.HPARAM_SPEC + [
         HparamSpec('mldg_beta', 1., lambda r: 10**r.uniform(-1, 1)),
-        HparamSpec('n_meta_test', 2, lambda r:  r.choice([1, 2]))
+        HparamSpec('n_meta_test', 2, lambda r:  int(r.choice([1, 2])))
     ]
 
     def __init__(self, task, num_domains, hparams):
@@ -60,7 +60,7 @@ class MLDG(ERM):
             )
 
             maski = self.task.get_mask((xi, yi))
-            inner_obj = self.loss_fn(inner_net(xi), yi, maski)
+            inner_obj = self.loss_fn(inner_net(xi).flatten(end_dim=-2), yi.flatten(), maski.flatten())
 
             inner_opt.zero_grad()
             inner_obj.backward()
@@ -78,7 +78,7 @@ class MLDG(ERM):
 
             # this computes Gj on the clone-network
             maskj = self.task.get_mask((xj, yj))
-            loss_inner_j = self.loss_fn(inner_net(xj), yj, maskj)
+            loss_inner_j = self.loss_fn(inner_net(xj).flatten(end_dim=-2), yj.flatten(), maskj.flatten())
             grad_inner_j = autograd.grad(loss_inner_j, inner_net.parameters(),
                 allow_unused=True)
 

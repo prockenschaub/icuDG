@@ -190,7 +190,6 @@ class Fold(Dataset):
 
         # Get labels
         Y = self.data['outc'].loc[pat_id].values  # 1 or T x 1
-        Y = Y.astype(np.float32)
 
         # Pad them to the right length (if necessary)
         if self.pad_to:
@@ -199,5 +198,6 @@ class Fold(Dataset):
                 Y = pad_to_len(Y, self.pad_to, PAD_VALUE)   # pad_to x 1
                 Y = Y[:, -1] 
             Y = pad_missing(Y)
+        Y = Y.astype(np.int64)
 
         return X, Y

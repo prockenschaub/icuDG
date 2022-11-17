@@ -33,7 +33,7 @@ class VREx(ERM):
             mask = self.task.get_mask((x, y))
             logits = all_logits[all_logits_idx:all_logits_idx + y.shape[0]]
             all_logits_idx += y.shape[0]
-            nll = self.loss_fn(logits, y, mask)
+            nll = self.loss_fn(logits.flatten(end_dim=-2), y.flatten(), mask.flatten())
             losses[i] = nll
 
         mean = losses.mean()

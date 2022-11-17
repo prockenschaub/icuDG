@@ -25,7 +25,7 @@ class ERM(Algorithm):
         all_x = cat([x for x,y in minibatches])
         all_y = cat([y for x,y in minibatches])
         all_m = cat([self.task.get_mask(batch) for batch in minibatches])
-        loss = self.loss_fn(self.predict(all_x), all_y, all_m)
+        loss = self.loss_fn(self.predict(all_x).flatten(end_dim=-2), all_y.flatten(), all_m.flatten())
 
         self.optimizer.zero_grad()
         loss.backward()

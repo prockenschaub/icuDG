@@ -68,7 +68,7 @@ class Fishr(Algorithm):
         all_logits = self.classifier(all_z)
 
         penalty = self.compute_fishr_penalty(all_logits, all_y, all_m, len_minibatches)
-        all_nll = self.loss_fn(all_logits, all_y, all_m)
+        all_nll = self.loss_fn(all_logits.flatten(end_dim=-2), all_y.flatten(), all_m.flatten())
 
         penalty_weight = 0
         if self.update_count >= self.hparams["fishr_penalty_anneal_iters"]:
@@ -93,7 +93,7 @@ class Fishr(Algorithm):
 
     def _get_grads(self, logits, y, m):
         self.optimizer.zero_grad()
-        loss = self.loss_extended(logits.view(-1, self.task.num_classes), y.long().view(-1), m.view(-1)) 
+        loss = self.loss_extended(logits.flatten(end_dim=-2), y.flatten(), m.flatten()) 
         loss = loss.sum()
         with backpack(BatchGrad()):
             loss.backward(

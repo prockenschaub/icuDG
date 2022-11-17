@@ -13,7 +13,7 @@ conda activate clinicaldg-new
 
 set -x
 
-while IFS="," read -r algo t v ts hs seed
+while IFS="," read -r hs algo t v ts seed
 do
     date 
 

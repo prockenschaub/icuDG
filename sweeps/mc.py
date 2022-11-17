@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     # Generate grid ----------------------------------------------------------------
     if args.val == 'train':
-        val_envs = args.val
+        val_envs = [args.val]
     elif args.val == 'loo':
         val_envs = envs
 

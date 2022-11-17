@@ -2,7 +2,6 @@ import pickle
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Callable
-from functools import partial
 
 import torch
 from torch.utils.data import ConcatDataset
@@ -10,7 +9,7 @@ from torch.utils.data import ConcatDataset
 from icudg.lib.hparams_registry import HparamSpec
 from icudg.lib.misc import predict_on_set, cat
 from icudg.lib.metrics import roc_auc_score
-from icudg.lib.losses import masked_bce_with_logits
+from icudg.lib.losses import MaskedBCEWithLogitsLoss, MaskedExtendedBCEWithLogitsLoss
 from icudg.tasks import base
 from icudg.algorithms.base import Algorithm
 
@@ -197,17 +196,21 @@ class MulticenterICU(base.Task):
             f"as a featurizer for the MulticenterICU task."
         )
 
-    def get_loss_fn(self) -> Callable:
+    def get_loss_fn(self, reduction='mean') -> Callable:
         """Return the loss function for this task, a (weighted) mask BCE loss
 
         Returns:
             Callable: loss function
         """
-        if hasattr(self, "case_weight"):
-            pos_weight = self.case_weight
-        else:
-            pos_weight = None
-        return partial(masked_bce_with_logits, pos_weight=pos_weight)
+        return MaskedBCEWithLogitsLoss(reduction, pos_weight=getattr(self, "case_weight", None))
+
+    def get_extended_loss_fn(self, reduction='mean') -> Callable:
+        """Return a loss function with extended gradient calculations for Fishr
+
+        Returns:
+            Callable: loss function
+        """
+        return MaskedExtendedBCEWithLogitsLoss(reduction, pos_weight=getattr(self, "case_weight", None))
 
     def eval_metrics(
         self, 

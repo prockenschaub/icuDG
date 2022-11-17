@@ -71,8 +71,8 @@ class AbstractMMD(ERM):
             objective += self.loss_fn(classifs[i], targets[i], masks[i])
             for j in range(i + 1, nmb):
                 penalty += self.mmd(
-                    features[i].flatten(end_dim=-2), 
-                    features[j].flatten(end_dim=-2)
+                    features[i].flatten(end_dim=-2)[masks[i].flatten()], 
+                    features[j].flatten(end_dim=-2)[masks[j].flatten()]
                 )
 
         objective /= nmb

@@ -39,7 +39,7 @@ class Fishr(Algorithm):
         self.network = nn.Sequential(self.featurizer, self.classifier)
 
         self.register_buffer("update_count", torch.tensor([0]))
-        self.bce_extended = extend(nn.CrossEntropyLoss(reduction='none')) # TODO: enable for masked
+        self.loss_extended = task.get_extended_loss_fn(reduction='none') # 
         self.ema_per_domain = [
             MovingAverage(ema=self.hparams["fishr_ema"], oneminusema_correction=True)
             for _ in range(self.num_domains)
@@ -93,7 +93,7 @@ class Fishr(Algorithm):
 
     def _get_grads(self, logits, y, m):
         self.optimizer.zero_grad()
-        loss = self.bce_extended(logits.view(-1, self.task.num_classes), y.long().view(-1)) * m.view(-1)
+        loss = self.loss_extended(logits.view(-1, self.task.num_classes), y.long().view(-1), m.view(-1)) 
         loss = loss.sum()
         with backpack(BatchGrad()):
             loss.backward(

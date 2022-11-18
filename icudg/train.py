@@ -83,6 +83,17 @@ if __name__ == "__main__":
     for k, v in sorted(vars(args).items()):
         print('\t{}: {}'.format(k, v))
 
+
+    # Seed everything
+    os.environ["PYTHONHASHSEED"] = str(args.seed)
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+    torch.use_deterministic_algorithms(True)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
     # Load the selected algorithm and task classes
     algorithm_class = vars(algorithms)[args.algorithm]
     task_class = vars(tasks)[args.task]     
@@ -107,13 +118,6 @@ if __name__ == "__main__":
     
     with open(os.path.join(args.output_dir, "params.json"), 'w') as f:
         f.write(json.dumps({'hparams': hparams, 'args': vars(args)}))
-
-    # Seed everything
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
 
     # Choose device (CPU or GPU)
     if torch.cuda.is_available():

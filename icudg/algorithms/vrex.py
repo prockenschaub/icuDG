@@ -53,7 +53,7 @@ class VREx(ERM):
         self.optimizer.step()
 
         self.update_count += 1
-        return {'loss': loss.item(), 'nll': nll.item(),
+        return {'loss': loss.item(), 'nll': mean.item(),
                 'penalty': penalty.item()}
 
     @property

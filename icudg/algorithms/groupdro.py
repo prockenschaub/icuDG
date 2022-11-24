@@ -40,4 +40,4 @@ class GroupDRO(ERM):
         loss.backward()
         self.optimizer.step()
 
-        return {'loss': loss.item()}
+        return {'loss': loss.item(), 'nll': losses.mean().item()}

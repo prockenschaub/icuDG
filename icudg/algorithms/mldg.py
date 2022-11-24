@@ -41,8 +41,9 @@ class MLDG(ERM):
 
         For computational efficiency, we do not compute second derivatives.
         """
-        num_mb = len(minibatches)
-        objective = 0
+        num_train = len(minibatches) - self.num_meta_test
+        nll = 0
+        penalty = 0
 
         self.optimizer.zero_grad()
         for p in self.network.parameters():
@@ -71,10 +72,10 @@ class MLDG(ERM):
             for p_tgt, p_src in zip(self.network.parameters(),
                                     inner_net.parameters()):
                 if p_src.grad is not None:
-                    p_tgt.grad.data.add_(p_src.grad.data / num_mb)
+                    p_tgt.grad.data.add_(p_src.grad.data / num_train)
 
-            # `objective` is populated for reporting purposes
-            objective += inner_obj.item()
+            # `nll` is populated for reporting purposes
+            nll += inner_obj.item() / num_train
 
             # this computes Gj on the clone-network
             maskj = self.task.get_mask((xj, yj))
@@ -82,19 +83,18 @@ class MLDG(ERM):
             grad_inner_j = autograd.grad(loss_inner_j, inner_net.parameters(),
                 allow_unused=True)
 
-            # `objective` is populated for reporting purposes
-            objective += (self.hparams['mldg_beta'] * loss_inner_j).item()
+            # `penalty` is populated for reporting purposes
+            penalty += loss_inner_j.item() / num_train
 
             for p, g_j in zip(self.network.parameters(), grad_inner_j):
                 if g_j is not None:
                     p.grad.data.add_(
-                        self.hparams['mldg_beta'] * g_j.data / num_mb)
+                        self.hparams['mldg_beta'] * g_j.data / num_train)
 
             # The network has now accumulated gradients Gi + beta * Gj
             # Repeat for all train-test splits, do .step()
 
-        objective /= len(minibatches)
-
+        loss = nll + self.hparams['mldg_beta'] * penalty
         self.optimizer.step()
 
-        return {'loss': objective}
+        return {'loss': loss, 'nll': nll, 'penalty': penalty}

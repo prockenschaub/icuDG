@@ -1,9 +1,10 @@
 import plotnine as ggp
 
 from utils import *
+from icudg.lib import misc
 
 
-task = 'icu-mortality'
+task = 'sepsis'
 path = Path(f'/Users/patrick/clinicaldg-outputs/{task}')
 
 # ------------------------------------------------------------------------------
@@ -35,6 +36,16 @@ erm = tbl.pivot_table(
 )
 erm.loc[['aumc', 'hirid', 'eicu', 'miiv', 'pooled (n-1)', 'all'], ['aumc', 'hirid', 'eicu', 'miiv']]
 
+# ------------------------------------------------------------------------------
+# Store grid for reruns with more trials
+grid = tbl[['hparams_seed', 'algorithm', 'test_env', 'val_env']].copy()
+grid = grid.reset_index()
+grid.loc[:, 'trial'] = pd.Series([[i for i in range(5)] for _ in range(grid.shape[0])])
+grid = grid.explode('trial')
+grid.loc[grid['algorithm'] == "ERMMerged", 'test_env'] = "all"
+grid['seed'] = grid.apply(lambda x: misc.seed_hash("MultiCenter", x.algorithm, x.hparams_seed, x.trial), axis=1)
+
+grid.to_csv(f"sweeps/{task}_best.csv", index=False)
 
 # ------------------------------------------------------------------------------
 # Plot ERM performance
@@ -56,7 +67,8 @@ g = (ggp.ggplot(plt, ggp.aes('test_env', 'train_env'))
         labels=['all', 'pooled (n-1)', 'MIMIC', 'eICU', 'HiRID', 'AUMC']
        )
      + ggp.scale_fill_cmap(cmap_name='Blues', limits=[0.5, 1.0], expand=(0, 0))
-     + ggp.guides(fill=ggp.guide_colourbar(barheight=50))
+     #+ ggp.guides(fill=ggp.guide_colourbar(barheight=50))
+     + ggp.guides(fill=None)
      + ggp.labs(
         x='\nEvaluation dataset',
         y='Training dataset',
@@ -71,7 +83,7 @@ g = (ggp.ggplot(plt, ggp.aes('test_env', 'train_env'))
        )
     )
 g
-ggp.ggsave(g, f'figures/erm_{task}.png')
+ggp.ggsave(g, f'figures/erm_{task}.png', width=4, height=6, dpi=300)
 
 
 # ------------------------------------------------------------------------------

@@ -39,7 +39,7 @@ erm.loc[['aumc', 'hirid', 'eicu', 'miiv', 'pooled (n-1)', 'all'], ['aumc', 'hiri
 # ------------------------------------------------------------------------------
 # Store grid for reruns with more trials
 grid = tbl[['hparams_seed', 'algorithm', 'test_env', 'val_env']].copy()
-grid = grid.reset_index()
+grid = grid.reset_index(drop=True)
 grid.loc[:, 'trial'] = pd.Series([[i for i in range(5)] for _ in range(grid.shape[0])])
 grid = grid.explode('trial')
 grid.loc[grid['algorithm'] == "ERMMerged", 'test_env'] = "all"

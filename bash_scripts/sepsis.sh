@@ -26,7 +26,7 @@ do
     python -m icudg.train \
         --task Sepsis \
         --algorithm ${algo} \
-        --hparams "{\"test_env\": \"${t}\", \"val_env\": \"${v}\", \"mc_architecture\": \"${NN}\"}" \
+        --hparams "{\"test_env\": \"${t}\", \"val_env\": \"${v}\", \"architecture\": \"${NN}\"}" \
         --hparams_seed ${hs} \
         --trial ${ts} \
         --seed ${seed} \

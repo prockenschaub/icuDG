@@ -20,7 +20,7 @@ do
     python -m clinicaldg.train \
         --task PhysioNet2019 \
         --algorithm ${algo} \
-        --hparams "{\"test_env\": \"${t}\", \"val_env\": \"${v}\", \"mc_architecture\": \"tcn\"}" \
+        --hparams "{\"test_env\": \"${t}\", \"val_env\": \"${v}\", \"architecture\": \"tcn\"}" \
         --hparams_seed ${hs} \
         --trial ${ts} \
         --seed ${seed} \

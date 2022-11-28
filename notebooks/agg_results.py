@@ -38,12 +38,16 @@ erm.loc[['aumc', 'hirid', 'eicu', 'miiv', 'pooled (n-1)', 'all'], ['aumc', 'hiri
 
 # ------------------------------------------------------------------------------
 # Store grid for reruns with more trials
-grid = tbl[['hparams_seed', 'algorithm', 'test_env', 'val_env']].copy()
+grid = tbl[['hparams_seed', 'algorithm', 'test_env', 'val_env', 'train_env']].copy()
+grid = grid[(grid.algorithm != "ERMID") | (grid.train_env == grid.test_env)]
 grid = grid.reset_index(drop=True)
-grid.loc[:, 'trial'] = pd.Series([[i for i in range(5)] for _ in range(grid.shape[0])])
+grid.loc[:, 'trial'] = pd.Series([[i for i in range(10)] for _ in range(grid.shape[0])])
 grid = grid.explode('trial')
 grid.loc[grid['algorithm'] == "ERMMerged", 'test_env'] = "all"
+grid = grid.drop_duplicates()
+grid = grid.drop(columns='train_env')
 grid['seed'] = grid.apply(lambda x: misc.seed_hash("MultiCenter", x.algorithm, x.hparams_seed, x.trial), axis=1)
+
 
 grid.to_csv(f"sweeps/{task}_best.csv", index=False)
 

@@ -51,7 +51,7 @@ def load_model_performance(path: Path) -> List:
         "args/trial",
         "folder",
         "es_step",
-        "es_val_loss",
+        "es_val_nll",
         "test_results"
     ]
     
@@ -82,7 +82,7 @@ def aggregate_results(df, by):
 def pick_best_result(df, by):
     return df.\
         groupby(by, observed=True, as_index=False).\
-        apply(lambda x: x.loc[x['es_val_loss']['mean'].idxmin(), :])
+        apply(lambda x: x.loc[x['es_val_nll']['mean'].idxmin(), :])
 
 def summ_mean_std(df, keep=None):
     df = df.copy()
@@ -112,7 +112,7 @@ def plot_base(progress: pd.DataFrame) -> ggp.ggplot:
     return (
         ggp.ggplot(progress, ggp.aes('step', group='trial'))
             + ggp.geom_line(ggp.aes(y='loss', color=['loss']), show_legend=True) 
-            + ggp.geom_line(ggp.aes(y='val_loss', color=['val']), show_legend=True)
+            + ggp.geom_line(ggp.aes(y='val_nll', color=['val']), show_legend=True)
             + ggp.geom_vline(ggp.aes(xintercept='es_step'), colour='black', show_legend=True)
             + ggp.scale_color_discrete(name='', limits=['loss', 'val', 'nll', 'penalty'])
             + ggp.facet_wrap("~ trial")

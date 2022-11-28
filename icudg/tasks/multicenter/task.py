@@ -127,7 +127,7 @@ class MulticenterICU(base.Task):
 
 
         # Calculate case weights based on train fold of train envs
-        if use_weight and not hasattr(self, "case_weight"):
+        if use_weight and not hasattr(self, "weights"):
             if not all_train_loaded:
                 raise RuntimeError(
                     f"If `use_weight` but no `case_weight` is prespecified, all training envs must be "

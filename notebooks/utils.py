@@ -76,7 +76,7 @@ def aggregate_results(df, by):
     return df.\
         drop(columns=['trial', 'folder', 'es_step']).\
         groupby(by+['hparams_seed'], observed=True).\
-        agg(['mean', 'std']).\
+        agg(['count', 'mean', 'std']).\
         reset_index()
 
 def pick_best_result(df, by):
@@ -84,7 +84,7 @@ def pick_best_result(df, by):
         groupby(by, observed=True, as_index=False).\
         apply(lambda x: x.loc[x['es_val_nll']['mean'].idxmin(), :])
 
-def summ_mean_std(df, keep=None):
+def summ_mean_ste(df, keep=None):
     df = df.copy()
     meta = [c for c, s in df.columns if s == ""]
     cols = [c for c, s in df.columns if s != ""]
@@ -94,7 +94,8 @@ def summ_mean_std(df, keep=None):
     if keep:
         cols = [c for c in cols if re.search(keep, c)]
     for c in cols:
-        df[c] = df[f'{c}_mean'].apply('{:.3f}'.format) + u"\u00B1" + df[f'{c}_std'].apply('{:.3f}'.format)
+        df[f'{c}_ste'] = df[f'{c}_std'] / df[f'{c}_count'] ** (1/2)
+        df[c] = df[f'{c}_mean'].apply('{:.3f}'.format) + u"\u00B1" + df[f'{c}_ste'].apply('{:.3f}'.format)
     return df[meta+cols]
 
 

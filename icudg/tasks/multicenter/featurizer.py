@@ -1,7 +1,18 @@
-
+import torch
 import torch.nn as nn
 
 from icudg import networks
+
+
+class GRUNet(nn.Module):
+    def __init__(self, num_inputs, hidden_dims, num_layers, dropout):
+        super().__init__()
+        self.rnn = nn.GRU(num_inputs, hidden_dims, num_layers, batch_first=True, dropout=dropout)
+        self.n_outputs = hidden_dims
+
+    def forward(self, x):
+        out, hn = self.rnn(x)
+        return out
 
 
 class TCNet(nn.Module):

@@ -176,7 +176,14 @@ class MulticenterICU(base.Task):
         Returns:
             torch.nn.Module
         """
-        if self.hparams['architecture'] == "tcn":
+        if self.hparams['architecture'] == "gru":
+            return featurizer.GRUNet(
+                self.num_inputs,
+                self.hparams['hidden_dims'],
+                self.hparams['num_layers'],
+                self.hparams['dropout']
+            )
+        elif self.hparams['architecture'] == "tcn":
             return featurizer.TCNet(
                 self.num_inputs,
                 self.hparams['hidden_dims'],

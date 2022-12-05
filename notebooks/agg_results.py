@@ -1,11 +1,23 @@
 import plotnine as ggp
+from scipy.stats import wilcoxon, ttest_rel
 
 from utils import *
 from icudg.lib import misc
 
 
-task = 'sepsis'
+task = 'aki'
 path = Path(f'/Users/patrick/clinicaldg-outputs/{task}')
+
+dbs = {
+    'aumc': 'AUMCdb',
+    'hirid': 'HiRID',
+    'eicu': 'eICU',
+    'miiv': 'MIMIC',
+    'pooled (n-1)': 'pooled (n-1)',
+    'all': 'all'
+}
+
+algos = ['ERM', 'CORAL', 'VREx', 'Fishr', 'MLDG', 'GroupDRO']
 
 # ------------------------------------------------------------------------------
 # Load and aggregate the results
@@ -13,7 +25,7 @@ grps = ['algorithm', 'val_env', 'test_env']
 res = load_model_performance(path)
 agg_res = aggregate_results(res, grps)
 bst_res = pick_best_result(agg_res, grps)
-summ = summ_mean_std(bst_res, "auroc")
+summ = summ_mean_ste(bst_res, "auroc")
 
 # ------------------------------------------------------------------------------
 # Tabulate ERM performance
@@ -34,7 +46,11 @@ erm = tbl.pivot_table(
     columns = 'test_env', 
     aggfunc = lambda x: x
 )
-erm.loc[['aumc', 'hirid', 'eicu', 'miiv', 'pooled (n-1)', 'all'], ['aumc', 'hirid', 'eicu', 'miiv']]
+erm = erm.loc[list(dbs.keys()), list(dbs.keys())[:4]]
+erm
+
+erm.index = pd.Index(list(dbs.values()))
+erm.to_csv(f'tables/erm_{task}.csv')
 
 # ------------------------------------------------------------------------------
 # Store grid for reruns with more trials
@@ -63,12 +79,12 @@ g = (ggp.ggplot(plt, ggp.aes('test_env', 'train_env'))
      + ggp.geom_hline(yintercept=2.5, size=4, colour='white')
      + ggp.coord_equal() 
      + ggp.scale_x_discrete(
-        limits=['aumc', 'hirid', 'eicu', 'miiv'],
-        labels=['AUMC', 'HiRID', 'eICU', 'MIMIC']
+        limits=list(dbs.keys())[:4],
+        labels=list(dbs.values())[:4]
        )
      + ggp.scale_y_discrete(
-        limits=['all', 'pooled (n-1)', 'miiv', 'eicu', 'hirid', 'aumc'],
-        labels=['all', 'pooled (n-1)', 'MIMIC', 'eICU', 'HiRID', 'AUMC']
+        limits=list(dbs.keys())[::-1],
+        labels=list(dbs.values())[::-1]
        )
      + ggp.scale_fill_cmap(cmap_name='Blues', limits=[0.5, 1.0], expand=(0, 0))
      #+ ggp.guides(fill=ggp.guide_colourbar(barheight=50))
@@ -105,23 +121,48 @@ dg = tbl.pivot_table(
     columns = 'evaluated_in', 
     aggfunc = lambda x: x
 )
-dg.loc[['ERM', 'CORAL', 'VREx', 'Fishr', 'MLDG', 'GroupDRO'], ['aumc', 'hirid', 'eicu', 'miiv']]
+dg = dg.loc[algos, list(dbs.keys())[:4]]
+dg
+dg.to_csv(f'tables/dg_{task}.csv')
 
+# ------------------------------------------------------------------------------
+# Test for differences to ERM
+
+exp = ['algorithm', 'test_env', 'hparams_seed']
+setting = tbl[exp]
+runs = setting.merge(res, on=exp)
+
+drop_cols = [c for c in runs.columns if "es_" in c or "nll" in c]
+perf = runs.drop(columns=drop_cols+['folder']).melt(id_vars=grps+['hparams_seed', 'trial'])
+perf = perf[perf['variable'].str.extract("^([a-z]+)").values.squeeze() == perf['test_env'].values]
+
+paired = perf[perf.algorithm == "ERM"].\
+    drop(columns=['algorithm', 'val_env', 'hparams_seed', 'variable']).\
+    merge(
+        perf[perf.algorithm != "ERM"].drop(columns=['val_env', 'hparams_seed', 'variable']), 
+        on=['test_env', 'trial'],
+        suffixes=['_erm', '_dg']
+    )
+
+def compare_to_erm(df, test=ttest_rel):
+    # Perform a one-sided test for hypothesis DG != ERM
+    res = test(df.value_dg.to_numpy(), df.value_erm.to_numpy(), alternative="two-sided")
+    return res.pvalue
+
+paired.groupby(['algorithm', 'test_env']).apply(compare_to_erm)
 
 # ------------------------------------------------------------------------------
 # Plot DG training process
 
 hparams = load_hparams(path)    
 
+# TODO: allow for LOO
+runs_hp = setting.merge(res[exp+['trial', 'folder', 'es_step']], on=exp).merge(hparams, on=exp)
+
 db = 'miiv'
 algo = 'GroupDRO'
 
-# TODO: allow for LOO
-exp = ['algorithm', 'test_env', 'hparams_seed']
-setting = tbl.loc[(tbl['algorithm'] == algo) & (tbl['test_env'] == db), exp]
-runs = setting.merge(res[exp+['trial', 'folder', 'es_step']], on=exp).merge(hparams, on=exp)
-
-progress = load_training_progress(path, db, runs.folder)
+progress = load_training_progress(path, db, runs_hp[(runs_hp['algorithm'] == algo) & (runs_hp['test_env'] == db)].folder)
 
 if algo == "CORAL":
     plot_fun = plot_coral
@@ -136,6 +177,8 @@ elif algo == "GroupDRO":
 
 
 plot_fun(runs.merge(progress, on='folder'))
+
+
 
 
 # ------------------------------------------------------------------------------

@@ -34,12 +34,13 @@ class TransformerNet(nn.Module):
     def __init__(self, num_inputs, hidden_dims, num_layers, num_heads, dropout):
         super().__init__()
         self.tf = networks.Transformer(
-            num_inputs,
-            hidden_dims,
-            num_heads,
-            1,
-            num_layers,
-            dropout=dropout
+            emb=num_inputs,
+            hidden=hidden_dims,
+            heads=num_heads,
+            ff_hidden_mult=2,
+            depth=num_layers,
+            dropout=dropout, 
+            dropout_att=dropout
         )
         self.n_outputs = hidden_dims
 

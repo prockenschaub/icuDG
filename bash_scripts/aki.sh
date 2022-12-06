@@ -13,6 +13,12 @@ conda activate clinicaldg-new
 
 set -x
 
+# If no architecture was set, default to TCN
+if [ -z ${NN} ]
+then 
+  export NN=tcn
+fi
+
 while IFS="," read -r hs algo t v ts seed
 do
     date 
@@ -20,14 +26,14 @@ do
     python -m icudg.train \
         --task AKI \
         --algorithm ${algo} \
-        --hparams "{\"test_env\": \"${t}\", \"val_env\": \"${v}\", \"architecture\": \"tcn\"}" \
+        --hparams "{\"test_env\": \"${t}\", \"val_env\": \"${v}\", \"architecture\": \"${NN}\"}" \
         --hparams_seed ${hs} \
         --trial ${ts} \
         --seed ${seed} \
         --es_metric val_nll \
         --es_patience 20 \
         --checkpoint_freq 10 \
-        --output_dir "outputs/aki/${t}/run${SLURM_ARRAY_TASK_ID}"
+        --output_dir "outputs/aki_${NN}/${t}/run${SLURM_ARRAY_TASK_ID}"
 
     date
 done < <(sed -n "$((${SLURM_ARRAY_TASK_ID}+1))p" "sweeps/mc_params_train.csv")

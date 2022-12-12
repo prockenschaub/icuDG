@@ -240,15 +240,15 @@ class MulticenterICU(base.Task):
                 auroc: area under the receiver operating characteristic
         """
         logits, y, mask = predict_on_set(algorithm, loader, device, self.get_mask)
-        mask = cat(mask)
+        mask = cat(mask).to(device)
         
         # Get the loss function
         loss = algorithm.loss_fn(logits.flatten(end_dim=-2), y.flatten(), mask.flatten()) # Loss is defined by task
 
         # Get the AUROC
         logits = logits[..., -1]
-        logits = logits.view(-1)[mask.view(-1)].numpy()
-        y = y.view(-1)[mask.view(-1)].long().numpy()
+        logits = logits.view(-1)[mask.view(-1)].cpu().numpy()
+        y = y.view(-1)[mask.view(-1)].long().cpu().numpy()
         auroc = roc_auc_score(y, logits)
 
         return {'nll': loss.item(), 'auroc': auroc}

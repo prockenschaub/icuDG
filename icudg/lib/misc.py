@@ -193,12 +193,12 @@ def predict_on_set(algorithm, loader, device, aux_fn=None):
     with torch.no_grad():
         for batch in loader:
             # Batch: (x, y, ...)
-            
-            # Make predictions
             x = to_device(batch[0], device)
-            
+            y = to_device(batch[1], device)
+
+            # Make predictions
             algorithm.eval()
-            preds = algorithm.predict(x).cpu()
+            preds = algorithm.predict(x)
 
             # Extract auxilliary information 
             aux = None
@@ -207,7 +207,7 @@ def predict_on_set(algorithm, loader, device, aux_fn=None):
 
             # Store all necessary information
             all_preds += [preds]
-            all_targets += [batch[1]]
+            all_targets += [y]
             all_aux += [aux]
     
     return cat(all_preds), cat(all_targets), all_aux

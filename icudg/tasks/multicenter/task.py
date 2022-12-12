@@ -170,6 +170,10 @@ class MulticenterICU(base.Task):
         """
         return ConcatDataset([self.envs[e][fold] for e in envs])
 
+    @property
+    def samples_per_epoch(self):
+        return min([len(self.envs[e]["train"]) for e in self.envs_loaded])
+
     def get_featurizer(self) -> torch.nn.Module:
         """Get the torch module used to embed the preprocessed input
 

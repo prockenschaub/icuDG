@@ -51,11 +51,8 @@ if __name__ == "__main__":
     parser.add_argument('--es_maximize', type=bool, default=False, 
         help='Flag to indicate if higher (=True) or lower (=False) values of `es_metric` are better.')
     parser.add_argument('--es_patience', type=int, default=10,
-        help='Number of tries without improvements of `es_metric` after which to stop (in multiples of `checkpoint_freq`).')
+        help='Number of epochs without improvements of `es_metric` after which to stop.')
 
-    
-    parser.add_argument('--checkpoint_freq', type=int, default=10,
-        help='Checkpoint every N steps.')
     parser.add_argument('--output_dir', type=str, default="train_output")
     parser.add_argument('--delete_model', action = 'store_true', 
         help = 'delete model weights after training to save disk space')
@@ -74,7 +71,6 @@ if __name__ == "__main__":
     print("Environment:")
     print("\tPython: {}".format(sys.version.split(" ")[0]))
     print("\tPyTorch: {}".format(torch.__version__))
-    print("\tTorchvision: {}".format(torchvision.__version__))
     print("\tCUDA: {}".format(torch.version.cuda))
     print("\tCUDNN: {}".format(torch.backends.cudnn.version()))
     print("\tNumPy: {}".format(np.__version__))
@@ -203,10 +199,9 @@ if __name__ == "__main__":
     train_minibatches_iterator = zip(*train_loaders)   
     checkpoint_vals = collections.defaultdict(lambda: [])
 
-    steps_per_epoch = min([len(i)/hparams['batch_size'] for i in train_dss])
+    steps_per_epoch = task.samples_per_epoch // hparams['batch_size']
 
     n_steps = args.max_steps
-    checkpoint_freq = args.checkpoint_freq
     
     es = EarlyStopping(patience=args.es_patience, maximize=args.es_maximize)    
     last_results_keys = None
@@ -232,12 +227,12 @@ if __name__ == "__main__":
             checkpoint_vals[key].append(val)
 
         # Validation and checkpointing
-        if step % checkpoint_freq == 0:
+        if step % steps_per_epoch == 0:
             prog_bar.set_description_str("Evaluating...")
 
             results = {
                 'step': step,
-                'epoch': step / steps_per_epoch,
+                'epoch': int(step / steps_per_epoch),
             }
 
             for key, val in checkpoint_vals.items():

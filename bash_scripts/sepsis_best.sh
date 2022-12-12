@@ -25,8 +25,7 @@ do
         --trial ${ts} \
         --seed ${seed} \
         --es_metric val_nll \
-        --es_patience 20 \
-        --checkpoint_freq 10 \
+        --es_patience 10 \
         --output_dir "outputs/sepsis_best/${t}/run${SLURM_ARRAY_TASK_ID}"
 
     date

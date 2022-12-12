@@ -124,7 +124,8 @@ if __name__ == "__main__":
     if torch.cuda.is_available():
         device = "cuda"
     else:
-        device = "cpu"               
+        device = "cpu"       
+    print(f"Device: {device}")       
     
     # Instantiate task
     task = task_class(hparams, vars(args))

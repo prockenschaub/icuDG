@@ -12,7 +12,6 @@ import tqdm
 import numpy as np
 import PIL
 import torch
-import torchvision
 import torch.utils.data
 
 from icudg import tasks
@@ -44,8 +43,8 @@ if __name__ == "__main__":
         help='Seed for everything else.')
 
     # Early stopping and model selection within current run
-    parser.add_argument('--max_steps', type=int, default=1000,
-        help='Maximum number of optimisation steps.')
+    parser.add_argument('--max_epochs', type=int, default=1000,
+        help='Maximum number of epochs.')
     parser.add_argument('--es_metric', type=str, default='val_nll',
         help='Metric used to determine whether or not to stop training early.')
     parser.add_argument('--es_maximize', type=bool, default=False, 
@@ -201,7 +200,7 @@ if __name__ == "__main__":
 
     steps_per_epoch = task.samples_per_epoch // hparams['batch_size']
 
-    n_steps = args.max_steps
+    n_steps = args.max_epochs * steps_per_epoch
     
     es = EarlyStopping(patience=args.es_patience, maximize=args.es_maximize)    
     last_results_keys = None

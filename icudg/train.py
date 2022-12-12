@@ -7,6 +7,7 @@ import os
 import random
 import sys
 import time
+import tqdm
 
 import numpy as np
 import PIL
@@ -211,7 +212,9 @@ if __name__ == "__main__":
 
     # Main training loop -------------------------------------------------------
     print("Training:")
+    prog_bar = tqdm.tqdm(leave=False)
     for step in range(start_step, n_steps):
+        prog_bar.update()
         # Check early stopping
         if es.early_stop:
             break
@@ -229,6 +232,8 @@ if __name__ == "__main__":
 
         # Validation and checkpointing
         if step % checkpoint_freq == 0:
+            prog_bar.set_description_str("Evaluating...")
+
             results = {
                 'step': step,
                 'epoch': step / steps_per_epoch,
@@ -240,7 +245,9 @@ if __name__ == "__main__":
             val_metrics = task.eval_metrics(algorithm, val_loader, device=device)
             val_metrics = misc.add_prefix(val_metrics, 'val')
             results.update(val_metrics)                        
-                
+
+            prog_bar.close()
+
             results_keys = sorted(results.keys())
             if results_keys != last_results_keys:
                 misc.print_row(results_keys, colwidth=12)
@@ -267,6 +274,7 @@ if __name__ == "__main__":
             if not algorithm.warmup:
                 es(-results[args.es_metric], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
 
+            prog_bar = tqdm.tqdm(leave=False)
 
     # Testing ------------------------------------------------------------------
     algorithm.load_state_dict(torch.load(os.path.join(args.output_dir, "model.pkl")))

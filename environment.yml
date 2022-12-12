@@ -17,3 +17,4 @@ dependencies:
 - pyyaml=6.0
 - statsmodels=0.13.2
 - tqdm=4.64.1
+- backpack-for-pytorch=1.5.0

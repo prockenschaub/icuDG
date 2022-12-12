@@ -6,10 +6,10 @@
 #SBATCH --partition=medium
 #SBATCH --time=24:00:00
 
-cd ~/work/ClinicalDG # NOTE: Change if your repo lives elsewhere
+cd ~/work/icuDG # NOTE: Change if your repo lives elsewhere
 
 eval "$($(which conda) shell.bash hook)"
-conda activate clinicaldg-new
+conda activate icudg
 
 set -x
 

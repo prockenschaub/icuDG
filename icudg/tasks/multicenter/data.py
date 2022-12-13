@@ -160,6 +160,31 @@ class ICUEnvironment():
         return Fold(self.data[fold], fold, self.pad_to)
 
 
+
+def fold_to_numpy(data):
+    pats = data['sta'].index
+    
+    inputs, targets = [], []
+    for idx in pats:
+        pat_id = pats[idx]
+        
+        # Get features and concatenate static and dynamic data
+        X_sta = data['sta'].loc[pat_id].values   # D
+        X_dyn = data['dyn'].loc[pat_id].values   # T x P
+        
+        num_time_steps = X_dyn.shape[0]
+        X = np.concatenate((np.tile(X_sta, (num_time_steps, 1)), X_dyn), axis=1)
+        X = X.astype(np.float32)
+
+        # Get labels
+        Y = data['outc'].loc[pat_id].values
+
+        inputs.append(X)
+        targets.append(Y)
+    
+    return inputs, targets
+
+
 class Fold(Dataset):
     """A single training, validation, or test fold of an environment
 
@@ -170,26 +195,15 @@ class Fold(Dataset):
     """
     def __init__(self, data: Dict[str, pd.DataFrame], fold: str, pad_to: int = None):
         self.fold = fold
-        self.data = data
         self.pats = self.data['sta'].index
+        self.data = fold_to_numpy(data)
         self.pad_to = pad_to
 
     def __len__(self):
         return len(self.pats)
     
     def __getitem__(self, idx):
-        pat_id = self.pats[idx]
-        
-        # Get features and concatenate static and dynamic data
-        X_sta = self.data['sta'].loc[pat_id].values   # D
-        X_dyn = self.data['dyn'].loc[pat_id].values   # T x P
-        
-        num_time_steps = X_dyn.shape[0]
-        X = np.concatenate((np.tile(X_sta, (num_time_steps, 1)), X_dyn), axis=1)
-        X = X.astype(np.float32)
-
-        # Get labels
-        Y = self.data['outc'].loc[pat_id].values  # 1 or T x 1
+        X, Y = self.data[0][idx], self.data[1][idx]
 
         # Pad them to the right length (if necessary)
         if self.pad_to:

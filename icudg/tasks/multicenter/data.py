@@ -4,7 +4,8 @@ import pyarrow.parquet as pq
 import multiprocessing as mp
 from typing import Dict, Tuple, Type
 
-from torch.utils.data import Dataset
+import torch
+from torch.utils.data import Dataset, TensorDataset
 
 from ...lib.resampling import get_cv_split
 from ...lib.misc import pad_to_len, pad_missing
@@ -125,6 +126,10 @@ class ICUEnvironment():
 
                 self.data[fold][part] = df
 
+    def to_X_y(self, pad_to=None) -> None:
+        for fold in ['train', 'val', 'test']:
+            self.data[fold] = fold_to_torch(self.data[fold], pad_to=pad_to)
+
     @property
     def loaded(self) -> bool:
         """Has the environment data been loaded yet?"""
@@ -143,7 +148,10 @@ class ICUEnvironment():
     def num_inputs(self) -> int:
         """combined number of inputs across static and dynamic predictors"""
         self.ascertain_loaded()
-        return len(self.data['train']['sta'].columns) + len(self.data['train']['dyn'].columns)
+        if isinstance(self.data['train'], dict):
+            return len(self.data['train']['sta'].columns) + len(self.data['train']['dyn'].columns)
+        elif isinstance(self.data['train'], tuple):
+            return self.data['train'][0][0].shape[1]
 
     def __getitem__(self, fold: str) -> Type["Fold"]:
         """Training, validation, or test fold of the current environment
@@ -157,17 +165,15 @@ class ICUEnvironment():
         self.ascertain_loaded()
         if not fold in ['train', 'val', 'test']:
             raise ValueError(f'fold must be one of ["train", "val", "test"], got {fold}')
-        return Fold(self.data[fold], fold, self.pad_to)
+        return TensorDataset(*self.data[fold])
 
 
 
-def fold_to_numpy(data):
+def fold_to_torch(data, pad_to=None):
     pats = data['sta'].index
     
     inputs, targets = [], []
-    for idx in pats:
-        pat_id = pats[idx]
-        
+    for pat_id in pats:
         # Get features and concatenate static and dynamic data
         X_sta = data['sta'].loc[pat_id].values   # D
         X_dyn = data['dyn'].loc[pat_id].values   # T x P
@@ -179,10 +185,20 @@ def fold_to_numpy(data):
         # Get labels
         Y = data['outc'].loc[pat_id].values
 
+        # Pad them to the right length (if necessary)
+        if pad_to:
+            X = pad_to_len(X, pad_to, PAD_VALUE)       # pad_to x P
+            if len(Y.shape) == 2:
+                Y = pad_to_len(Y, pad_to, PAD_VALUE)   # pad_to x 1
+                Y = Y[:, -1] 
+            Y = pad_missing(Y)
+        
+        Y = Y.astype(np.int64)
+
         inputs.append(X)
         targets.append(Y)
     
-    return inputs, targets
+    return torch.tensor(np.stack(inputs)), torch.tensor(np.stack(targets))
 
 
 class Fold(Dataset):
@@ -195,23 +211,12 @@ class Fold(Dataset):
     """
     def __init__(self, data: Dict[str, pd.DataFrame], fold: str, pad_to: int = None):
         self.fold = fold
-        self.pats = data['sta'].index.copy()
-        self.data = fold_to_numpy(data)
-        self.pad_to = pad_to
+        self.data = data
 
     def __len__(self):
-        return len(self.pats)
+        return len(self.data[0])
     
     def __getitem__(self, idx):
         X, Y = self.data[0][idx], self.data[1][idx]
-
-        # Pad them to the right length (if necessary)
-        if self.pad_to:
-            X = pad_to_len(X, self.pad_to, PAD_VALUE)       # pad_to x P
-            if len(Y.shape) == 2:
-                Y = pad_to_len(Y, self.pad_to, PAD_VALUE)   # pad_to x 1
-                Y = Y[:, -1] 
-            Y = pad_missing(Y)
-        Y = Y.astype(np.int64)
 
         return X, Y

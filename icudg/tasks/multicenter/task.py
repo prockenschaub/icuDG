@@ -118,6 +118,7 @@ class MulticenterICU(base.Task):
             if name in envs:
                 obj.normalise(self.means, self.stds)
                 obj.impute()
+                obj.to_X_y(pad_to=self.pad_to)
 
         # Check that all have the same number of inputs after preprocessing
         input_dims = np.unique([e.num_inputs for e in self.envs.values() if e.loaded])
@@ -133,8 +134,8 @@ class MulticenterICU(base.Task):
                     f"If `use_weight` but no `case_weight` is prespecified, all training envs must be "
                     f"setup. The following training envs are missing: {set(self.TRAIN_ENVS) - set(self.envs_loaded)}"
                 )
-            train_data = pd.concat([self.envs[e]['train'].data['outc'] for e in self.TRAIN_ENVS])
-            prop_cases = np.mean(train_data.iloc[:, 0])
+            train_data = torch.concat([self.envs[e]['train'][:][1] for e in self.TRAIN_ENVS])
+            prop_cases = torch.mean(train_data[train_data != data.PAD_VALUE].float())
             case_weight = (1. - prop_cases) / prop_cases
             self.weights = torch.tensor([1., case_weight], dtype=torch.float32)
         elif not use_weight:
@@ -265,7 +266,7 @@ class MulticenterICU(base.Task):
         """
         save_dict = {
             'loaded': self.envs_loaded,
-            'splits': {n: e.splits for n, e in self.envs.items() if e.loaded},
+            #'splits': {n: e.splits for n, e in self.envs.items() if e.loaded},
             'means': self.means,
             'stds': self.stds
         }

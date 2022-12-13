@@ -128,7 +128,7 @@ class ICUEnvironment():
 
     def to_X_y(self, pad_to=None) -> None:
         for fold in ['train', 'val', 'test']:
-            self.data[fold] = fold_to_torch(self.data[fold], pad_to=pad_to).to("cuda")
+            self.data[fold] = fold_to_torch(self.data[fold], pad_to=pad_to)
 
     @property
     def loaded(self) -> bool:
@@ -198,7 +198,7 @@ def fold_to_torch(data, pad_to=None):
         inputs.append(X)
         targets.append(Y)
     
-    return torch.tensor(np.stack(inputs)), torch.tensor(np.stack(targets))
+    return torch.tensor(np.stack(inputs)).to("cuda"), torch.tensor(np.stack(targets)).to("cuda")
 
 
 class Fold(Dataset):

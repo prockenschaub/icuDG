@@ -128,7 +128,7 @@ class ICUEnvironment():
 
     def to_X_y(self, pad_to=None) -> None:
         for fold in ['train', 'val', 'test']:
-            self.data[fold] = fold_to_torch(self.data[fold], pad_to=pad_to)
+            self.data[fold] = fold_to_torch(self.data[fold], pad_to=pad_to).to("cuda")
 
     @property
     def loaded(self) -> bool:

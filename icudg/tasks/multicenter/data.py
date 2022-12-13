@@ -195,7 +195,7 @@ class Fold(Dataset):
     """
     def __init__(self, data: Dict[str, pd.DataFrame], fold: str, pad_to: int = None):
         self.fold = fold
-        self.pats = self.data['sta'].index
+        self.pats = data['sta'].index.copy()
         self.data = fold_to_numpy(data)
         self.pad_to = pad_to
 

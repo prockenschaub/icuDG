@@ -1,3 +1,6 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Modifications made by Patrick Rockenschaub
+
 import torch
 
 from icudg.lib.hparams_registry import HparamSpec
@@ -6,9 +9,9 @@ from .erm import ERM
 
 
 class GroupDRO(ERM):
-    """
-    Robust ERM minimizes the error at the worst minibatch
-    Algorithm 1 from [https://arxiv.org/pdf/1911.08731.pdf]
+    """Robust ERM minimizes the error at the worst minibatch
+    
+    Implements algorithm 1 from https://arxiv.org/pdf/1911.08731.pdf
     """
 
     HPARAM_SPEC = ERM.HPARAM_SPEC + [

@@ -1,3 +1,5 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Modifications made by Patrick Rockenschaub
 import copy
 
 import torch
@@ -9,9 +11,9 @@ from icudg.lib.misc import split_meta_train_test
 from .erm import ERM
 
 class MLDG(ERM):
-    """
-    Model-Agnostic Meta-Learning
-    Algorithm 1 / Equation (3) from: https://arxiv.org/pdf/1710.03463.pdf
+    """Model-Agnostic Meta-Learning
+    
+    Implements algorithm 1 / equation (3) from: https://arxiv.org/pdf/1710.03463.pdf
     Related: https://arxiv.org/pdf/1703.03400.pdf
     Related: https://arxiv.org/pdf/1910.13580.pdf
     """

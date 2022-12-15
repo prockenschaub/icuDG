@@ -9,6 +9,9 @@ import pandas as pd
 from sklearn.isotonic import IsotonicRegression
 from statsmodels.gam.api import GLMGam, BSplines
 import plotnine as ggp
+from typing import List, Tuple
+
+import torch
 
 from icudg import tasks
 from icudg import algorithms
@@ -17,14 +20,33 @@ from icudg.lib.misc import predict_on_set
 
 from notebooks.utils import load_all_stats
 
-def init_data_loader(datasets, task, fold):
-        return FastDataLoader(
-            dataset=task.get_torch_dataset(datasets, fold),  
-            batch_size=1024,
-            num_workers=1
-        )
+def init_data_loader(envs: List[str], task: tasks.Task, fold: str) -> FastDataLoader:
+    """Initialise a dataloader
 
-def get_predictions(algorithm, loader):
+    Args:
+        env: name of one or more environments that should contribute to the dataloader 
+        task: a set up task object containing the data
+        fold: the resampling fold to load, can be 'train', 'val', or 'test'
+
+    Returns:
+        an initialised dataloader
+    """
+    return FastDataLoader(
+        dataset=task.get_torch_dataset(envs, fold),  
+        batch_size=1024,
+        num_workers=1
+    )
+
+def get_predictions(algorithm: algorithms.Algorithm, loader: FastDataLoader) -> Tuple[np.ndarray, np.ndarray]:
+    """Obtain predictions from a fitted algorithm 
+
+    Args:
+        algorithm: the fitted prediction model
+        loader: the initialised data loader
+
+    Returns:
+        predictions and targets for all samples of the dataloader
+    """
     preds, targets, _ = predict_on_set(algorithm, loader, 'cpu')
     preds = torch.softmax(preds, dim=-1)
     preds = preds[..., -1].flatten()
@@ -32,15 +54,57 @@ def get_predictions(algorithm, loader):
     mask = targets != 2
     return preds[mask].numpy(), targets[mask].numpy()
 
-def enframe_result(preds, recal, targets, mode, train, test):
+def enframe_result(
+    raw: np.ndarray, 
+    recal: np.ndarray, 
+    targets: np.ndarray, 
+    mode: str, 
+    train: List[str], 
+    test: str
+) -> pd.DataFrame:
+    """Combine raw and recalibrated prediction results in a pandas DataFrame
+
+    Args:
+        raw: raw model predictions
+        recal: recalibrated model predictions
+        targets: ground truth labels
+        mode: fold for which the predictions were calculated, can be 'train', 'val', or 'test'
+        train: names of all training environments
+        test: name of the test environment
+
+    Returns:
+        all results in a single DataFrame
+    """
     return pd.DataFrame({
         'mode': mode,
         'train': train[0] if len(train) == 1 else 'pooled',
         'test': test,
-        'raw': preds, 
+        'raw': raw, 
         'recal': recal, 
         'target': targets
     })
+
+def smooth(preds: pd.Series, targets: pd.Series) -> Tuple[np.ndarray, np.ndarray]:
+    """Calculate smooth calibration curves using a Generalised Additive Model with BSplines
+
+    Args:
+        preds: model predictions
+        targets: ground truth labels
+
+    Note that the data is winsorised before fitting the GAM.
+
+    Returns:
+        smoothed values y over a grid x
+    """
+    q = preds.quantile([0.005, 0.995])
+    keep = (preds > q.iloc[0]) & (preds < q.iloc[1])
+    preds, targets = preds[keep], targets[keep]
+    bs = BSplines(preds, df=4, degree=3)
+    model = GLMGam(endog=targets, smoother=bs)
+    fit = model.fit()
+    x = np.arange(preds.min(), preds.max(), 0.01)
+    y = fit.predict(exog_smooth=x)
+    return x, y
 
 
 if __name__ == '__main__':
@@ -118,18 +182,6 @@ if __name__ == '__main__':
                 print(", ", end="")
 
     res = pd.concat(res)
-    
-
-    def smooth(preds, targets):
-        q = preds.quantile([0.005, 0.995])
-        keep = (preds > q.iloc[0]) & (preds < q.iloc[1])
-        preds, targets = preds[keep], targets[keep]
-        bs = BSplines(preds, df=4, degree=3)
-        model = GLMGam(endog=targets, smoother=bs)
-        fit = model.fit()
-        x = np.arange(preds.min(), preds.max(), 0.01)
-        y = fit.predict(exog_smooth=x)
-        return x, y
 
     res = res[(res['mode'] == 'test') & ((res['train'] == "pooled") | (res['train'] == res['test']))]
 

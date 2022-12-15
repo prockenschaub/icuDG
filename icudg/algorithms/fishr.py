@@ -1,8 +1,9 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Modifications made by Patrick Rockenschaub
 from collections import OrderedDict
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from backpack import backpack, extend
 from backpack.extensions import BatchGrad
@@ -15,7 +16,10 @@ from .base import Algorithm
 
 
 class Fishr(Algorithm):
-    "Invariant Gradients variances for Out-of-distribution Generalization"
+    """Invariant Gradients variances for Out-of-distribution Generalization
+
+    Implements algorithm 1 from https://arxiv.org/abs/2109.02934
+    """
 
     HPARAM_SPEC = Algorithm.HPARAM_SPEC + [
         HparamSpec('fishr_lambda', 1000., lambda r: 10**r.uniform(1., 4.)),

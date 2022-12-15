@@ -1,3 +1,5 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Modifications made by Patrick Rockenschaub
 import torch
 
 from icudg.lib.hparams_registry import HparamSpec
@@ -6,7 +8,10 @@ from icudg.lib.misc import cat
 from .erm import ERM
 
 class VREx(ERM):
-    """V-REx algorithm from http://arxiv.org/abs/2003.00688"""
+    """Out-of-Distribution Generalization via Risk Extrapolation (REx)
+    
+    Implements equation (8) from http://arxiv.org/abs/2003.00688
+    """
     
     HPARAM_SPEC = ERM.HPARAM_SPEC + [
         HparamSpec('vrex_lambda', 1e1, lambda r: 10**r.uniform(-1, 5)),

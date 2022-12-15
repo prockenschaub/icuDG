@@ -32,7 +32,7 @@ if __name__ == "__main__":
     
     # Hyperparameters and trial definition
     parser.add_argument('--hparams', type=str,
-        help='JSON-serialized hparams dictionary.')
+        help='Algorithm and task hyperparameters serialised as JSON.')
     parser.add_argument('--hparams_seed', type=int, default=0,
         help='Seed for random draw of unspecified hparams (0 means "default hparams").')
     parser.add_argument('--n_splits', type=int, default=5,
@@ -54,13 +54,13 @@ if __name__ == "__main__":
 
     parser.add_argument('--output_dir', type=str, default="train_output")
     parser.add_argument('--delete_model', action = 'store_true', 
-        help = 'delete model weights after training to save disk space')
+        help = 'Whether to delete model weights after training to save disk space')
     
     # Misc training settings
     parser.add_argument('--debug', action = 'store_true', 
-        help = 'flag to debug model with small sample size')
+        help = 'Whether to debug model with a smaller sample size')
     parser.add_argument('--num_workers', type=int, default=1,
-        help = 'number of workers for data loader')
+        help = 'Number of workers for data loader')
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)

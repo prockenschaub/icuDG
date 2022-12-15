@@ -1,8 +1,11 @@
 import math
 
 import torch
+from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
+
+from typing import List, Union
 
 # Self-attention network -------------------------------------------------------
 #
@@ -12,7 +15,7 @@ import torch.nn.functional as F
 # Code copied from https://github.com/ratschlab/HIRID-ICU-Benchmark/
 
 
-def parrallel_recomb(q_t, kv_t, att_type='all', local_context=3, bin_size=None):
+def parrallel_recomb(q_t: Tensor, kv_t: Tensor, att_type: str = 'all', local_context: int = 3, bin_size: int = None):
     """ Return mask of attention matrix (ts_q, ts_kv) """
     with torch.no_grad():
         q_t[q_t == -1.0] = float('inf')  # We want padded to attend to everyone to avoid any nan.
@@ -43,7 +46,7 @@ def parrallel_recomb(q_t, kv_t, att_type='all', local_context=3, bin_size=None):
 class PositionalEncoding(nn.Module):
     "Positiona Encoding, mostly from: https://pytorch.org/tutorials/beginner/transformer_tutorial.html"
 
-    def __init__(self, emb, max_len=3000):
+    def __init__(self, emb: int, max_len: int = 3000):
         super().__init__()
         pe = torch.zeros(max_len, emb)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
@@ -53,29 +56,39 @@ class PositionalEncoding(nn.Module):
         pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         bs, n, emb = x.size()
         return x + self.pe[:, :n, :]
 
 
 class SelfAttention(nn.Module):
     """Multi Head Attention block from Attention is All You Need.
-    Input has shape (batch_size, n_timestemps, emb).
 
-    ----------
-    emb:
-        Dimension of the input vector.
-    hidden:
-        Dimension of query, key, value matrixes.
-    heads:
-        Number of heads.
-
-    mask:
-        Mask the future timestemps
+    Args
+        emb: dimension of the input vector.
+        hidden: dimension of query, key, value matrixes.
+        heads: number of heads.
+        mask: whether to mask future timestemps
+        att_type: which time steps to use for attention, can be 'all', 'local', or 'strided'. 
+            The latter two require a local context to be set. Defaults to 'all'.
+        local_context: additional information for which time steps to attend to, interpretation depends on 
+            `att_type`. For 'local', only time steps within `local_context` steps of the current steps are attended
+            to. For 'stride', only every `local_context` is attended to.
+        mask_aggregation: if more than one type of attention, decide how to combine them. Can be 'union' 
+            (boolean OR of masks) or 'split' (concatenation of masks).
+        dropout_att: proportion of nodes to disable during training. Defaults to 0.
     """
-
-    def __init__(self, emb, hidden, heads=8, mask=True, att_type='all', local_context=None, mask_aggregation='union',
-                 dropout_att=0.0):
+    def __init__(
+        self, 
+        emb: int, 
+        hidden: int, 
+        heads: int = 8, 
+        mask: bool = True, 
+        att_type: Union[str, List[str]] = 'all', 
+        local_context: int = None, 
+        mask_aggregation: str ='union',
+        dropout_att: float = 0.0
+    ):
         """Initialize the Multi Head Block."""
         super().__init__()
 
@@ -98,15 +111,14 @@ class SelfAttention(nn.Module):
         # Output linear function
         self.unifyheads = nn.Linear(heads * hidden, emb)
 
-    def forward(self, x):
-        """
-        x:
-            Input data tensor with shape (batch_size, n_timestemps, emb)
-        hidden:
-            Hidden dim (dimension of query, key, value matrixes)
+    def forward(self, x: Tensor) -> Tensor:
+        """Apply forward step to x
 
+        Args
+            x: input data tensor with shape (batch_size, n_timestemps, emb)
+            
         Returns
-            Self attention tensor with shape (batch_size, n_timestemps, emb)
+            self attention tensor with shape (batch_size, n_timestemps, emb)
         """
         # bs - batch_size, n - vectors number, emb - embedding dimensionality
         bs, n, emb = x.size()
@@ -182,9 +194,29 @@ class SelfAttention(nn.Module):
 
 
 class TransformerBlock(nn.Module):
+    """Self-attention followed by layer normalisation and feed-forward network
 
-    def __init__(self, emb, hidden, heads, ff_hidden_mult, dropout=0.0, mask=True, dropout_att=0.0):
-        super().__init__()
+    Args:
+        emb: dimension of the input vector.
+        hidden: dimension of query, key, value matrixes.
+        heads: number of heads.
+        ff_hidden_mult: factor by which to scale hidden dimension of the feed-forward network, i.e., 
+            ff_hidden = emb * ff_hidden_mult
+        dropout: proportion of feed-forward input and output nodes to disable during training. Defaults to 0.
+        mask: whether to mask future timestemps
+        dropout_att: proportion of self-attention nodes to disable during training. Defaults to 0.
+    """
+    def __init__(
+        self, 
+        emb: int, 
+        hidden: int, 
+        heads: int, 
+        ff_hidden_mult: int, 
+        dropout: float = 0.0, 
+        mask: bool = True, 
+        dropout_att: float = 0.0
+    ):
+        super().__init__() 
 
         self.attention = SelfAttention(emb, hidden, heads=heads, mask=mask, dropout_att=dropout_att)
         self.mask = mask
@@ -199,7 +231,15 @@ class TransformerBlock(nn.Module):
 
         self.drop = nn.Dropout(dropout)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
+        """Apply forward step to x
+
+        Args
+            x: input data tensor with shape (batch_size, n_timestemps, emb)
+            
+        Returns
+            self attention tensor with shape (batch_size, n_timestemps, emb)
+        """
         attended = self.attention.forward(x)
         x = self.norm1(attended + x)
         x = self.drop(x)
@@ -212,7 +252,20 @@ class TransformerBlock(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, emb, hidden, heads, ff_hidden_mult, depth, dropout=0.0, l1_reg=0,
+    """One or more sequential Transformer blocks w/ or w/o positional embedding
+
+    Args:
+        emb: dimension of the input vector.
+        hidden: dimension of query, key, value matrixes.
+        heads: number of heads.
+        ff_hidden_mult: factor by which to scale hidden dimension of the feed-forward network, i.e., 
+            ff_hidden = emb * ff_hidden_mult
+        depth: number of transformer blocks
+        dropout: proportion of feed-forward input and output nodes to disable during training. Defaults to 0.
+        pos_encoding: whether to use positional encoding 
+        dropout_att: proportion of self-attention nodes to disable during training. Defaults to 0.
+    """
+    def __init__(self, emb, hidden, heads, ff_hidden_mult, depth, dropout=0.0, 
                  pos_encoding=True, dropout_att=0.0):
         super().__init__()
 
@@ -229,9 +282,18 @@ class Transformer(nn.Module):
                                             dropout=dropout, dropout_att=dropout_att))
 
         self.tblocks = nn.Sequential(*tblocks)
-        self.l1_reg = l1_reg
+        self.l1_reg = None # TODO: left for legacy issues when loading already trained models. Remove
+                           # once this isn't an issue anymore. 
 
     def forward(self, x):
+        """Apply forward step to x
+
+        Args
+            x: input data tensor with shape (batch_size, n_timestemps, emb)
+            
+        Returns
+            self attention tensor with shape (batch_size, n_timestemps, emb)
+        """
         x = self.input_embedding(x)
         if self.pos_encoder is not None:
             x = self.pos_encoder(x)

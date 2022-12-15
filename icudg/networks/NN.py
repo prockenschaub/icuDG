@@ -1,9 +1,18 @@
+from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 
 class MLP(nn.Module):
-    """Just an MLP"""
-    def __init__(self, n_inputs, hidden_dims, num_layers, n_outputs, dropout=0.):
+    """Just a Multilayer Perceptron
+    
+    Args:
+        n_inputs: dimension of input feature vector
+        hidden_dims: dimension of hidden layers
+        num_layers: total number of layers (including input and output layer)
+        n_outputs: dimensionality of output, e.g., 2 in the case of binary classification
+        dropout: proportion of nodes to disable during training. Defaults to 0..
+    """
+    def __init__(self, n_inputs: int, hidden_dims: int, num_layers: int, n_outputs: int, dropout: float = 0.):
         super(MLP, self).__init__()
         self.input = nn.Linear(n_inputs, hidden_dims)
         self.dropout = nn.Dropout(dropout)
@@ -13,7 +22,15 @@ class MLP(nn.Module):
         self.output = nn.Linear(hidden_dims, n_outputs)
         self.n_outputs = n_outputs
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
+        """Apply forward step to x
+
+        Args:
+            x: input data of dimension (batch_size, ..., n_inputs) 
+
+        Returns:
+            model prediction of dimension (batch_size, ..., n_output)
+        """
         x = self.input(x)
         x = self.dropout(x)
         x = F.relu(x)

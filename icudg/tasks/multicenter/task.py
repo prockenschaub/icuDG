@@ -1,9 +1,10 @@
 import pickle
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Callable
+from typing import List, Dict, Tuple, Callable
 
 import torch
+from torch import Tensor
 from torch.utils.data import ConcatDataset
 
 from icudg.lib.hparams_registry import HparamSpec
@@ -20,9 +21,9 @@ class MulticenterICU(base.Task):
     """Basic task setup for experiments using multicenter ICU data.
 
     Args:
-        outcome (str): the outcome to predict ("mortality24", "aki", or "sepsis")
-        hparams (dict): a dictionary with all relevant hyperparameters
-        args (dict): additional training arguments passed via the command line
+        outcome: the outcome to predict ("mortality24", "aki", or "sepsis")
+        hparams: a dictionary with all relevant hyperparameters
+        args: additional training arguments passed via the command line
 
     Environments: 
         'miiv' : MIMIC IV (US)
@@ -61,7 +62,7 @@ class MulticenterICU(base.Task):
         HparamSpec('fishr_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
     ]
 
-    def __init__(self, outcome, hparams, args):
+    def __init__(self, outcome: str, hparams: Dict, args: Dict):
         self.outcome = outcome
         self.args = args
         self.hparams = hparams
@@ -80,9 +81,13 @@ class MulticenterICU(base.Task):
 
     @property
     def envs_loaded(self) -> List[str]:
+        """List all loaded environments 
+        
+        Note: this differs from the list of possible environments. Call self.setup() to load an environment.
+        """
         return [e.db for e in self.envs.values() if e.loaded]
 
-    def setup(self, envs: List[str] = None, use_weight: bool = True) -> None:
+    def setup(self, envs: List[str] = None, use_weight: bool = True):
         """Perform actual data loading and preprocessing
         
         Args:
@@ -154,16 +159,16 @@ class MulticenterICU(base.Task):
         self.means = means
         self.stds = stds
 
-    def set_weights(self, weight: torch.Tensor):
-        """"""
+    def set_weights(self, weight: Tensor):
+        """Set the case weights"""
         self.weights = weight
 
     def get_torch_dataset(self, envs: List[str], fold: str) -> ConcatDataset:
         """Get one or more envs as a torch dataset
 
         Args:
-            envs (List[str]): list of environment names to get
-            fold (str): fold to return ('train', 'val', 'test')
+            envs: list of environment names to get
+            fold: fold to return, can be 'train', 'val', or 'test'
 
         Returns:
             ConcatDataset
@@ -172,13 +177,11 @@ class MulticenterICU(base.Task):
 
     @property
     def samples_per_epoch(self):
+        """1 Epoch = number of samples in the smallest environment"""
         return min([len(self.envs[e]["train"]) for e in self.envs_loaded])
 
     def get_featurizer(self) -> torch.nn.Module:
         """Get the torch module used to embed the preprocessed input
-
-        Returns:
-            torch.nn.Module
         """
         if self.hparams['architecture'] == "gru":
             return featurizer.GRUNet(
@@ -210,17 +213,11 @@ class MulticenterICU(base.Task):
 
     def get_loss_fn(self, reduction='mean') -> Callable:
         """Return the loss function for this task, a (weighted) mask BCE loss
-
-        Returns:
-            Callable: loss function
         """
         return MaskedBCEWithLogitsLoss(getattr(self, "weights", None), reduction)
 
     def get_extended_loss_fn(self, reduction='mean') -> Callable:
         """Return a loss function with extended gradient calculations for Fishr
-
-        Returns:
-            Callable: loss function
         """
         return MaskedBCEWithLogitsLoss(getattr(self, "weights", None), reduction, extend=True)
 
@@ -257,11 +254,11 @@ class MulticenterICU(base.Task):
 
         return {'nll': loss.item(), 'auroc': auroc}
 
-    def save_task(self, file_path: str) -> None:
+    def save_task(self, file_path: str):
         """Save the task state for reproducibility (splits and means)
 
         Args:
-            file_path (str): file path specifying where to save the task
+            file_path: file path specifying where to save the task
         """
         save_dict = {
             'loaded': self.envs_loaded,
@@ -274,31 +271,39 @@ class MulticenterICU(base.Task):
 
 
 class Mortality24(MulticenterICU):
+    """Task for the prediction of ICU mortality after 24 hours of observation"""
     def __init__(self, hparams, args):
         self.pad_to = None
         super().__init__('mortality24', hparams, args)
 
-    def get_mask(self, batch):
+    def get_mask(self, batch: Tuple[Tensor]) -> Tensor:
+        """Consider all 24h for the prediction of mortality
+        """
         # batch: x, y, ...
         y = batch[1]
         return torch.ones_like(y, dtype=torch.bool)
 
     def get_featurizer(self):
+        """Only consider last prediction of the featurizer"""
         return featurizer.LastStep(super(Mortality24, self).get_featurizer())
 
 
 class AKI(MulticenterICU):
+    """Task for the hourly prediction of acute kidney injury"""
     def __init__(self, hparams, args):
         self.pad_to = 169 # one week of data
         super().__init__("aki", hparams, args)
 
-    def get_mask(self, batch):
+    def get_mask(self, batch: Tuple[Tensor]) -> Tensor:
+        """Consider only the hours until a patient is discharged or censored
+        """
         # batch: x, y, ...
         y = batch[1]
         return y != data.PAD_VALUE
 
 
 class Sepsis(MulticenterICU):
+    """Task for the hourly prediction of sepsis"""
     HPARAM_SPEC = MulticenterICU.HPARAM_SPEC + [
         HparamSpec('mmd_beta', 1000., lambda r: 10**r.uniform(2., 5.))
     ]
@@ -307,7 +312,10 @@ class Sepsis(MulticenterICU):
         self.pad_to = 169 # one week of data
         super().__init__("sepsis", hparams, args)
 
-    def get_mask(self, batch):
+    def get_mask(self, batch: Tuple[Tensor]) -> Tensor:
+        """Consider only the hours until a patient is discharged or censored
+        """
         # batch: x, y, ...
         y = batch[1]
         return y != data.PAD_VALUE
+    

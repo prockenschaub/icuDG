@@ -91,3 +91,21 @@ if __name__ == '__main__':
      + ggp.geom_abline(intercept=0, slope=1, linetype="dashed")
      + ggp.coord_fixed(xlim=[0, 1], ylim=[0, 1])
     )
+
+
+    test_preds, test_targets, _ = predict_on_set(algorithm, test_loader, 'cpu')
+    test_preds, test_targets = postprocess_preds(test_preds, test_targets)
+    raw = pd.DataFrame({'preds': test_preds, 'targets': test_targets})
+    (ggp.ggplot(raw, ggp.aes('preds', 'targets')) 
+     + ggp.geom_smooth()
+     + ggp.geom_abline(intercept=0, slope=1, linetype="dashed")
+     + ggp.coord_fixed(xlim=[0, 1], ylim=[0, 1])
+    )
+
+    iso_preds = iso.predict(test_preds)
+    recal = pd.DataFrame({'preds': iso_preds, 'targets': test_targets})
+    (ggp.ggplot(recal, ggp.aes('preds', 'targets')) 
+     + ggp.geom_smooth()
+     + ggp.geom_abline(intercept=0, slope=1, linetype="dashed")
+     + ggp.coord_fixed(xlim=[0, 1], ylim=[0, 1])
+    )

@@ -18,8 +18,6 @@ def safe_mkdir(path):
             return 
         path.mkdir(parents=True, exist_ok=True)
 
-# PhysioNet CinC Challenge 2019 ------------------------------------------------
-
 def download_physionet2019(path):
     path = Path(path)
     safe_mkdir(path)
@@ -53,6 +51,5 @@ def import_physionet2019():
 
 
 if __name__ == "__main__":
-    download_mnist()
     download_physionet2019()
     import_physionet2019()

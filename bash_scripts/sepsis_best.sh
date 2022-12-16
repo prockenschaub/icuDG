@@ -32,7 +32,7 @@ do
         --seed ${seed} \
         --es_metric val_nll \
         --es_patience 10 \
-        --output_dir "outputs/sepsis_best_${NN}/${t}/run${SLURM_ARRAY_TASK_ID}"
+        --output_dir "outputs/sepsis_${NN}_best/${t}/run${SLURM_ARRAY_TASK_ID}"
 
     date
-done < <(sed -n "$((${SLURM_ARRAY_TASK_ID}+1))p" "sweeps/sepsis_best_${NN}.csv")
+done < <(sed -n "$((${SLURM_ARRAY_TASK_ID}+1))p" "sweeps/sepsis_${NN}_best.csv")

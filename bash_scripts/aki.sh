@@ -4,7 +4,7 @@
 #SBATCH --ntasks=2
 #SBATCH --mem=25G
 #SBATCH --partition=medium
-#SBATCH --time=24:00:00
+#SBATCH --time=36:00:00
 
 cd ~/work/icuDG # NOTE: Change if your repo lives elsewhere
 

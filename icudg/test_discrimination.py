@@ -43,7 +43,7 @@ if __name__ == '__main__':
         torch.load(os.path.join(args.input_dir, "model.pkl"))
     )
 
-    # Discrimintation
+    # Discrimination
     test_loader = FastDataLoader(
         dataset=task.get_torch_dataset(['miiv'], 'val'),  
         batch_size=train_hparams['batch_size']*4,
@@ -51,61 +51,4 @@ if __name__ == '__main__':
     )
     task.eval_metrics(algorithm, test_loader, device='cpu')    
     
-    # Calibration
-    def postprocess_preds(preds, targets):
-        preds = torch.softmax(preds, dim=-1)
-        preds = preds[..., -1].flatten()
-        targets = targets.flatten()
-        mask = targets != 2
-        return preds[mask].numpy(), targets[mask].numpy()
-    
-    train_loader = FastDataLoader(
-        dataset=task.get_torch_dataset(['miiv'], 'train'),  
-        batch_size=train_hparams['batch_size']*4,
-        num_workers=train_args.num_workers
-    )
-    train_preds, train_targets, _ = predict_on_set(algorithm, train_loader, 'cpu')
-    train_preds, train_targets = postprocess_preds(train_preds, train_targets)
-    iso = IsotonicRegression(y_min=0, y_max=1)
-    iso.fit(train_preds, train_targets)
-
-
-    val_loader = FastDataLoader(
-        dataset=task.get_torch_dataset(['miiv'], 'val'),  
-        batch_size=train_hparams['batch_size']*4,
-        num_workers=train_args.num_workers
-    )
-    val_preds, val_targets, _ = predict_on_set(algorithm, val_loader, 'cpu')
-    val_preds, val_targets = postprocess_preds(val_preds, val_targets)
-    raw = pd.DataFrame({'preds': val_preds, 'targets': val_targets})
-    (ggp.ggplot(raw, ggp.aes('preds', 'targets')) 
-     + ggp.geom_smooth()
-     + ggp.geom_abline(intercept=0, slope=1, linetype="dashed")
-     + ggp.coord_fixed(xlim=[0, 1], ylim=[0, 1])
-    )
-
-    iso_preds = iso.predict(val_preds)
-    recal = pd.DataFrame({'preds': iso_preds, 'targets': val_targets})
-    (ggp.ggplot(recal, ggp.aes('preds', 'targets')) 
-     + ggp.geom_smooth()
-     + ggp.geom_abline(intercept=0, slope=1, linetype="dashed")
-     + ggp.coord_fixed(xlim=[0, 1], ylim=[0, 1])
-    )
-
-
-    test_preds, test_targets, _ = predict_on_set(algorithm, test_loader, 'cpu')
-    test_preds, test_targets = postprocess_preds(test_preds, test_targets)
-    raw = pd.DataFrame({'preds': test_preds, 'targets': test_targets})
-    (ggp.ggplot(raw, ggp.aes('preds', 'targets')) 
-     + ggp.geom_smooth()
-     + ggp.geom_abline(intercept=0, slope=1, linetype="dashed")
-     + ggp.coord_fixed(xlim=[0, 1], ylim=[0, 1])
-    )
-
-    iso_preds = iso.predict(test_preds)
-    recal = pd.DataFrame({'preds': iso_preds, 'targets': test_targets})
-    (ggp.ggplot(recal, ggp.aes('preds', 'targets')) 
-     + ggp.geom_smooth()
-     + ggp.geom_abline(intercept=0, slope=1, linetype="dashed")
-     + ggp.coord_fixed(xlim=[0, 1], ylim=[0, 1])
-    )
+   

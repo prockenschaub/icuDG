@@ -58,6 +58,7 @@ def enframe_result(
     raw: np.ndarray, 
     recal: np.ndarray, 
     targets: np.ndarray, 
+    trial: int,
     mode: str, 
     train: List[str], 
     test: str
@@ -68,6 +69,7 @@ def enframe_result(
         raw: raw model predictions
         recal: recalibrated model predictions
         targets: ground truth labels
+        trial: number of the CV fold that the model was trained on 
         mode: fold for which the predictions were calculated, can be 'train', 'val', or 'test'
         train: names of all training environments
         test: name of the test environment
@@ -79,6 +81,7 @@ def enframe_result(
         'mode': mode,
         'train': train[0] if len(train) == 1 else 'pooled',
         'test': test,
+        'trial': trial,
         'raw': raw, 
         'recal': recal, 
         'target': targets
@@ -109,25 +112,28 @@ def smooth(preds: pd.Series, targets: pd.Series) -> Tuple[np.ndarray, np.ndarray
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Domain calibration')
-    parser.add_argument('--input-dir', type=str, default='/Users/patrick/clinicaldg-outputs/sepsis_best_tcn')
+    parser.add_argument('--task', type=str, default='sepsis')
+    parser.add_argument('--model', type=str, default='tcn')
+    parser.add_argument('--input-dir', type=str, default='/Users/patrick/clinicaldg-outputs')
     parser.add_argument('--num-trials', type=int, default=10)
     args = parser.parse_known_args()[0]
 
-    
-    lst = load_all_stats(Path(args.input_dir))
-    res = []
+    path = f'{args.input_dir}/{args.task}_{args.model}_best'
 
+    lst = load_all_stats(Path(path))
+    
     for row_num, row in lst.iterrows():
+        res = []
+        
         print(f"Process row {row_num+1} of {lst.shape[0]}.")
         train_args = row['args']
         train_hparams = row['model_hparams']
         
         algo = train_args['algorithm']
+        trial = train_args['trial']
+
         if algo not in ["ERM", "ERMID"]:
             print(f"Skip as not ERM or ERMID.")
-            continue
-        elif train_args['trial'] != 1:
-            print(f"Skip as not first fold.")
             continue
         
         test = row['model_test_domains']
@@ -145,7 +151,7 @@ if __name__ == '__main__':
         algorithm_class = vars(algorithms)[algo]
         algorithm = algorithm_class(task, None, train_hparams)
         algorithm.load_state_dict(
-            torch.load(os.path.join(args.input_dir, test[0], row.folder, "model.pkl"))
+            torch.load(os.path.join(path, test[0], row.folder, "model.pkl"))
         )
 
         print(f"Recalibrate.")
@@ -160,8 +166,8 @@ if __name__ == '__main__':
         train_recal = iso.predict(train_preds)
         val_recal = iso.predict(val_preds)
 
-        res.append(enframe_result(train_preds, train_recal, train_targets, 'train', train, test[0]))
-        res.append(enframe_result(val_preds, val_recal, val_targets, 'val', train, test[0]))
+        res.append(enframe_result(train_preds, train_recal, train_targets, trial, 'train', train, test[0]))
+        res.append(enframe_result(val_preds, val_recal, val_targets, trial, 'val', train, test[0]))
 
         if len(train) > 1:
             eval_on = test
@@ -174,34 +180,39 @@ if __name__ == '__main__':
             test_loader = init_data_loader([s], task, 'test')
             test_preds, test_targets = get_predictions(algorithm, test_loader)
             test_recal = iso.predict(test_preds)
-            res.append(enframe_result(test_preds, test_recal, test_targets, 'test', train, s))
+            res.append(enframe_result(test_preds, test_recal, test_targets, trial, 'test', train, s))
 
-            if i == len(eval_on):
+            if i == len(eval_on)-1:
                 print("")
             else:
                 print(", ", end="")
 
-    res = pd.concat(res)
+        res = pd.concat(res, axis=0)
+        
+        save_path = Path(f'outputs/{args.task}_{args.model}_recalibrated')
+        save_path.mkdir(exist_ok=True)
+        res.to_csv(save_path/f'{test[0]}_{algo}_{trial}.csv', index=False)
 
-    res = res[(res['mode'] == 'test') & ((res['train'] == "pooled") | (res['train'] == res['test']))]
+    # res = pd.concat(res)
+    # res = res[(res['mode'] == 'test') & ((res['train'] == "pooled") | (res['train'] == res['test']))]
 
-    res_smoothed = []
-    for name, group in res.groupby(['mode', 'train', 'test']):
-        grid, smoothed = smooth(group['recal'], group['target'])
-        res_smoothed.append(pd.DataFrame({
-            'mode': name[0], 
-            'train': name[1], 
-            'test': name[2],
-            'x': grid, 
-            'y': smoothed
-        }))
-    res_smoothed = pd.concat(res_smoothed)
+    # res_smoothed = []
+    # for name, group in res.groupby(['mode', 'train', 'test']):
+    #     grid, smoothed = smooth(group['recal'], group['target'])
+    #     res_smoothed.append(pd.DataFrame({
+    #         'mode': name[0], 
+    #         'train': name[1], 
+    #         'test': name[2],
+    #         'x': grid, 
+    #         'y': smoothed
+    #     }))
+    # res_smoothed = pd.concat(res_smoothed)
 
-    (ggp.ggplot(res_smoothed, ggp.aes('x', 'y')) 
-     + ggp.geom_abline(intercept=0, slope=1, linetype="dotted", colour='lightgrey')
-     + ggp.geom_line()
-     + ggp.geom_rug(data=res[(res.train == res.test) & (res['mode'] == "test")], mapping=ggp.aes(x='recal', y=1), alpha=0.1)
-     + ggp.coord_fixed(xlim=[0, 1], ylim=[-0.035, 1], expand=False)
-     + ggp.facet_wrap('test')
-     + ggp.theme_bw()
-    )
+    # (ggp.ggplot(res_smoothed, ggp.aes('x', 'y')) 
+    #  + ggp.geom_abline(intercept=0, slope=1, linetype="dotted", colour='lightgrey')
+    #  + ggp.geom_line()
+    #  + ggp.geom_rug(data=res[(res.train == res.test) & (res['mode'] == "test")], mapping=ggp.aes(x='recal', y=1), alpha=0.1)
+    #  + ggp.coord_fixed(xlim=[0, 1], ylim=[-0.035, 1], expand=False)
+    #  + ggp.facet_wrap('test')
+    #  + ggp.theme_bw()
+    # )

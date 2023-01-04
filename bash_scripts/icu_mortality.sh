@@ -4,8 +4,8 @@
 #SBATCH --nodes=1
 #SBATCH --exclusive
 #SBATCH --mem=0
-#SBATCH --partition=medium
-#SBATCH --time=48:00:00
+#SBATCH --partition=compute
+#SBATCH --time=24:00:00
 
 cd ~/work/icuDG # NOTE: Change if your repo lives elsewhere
 
@@ -30,7 +30,9 @@ fi
 
 for i in $(seq 50)
 do
-  row=$(( $START + $i - 1 ))
+  row=$(( $START + 50 * ($SLURM_ARRAY_TASK_ID-1) + $i - 1 ))
+
+  echo "Submitted row $row"
 
   while IFS="," read -r hs algo t v ts seed
   do
@@ -45,9 +47,7 @@ do
         --seed ${seed} \
         --es_metric val_nll \
         --es_patience 10 \
-        --output_dir "outputs/icu-mortality_${NN}/${t}/run${SLURM_ARRAY_TASK_ID}" \
+        --output_dir "outputs/icu-mortality_${NN}/${t}/run${row}" \
         --delete_model & 
-
-      date
   done < <(sed -n "$(($row+1))p" "sweeps/mc_params_train.csv")
 done

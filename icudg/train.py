@@ -178,7 +178,7 @@ if __name__ == "__main__":
     print("Number of parameters: %s" % sum([np.prod(p.size()) for p in algorithm.parameters()]))
 
     # Load any existing checkpoints (only available on slurm cluster)
-    if not args.use_checkpoint and has_checkpoint(args.output_dir):
+    if args.use_checkpoint and has_checkpoint(args.output_dir):
         state = load_checkpoint(args.output_dir)
         algorithm.load_state_dict(state['model_dict'])
         

@@ -33,7 +33,8 @@ do
         --es_metric val_nll \
         --es_patience 10 \
         --output_dir "outputs/icu-mortality_${NN}/${t}/run${SLURM_ARRAY_TASK_ID}" \
-        --delete_model
+        --delete_model \
+        --use_checkpoint
 
     date
 done < <(sed -n "$((${SLURM_ARRAY_TASK_ID}+1))p" "sweeps/mc_params_train.csv")

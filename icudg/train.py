@@ -59,6 +59,8 @@ if __name__ == "__main__":
     # Misc training settings
     parser.add_argument('--debug', action = 'store_true', 
         help = 'Whether to debug model with a smaller sample size')
+    parser.add_argument('--use_checkpoint', action = 'store_true', 
+        help = 'Whether to start training from an existing checkpoint if it exists')
     parser.add_argument('--num_workers', type=int, default=1,
         help = 'Number of workers for data loader')
     args = parser.parse_args()
@@ -175,9 +177,9 @@ if __name__ == "__main__":
     
     print("Number of parameters: %s" % sum([np.prod(p.size()) for p in algorithm.parameters()]))
 
-    # Load any existing checkpoints
-    if has_checkpoint():
-        state = load_checkpoint()
+    # Load any existing checkpoints (only available on slurm cluster)
+    if not args.use_checkpoint and has_checkpoint(args.output_dir):
+        state = load_checkpoint(args.output_dir)
         algorithm.load_state_dict(state['model_dict'])
         
         if isinstance(algorithm.optimizer, dict):

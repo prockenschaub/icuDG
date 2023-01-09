@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --output=logs/%x-%A-%a.log
-#SBATCH --ntasks=2
+#SBATCH --ntasks=1
 #SBATCH --mem=25G
 #SBATCH --partition=medium
 #SBATCH --time=36:00:00

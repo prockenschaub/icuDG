@@ -195,6 +195,7 @@ if __name__ == "__main__":
         print("Loaded checkpoint at step %s" % start_step)
     else:
         start_step = 0    
+        es = EarlyStopping(patience=args.es_patience, maximize=args.es_maximize) 
 
     # Set any remaining training settings
     train_minibatches_iterator = zip(*train_loaders)   
@@ -203,18 +204,18 @@ if __name__ == "__main__":
     steps_per_epoch = task.samples_per_epoch // hparams['batch_size']
 
     n_steps = args.max_epochs * steps_per_epoch
-    
-    es = EarlyStopping(patience=args.es_patience, maximize=args.es_maximize)    
+       
     last_results_keys = None
 
     # Main training loop -------------------------------------------------------
     print("Training:")
     prog_bar = tqdm.tqdm(leave=False)
     for step in range(start_step, n_steps):
-        prog_bar.update()
         # Check early stopping
         if es.early_stop:
             break
+
+        prog_bar.update()
 
         # Forward pass and parameter update
         step_start_time = time.time()
@@ -256,6 +257,9 @@ if __name__ == "__main__":
             with open(epochs_path, 'a') as f:
                 f.write(json.dumps(results, sort_keys=True) + "\n")
             
+            if not algorithm.warmup:
+                es(-results[args.es_metric], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
+
             save_checkpoint(
                 algorithm, 
                 algorithm.optimizer, 
@@ -265,12 +269,8 @@ if __name__ == "__main__":
                 torch.random.get_rng_state(),
                 args.output_dir
             )
-            
-            checkpoint_vals = collections.defaultdict(lambda: [])
-            
-            if not algorithm.warmup:
-                es(-results[args.es_metric], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
 
+            checkpoint_vals = collections.defaultdict(lambda: [])
             prog_bar = tqdm.tqdm(leave=False)
 
     # Testing ------------------------------------------------------------------

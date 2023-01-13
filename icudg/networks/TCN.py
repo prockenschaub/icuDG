@@ -110,14 +110,14 @@ class TemporalBlock(nn.Module):
         self.conv1 = Conv1dWithWN(n_inputs, n_outputs, kernel_size,
                                            stride=stride, padding=padding, dilation=dilation)
         self.chomp1 = Chomp1d(padding)
-        self.relu1 = nn.ReLU()
+        self.relu1 = nn.LeakyReLU()
         self.dropout1 = nn.Dropout(dropout)
 
         # Second causal convolution layer
         self.conv2 = Conv1dWithWN(n_outputs, n_outputs, kernel_size,
                                            stride=stride, padding=padding, dilation=dilation)
         self.chomp2 = Chomp1d(padding)
-        self.relu2 = nn.ReLU()
+        self.relu2 = nn.LeakyReLU()
         self.dropout2 = nn.Dropout(dropout)
 
         self.net = nn.Sequential(self.conv1, self.chomp1, self.relu1, self.dropout1,

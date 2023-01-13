@@ -33,10 +33,10 @@ class MLP(nn.Module):
         """
         x = self.input(x)
         x = self.dropout(x)
-        x = F.relu(x)
+        x = F.leaky_relu(x)
         for hidden in self.hiddens:
             x = hidden(x)
             x = self.dropout(x)
-            x = F.relu(x)
+            x = F.leaky_relu(x)
         x = self.output(x)
         return x

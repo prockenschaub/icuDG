@@ -225,7 +225,7 @@ class TransformerBlock(nn.Module):
 
         self.ff = nn.Sequential(
             nn.Linear(emb, ff_hidden_mult * emb),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(ff_hidden_mult * emb, emb)
         )
 

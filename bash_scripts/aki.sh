@@ -23,6 +23,11 @@ while IFS="," read -r hs algo t v ts seed
 do
     date 
 
+    if test -f "outputs/aki_${NN}/${t}/run${SLURM_ARRAY_TASK_ID}/done"; then
+      echo "Model already fitted (${t}/run${SLURM_ARRAY_TASK_ID}), do not run again."
+      break
+    fi
+
     python -m icudg.train \
         --task AKI \
         --algorithm ${algo} \

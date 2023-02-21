@@ -125,7 +125,7 @@ class TemporalBlock(nn.Module):
         
         # Downsampling (not used in this repo)
         self.downsample = nn.Conv1d(n_inputs, n_outputs, 1) if n_inputs != n_outputs else None
-        self.relu = nn.ReLU()
+        self.relu = nn.LeakyReLU()
 
         # Weight initialisation
         self.init_weights()

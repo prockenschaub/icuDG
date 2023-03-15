@@ -2,15 +2,15 @@
 
 import argparse
 import collections
-import json
 import os
 import random
 import sys
 import time
-import tqdm
 
+import tqdm
+import json
 import numpy as np
-import PIL
+
 import torch
 import torch.utils.data
 
@@ -75,7 +75,6 @@ if __name__ == "__main__":
     print("\tCUDA: {}".format(torch.version.cuda))
     print("\tCUDNN: {}".format(torch.backends.cudnn.version()))
     print("\tNumPy: {}".format(np.__version__))
-    print("\tPIL: {}".format(PIL.__version__))
 
     print('Args:')
     for k, v in sorted(vars(args).items()):

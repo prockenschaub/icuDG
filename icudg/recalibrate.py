@@ -1,24 +1,21 @@
 from pathlib import Path
 import argparse
 import os
-import torch
-import torch.utils.data
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
 from sklearn.isotonic import IsotonicRegression
-from statsmodels.gam.api import GLMGam, BSplines
-import plotnine as ggp
-from typing import List, Tuple
 
 import torch
+import torch.utils.data
 
 from icudg import tasks
 from icudg import algorithms
 from icudg.lib.fast_data_loader import FastDataLoader
 from icudg.lib.misc import predict_on_set
-
 from notebooks.utils import load_all_stats
+
 
 def init_data_loader(envs: List[str], task: tasks.Task, fold: str) -> FastDataLoader:
     """Initialise a dataloader
@@ -87,35 +84,12 @@ def enframe_result(
         'target': targets
     })
 
-def smooth(preds: pd.Series, targets: pd.Series) -> Tuple[np.ndarray, np.ndarray]:
-    """Calculate smooth calibration curves using a Generalised Additive Model with BSplines
-
-    Args:
-        preds: model predictions
-        targets: ground truth labels
-
-    Note that the data is winsorised before fitting the GAM.
-
-    Returns:
-        smoothed values y over a grid x
-    """
-    q = preds.quantile([0.005, 0.995])
-    keep = (preds > q.iloc[0]) & (preds < q.iloc[1])
-    preds, targets = preds[keep], targets[keep]
-    bs = BSplines(preds, df=4, degree=3)
-    model = GLMGam(endog=targets, smoother=bs)
-    fit = model.fit()
-    x = np.arange(preds.min(), preds.max(), 0.01)
-    y = fit.predict(exog_smooth=x)
-    return x, y
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Domain calibration')
     parser.add_argument('--task', type=str, default='sepsis')
     parser.add_argument('--model', type=str, default='tcn')
     parser.add_argument('--input-dir', type=str, default='/Users/patrick/clinicaldg-outputs')
-    parser.add_argument('--num-trials', type=int, default=10)
     args = parser.parse_known_args()[0]
 
     path = f'{args.input_dir}/{args.task}_{args.model}_best'
@@ -133,9 +107,9 @@ if __name__ == '__main__':
         trial = train_args['trial']
 
         if algo not in ["ERM", "ERMID"]:
-            print(f"Skip as not ERM or ERMID.")
+            print(f"Not ERM or ERMID. Skip.")
             continue
-        
+
         test = row['model_test_domains']
         if algo == "ERM":
             train = list(set(['aumc', 'eicu', 'hirid', 'miiv']) - set(test))
@@ -191,28 +165,4 @@ if __name__ == '__main__':
         
         save_path = Path(f'outputs/{args.task}_{args.model}_recalibrated')
         save_path.mkdir(exist_ok=True)
-        res.to_csv(save_path/f'{test[0]}_{algo}_{trial}.csv', index=False)
-
-    # res = pd.concat(res)
-    # res = res[(res['mode'] == 'test') & ((res['train'] == "pooled") | (res['train'] == res['test']))]
-
-    # res_smoothed = []
-    # for name, group in res.groupby(['mode', 'train', 'test']):
-    #     grid, smoothed = smooth(group['recal'], group['target'])
-    #     res_smoothed.append(pd.DataFrame({
-    #         'mode': name[0], 
-    #         'train': name[1], 
-    #         'test': name[2],
-    #         'x': grid, 
-    #         'y': smoothed
-    #     }))
-    # res_smoothed = pd.concat(res_smoothed)
-
-    # (ggp.ggplot(res_smoothed, ggp.aes('x', 'y')) 
-    #  + ggp.geom_abline(intercept=0, slope=1, linetype="dotted", colour='lightgrey')
-    #  + ggp.geom_line()
-    #  + ggp.geom_rug(data=res[(res.train == res.test) & (res['mode'] == "test")], mapping=ggp.aes(x='recal', y=1), alpha=0.1)
-    #  + ggp.coord_fixed(xlim=[0, 1], ylim=[-0.035, 1], expand=False)
-    #  + ggp.facet_wrap('test')
-    #  + ggp.theme_bw()
-    # )
+        res.to_parquet(save_path/f'{test[0]}_{algo}_{trial}.parquet', index=False)

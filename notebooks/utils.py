@@ -10,7 +10,10 @@ import plotnine as ggp
 METHODS = ['ERMMerged', 'ERMID', 'ERM',  'CORAL', 'VREx', 'Fishr', 'GroupDRO', 'MLDG']
 
 def load_single_set_of_stats(path: Path, subset: List = None) -> Dict:
-    stats = torch.load((path/'stats.pkl').open('rb')) 
+    try:
+        stats = torch.load((path/'stats.pkl').open('rb'))
+    except: 
+        return None 
     stats['folder'] = path.stem
     
     if subset is None:
@@ -31,7 +34,8 @@ def load_all_stats(path: Path, subset: List = None) -> pd.DataFrame:
     lst = []
     for i in tqdm(path.glob('**/done')):
         stats = load_single_set_of_stats(i.parent, subset)
-        lst.append(stats)
+        if stats is not None:
+            lst.append(stats)
     return pd.DataFrame(lst)
 
 def load_model_performance(path: Path) -> List:

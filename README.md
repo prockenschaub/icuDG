@@ -77,7 +77,7 @@ To perform random hyperparameter sweeps, a list of hyperparameters was drawn and
 
 ### Step 3: Aggregating Results
 
-We provide sample code for creating aggregate results for an experiment in [notebooks/agg_results.ipynb](notebooks/agg_results.ipyn).
+We provide sample code for creating aggregate results for an experiment in [notebooks/agg_results.ipynb](notebooks/agg_results.ipynb).
 
 
 ## License

@@ -1,6 +1,3 @@
-mnist: 
-  data_dir: 'path/to/data'
-
 multicenter:
   data_dir: 'path/to/data'
 

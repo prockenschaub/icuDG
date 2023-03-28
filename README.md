@@ -2,8 +2,21 @@
 
 ## Paper
 
-The findings from this repo will be made available via arXiv shortly. Once the manuscript has been uploaded, a link will be posted here. 
+If you use this code in your research, please cite the following publication:
 
+```
+@article{rockenschaub2023generalisability,
+      title={Generalisability of deep learning-based early warning in the intensive care unit: a retrospective empirical evaluation}, 
+      author={Patrick Rockenschaub and Adam Hilbert and Tabea Kossen and Falk von Dincklage and Vince Istvan Madai and Dietmar Frey},
+      year={2023},
+      eprint={2303.15354},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
+```
+
+This paper can be found on arxiv: https://arxiv.org/abs/2303.15354
 
 ## Acknowledgements
 

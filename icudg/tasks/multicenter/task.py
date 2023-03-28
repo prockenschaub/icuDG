@@ -1,16 +1,16 @@
 import pickle
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Callable
-from functools import partial
+from typing import List, Dict, Tuple, Callable
 
 import torch
+from torch import Tensor
 from torch.utils.data import ConcatDataset
 
 from icudg.lib.hparams_registry import HparamSpec
 from icudg.lib.misc import predict_on_set, cat
 from icudg.lib.metrics import roc_auc_score
-from icudg.lib.losses import masked_bce_with_logits
+from icudg.lib.losses import MaskedBCEWithLogitsLoss
 from icudg.tasks import base
 from icudg.algorithms.base import Algorithm
 
@@ -21,9 +21,9 @@ class MulticenterICU(base.Task):
     """Basic task setup for experiments using multicenter ICU data.
 
     Args:
-        outcome (str): the outcome to predict ("mortality24", "aki", or "sepsis")
-        hparams (dict): a dictionary with all relevant hyperparameters
-        args (dict): additional training arguments passed via the command line
+        outcome: the outcome to predict ("mortality24", "aki", or "sepsis")
+        hparams: a dictionary with all relevant hyperparameters
+        args: additional training arguments passed via the command line
 
     Environments: 
         'miiv' : MIMIC IV (US)
@@ -52,11 +52,17 @@ class MulticenterICU(base.Task):
         HparamSpec('num_layers', 1, lambda r: int(r.randint(low=1, high=10))),
         HparamSpec('kernel_size', 4, lambda r: int(r.randint(low=2, high=6))),
         HparamSpec('heads', 4, lambda r: int(r.randint(low=1, high=3))),
-        HparamSpec('dropout', 0.5, lambda r: float(r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7])))
+        HparamSpec('dropout', 0.5, lambda r: float(r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7]))),
 
+        # Task-specific algorithm hyperparams
+        HparamSpec('mmd_gamma', 1000., lambda r: 10**r.uniform(2., 4.)),
+        HparamSpec('vrex_lambda', 1000, lambda r: 10**r.uniform(2., 4.)),
+        HparamSpec('vrex_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
+        HparamSpec('fishr_lambda', 1000., lambda r: 10**r.uniform(2., 4.)),
+        HparamSpec('fishr_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
     ]
 
-    def __init__(self, outcome, hparams, args):
+    def __init__(self, outcome: str, hparams: Dict, args: Dict):
         self.outcome = outcome
         self.args = args
         self.hparams = hparams
@@ -75,9 +81,13 @@ class MulticenterICU(base.Task):
 
     @property
     def envs_loaded(self) -> List[str]:
+        """List all loaded environments 
+        
+        Note: this differs from the list of possible environments. Call self.setup() to load an environment.
+        """
         return [e.db for e in self.envs.values() if e.loaded]
 
-    def setup(self, envs: List[str] = None, use_weight: bool = True) -> None:
+    def setup(self, envs: List[str] = None, use_weight: bool = True):
         """Perform actual data loading and preprocessing
         
         Args:
@@ -122,7 +132,7 @@ class MulticenterICU(base.Task):
 
 
         # Calculate case weights based on train fold of train envs
-        if use_weight and not hasattr(self, "case_weight"):
+        if use_weight and not hasattr(self, "weights"):
             if not all_train_loaded:
                 raise RuntimeError(
                     f"If `use_weight` but no `case_weight` is prespecified, all training envs must be "
@@ -130,9 +140,10 @@ class MulticenterICU(base.Task):
                 )
             train_data = pd.concat([self.envs[e]['train'].data['outc'] for e in self.TRAIN_ENVS])
             prop_cases = np.mean(train_data.iloc[:, 0])
-            self.case_weight = torch.tensor((1 - prop_cases) / prop_cases)
+            case_weight = (1. - prop_cases) / prop_cases
+            self.weights = torch.tensor([1., case_weight], dtype=torch.float32)
         elif not use_weight:
-            self.case_weight = None
+            self.weights = None
 
     def set_means_and_stds(self, means: Dict[str, pd.Series], stds: Dict[str, pd.Series]):
         """Specify means and standard devs for normalisation during setup, e.g., based on previous training
@@ -148,29 +159,38 @@ class MulticenterICU(base.Task):
         self.means = means
         self.stds = stds
 
-    def set_case_weight(self, weight: torch.Tensor):
-        """"""
-        self.case_weight = weight
+    def set_weights(self, weight: Tensor):
+        """Set the case weights"""
+        self.weights = weight
 
     def get_torch_dataset(self, envs: List[str], fold: str) -> ConcatDataset:
         """Get one or more envs as a torch dataset
 
         Args:
-            envs (List[str]): list of environment names to get
-            fold (str): fold to return ('train', 'val', 'test')
+            envs: list of environment names to get
+            fold: fold to return, can be 'train', 'val', or 'test'
 
         Returns:
             ConcatDataset
         """
         return ConcatDataset([self.envs[e][fold] for e in envs])
 
+    @property
+    def samples_per_epoch(self):
+        """1 Epoch = number of samples in the smallest environment"""
+        return min([len(self.envs[e]["train"]) for e in self.envs_loaded])
+
     def get_featurizer(self) -> torch.nn.Module:
         """Get the torch module used to embed the preprocessed input
-
-        Returns:
-            torch.nn.Module
         """
-        if self.hparams['architecture'] == "tcn":
+        if self.hparams['architecture'] == "gru":
+            return featurizer.GRUNet(
+                self.num_inputs,
+                self.hparams['hidden_dims'],
+                self.hparams['num_layers'],
+                self.hparams['dropout']
+            )
+        elif self.hparams['architecture'] == "tcn":
             return featurizer.TCNet(
                 self.num_inputs,
                 self.hparams['hidden_dims'],
@@ -191,17 +211,15 @@ class MulticenterICU(base.Task):
             f"as a featurizer for the MulticenterICU task."
         )
 
-    def get_loss_fn(self) -> Callable:
+    def get_loss_fn(self, reduction='mean') -> Callable:
         """Return the loss function for this task, a (weighted) mask BCE loss
-
-        Returns:
-            Callable: loss function
         """
-        if hasattr(self, "case_weight"):
-            pos_weight = self.case_weight
-        else:
-            pos_weight = None
-        return partial(masked_bce_with_logits, pos_weight=pos_weight)
+        return MaskedBCEWithLogitsLoss(getattr(self, "weights", None), reduction)
+
+    def get_extended_loss_fn(self, reduction='mean') -> Callable:
+        """Return a loss function with extended gradient calculations for Fishr
+        """
+        return MaskedBCEWithLogitsLoss(getattr(self, "weights", None), reduction, extend=True)
 
     def eval_metrics(
         self, 
@@ -223,24 +241,24 @@ class MulticenterICU(base.Task):
                 auroc: area under the receiver operating characteristic
         """
         logits, y, mask = predict_on_set(algorithm, loader, device, self.get_mask)
-        mask = cat(mask)
+        mask = cat(mask).to(device)
         
         # Get the loss function
-        loss = algorithm.loss_fn(logits, y, mask) # Loss is defined by task
+        loss = algorithm.loss_fn(logits.flatten(end_dim=-2), y.flatten(), mask.flatten()) # Loss is defined by task
 
         # Get the AUROC
         logits = logits[..., -1]
-        logits = logits.view(-1)[mask.view(-1)].numpy()
-        y = y.view(-1)[mask.view(-1)].long().numpy()
+        logits = logits.view(-1)[mask.view(-1)].cpu().numpy()
+        y = y.view(-1)[mask.view(-1)].long().cpu().numpy()
         auroc = roc_auc_score(y, logits)
 
         return {'nll': loss.item(), 'auroc': auroc}
 
-    def save_task(self, file_path: str) -> None:
+    def save_task(self, file_path: str):
         """Save the task state for reproducibility (splits and means)
 
         Args:
-            file_path (str): file path specifying where to save the task
+            file_path: file path specifying where to save the task
         """
         save_dict = {
             'loaded': self.envs_loaded,
@@ -253,36 +271,51 @@ class MulticenterICU(base.Task):
 
 
 class Mortality24(MulticenterICU):
+    """Task for the prediction of ICU mortality after 24 hours of observation"""
     def __init__(self, hparams, args):
         self.pad_to = None
         super().__init__('mortality24', hparams, args)
 
-    def get_mask(self, batch):
+    def get_mask(self, batch: Tuple[Tensor]) -> Tensor:
+        """Consider all 24h for the prediction of mortality
+        """
         # batch: x, y, ...
         y = batch[1]
         return torch.ones_like(y, dtype=torch.bool)
 
     def get_featurizer(self):
+        """Only consider last prediction of the featurizer"""
         return featurizer.LastStep(super(Mortality24, self).get_featurizer())
 
 
 class AKI(MulticenterICU):
+    """Task for the hourly prediction of acute kidney injury"""
     def __init__(self, hparams, args):
         self.pad_to = 169 # one week of data
         super().__init__("aki", hparams, args)
 
-    def get_mask(self, batch):
+    def get_mask(self, batch: Tuple[Tensor]) -> Tensor:
+        """Consider only the hours until a patient is discharged or censored
+        """
         # batch: x, y, ...
         y = batch[1]
         return y != data.PAD_VALUE
 
 
 class Sepsis(MulticenterICU):
+    """Task for the hourly prediction of sepsis"""
+    HPARAM_SPEC = MulticenterICU.HPARAM_SPEC + [
+        HparamSpec('mmd_beta', 1000., lambda r: 10**r.uniform(2., 5.))
+    ]
+
     def __init__(self, hparams, args):
         self.pad_to = 169 # one week of data
         super().__init__("sepsis", hparams, args)
 
-    def get_mask(self, batch):
+    def get_mask(self, batch: Tuple[Tensor]) -> Tensor:
+        """Consider only the hours until a patient is discharged or censored
+        """
         # batch: x, y, ...
         y = batch[1]
         return y != data.PAD_VALUE
+    

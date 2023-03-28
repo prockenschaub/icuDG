@@ -2,16 +2,16 @@
 
 import argparse
 import collections
-import json
 import os
 import random
 import sys
 import time
 
+import tqdm
+import json
 import numpy as np
-import PIL
+
 import torch
-import torchvision
 import torch.utils.data
 
 from icudg import tasks
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     
     # Hyperparameters and trial definition
     parser.add_argument('--hparams', type=str,
-        help='JSON-serialized hparams dictionary.')
+        help='Algorithm and task hyperparameters serialised as JSON.')
     parser.add_argument('--hparams_seed', type=int, default=0,
         help='Seed for random draw of unspecified hparams (0 means "default hparams").')
     parser.add_argument('--n_splits', type=int, default=5,
@@ -43,27 +43,26 @@ if __name__ == "__main__":
         help='Seed for everything else.')
 
     # Early stopping and model selection within current run
-    parser.add_argument('--max_steps', type=int, default=1000,
-        help='Maximum number of optimisation steps.')
+    parser.add_argument('--max_epochs', type=int, default=1000,
+        help='Maximum number of epochs.')
     parser.add_argument('--es_metric', type=str, default='val_nll',
         help='Metric used to determine whether or not to stop training early.')
     parser.add_argument('--es_maximize', type=bool, default=False, 
         help='Flag to indicate if higher (=True) or lower (=False) values of `es_metric` are better.')
     parser.add_argument('--es_patience', type=int, default=10,
-        help='Number of tries without improvements of `es_metric` after which to stop (in multiples of `checkpoint_freq`).')
+        help='Number of epochs without improvements of `es_metric` after which to stop.')
 
-    
-    parser.add_argument('--checkpoint_freq', type=int, default=10,
-        help='Checkpoint every N steps.')
     parser.add_argument('--output_dir', type=str, default="train_output")
     parser.add_argument('--delete_model', action = 'store_true', 
-        help = 'delete model weights after training to save disk space')
+        help = 'Whether to delete model weights after training to save disk space')
     
     # Misc training settings
     parser.add_argument('--debug', action = 'store_true', 
-        help = 'flag to debug model with small sample size')
+        help = 'Whether to debug model with a smaller sample size')
+    parser.add_argument('--use_checkpoint', action = 'store_true', 
+        help = 'Whether to start training from an existing checkpoint if it exists')
     parser.add_argument('--num_workers', type=int, default=1,
-        help = 'number of workers for data loader')
+        help = 'Number of workers for data loader')
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -73,15 +72,24 @@ if __name__ == "__main__":
     print("Environment:")
     print("\tPython: {}".format(sys.version.split(" ")[0]))
     print("\tPyTorch: {}".format(torch.__version__))
-    print("\tTorchvision: {}".format(torchvision.__version__))
     print("\tCUDA: {}".format(torch.version.cuda))
     print("\tCUDNN: {}".format(torch.backends.cudnn.version()))
     print("\tNumPy: {}".format(np.__version__))
-    print("\tPIL: {}".format(PIL.__version__))
 
     print('Args:')
     for k, v in sorted(vars(args).items()):
         print('\t{}: {}'.format(k, v))
+
+
+    # Seed everything
+    os.environ["PYTHONHASHSEED"] = str(args.seed)
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+    torch.use_deterministic_algorithms(True)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
     # Load the selected algorithm and task classes
     algorithm_class = vars(algorithms)[args.algorithm]
@@ -108,18 +116,12 @@ if __name__ == "__main__":
     with open(os.path.join(args.output_dir, "params.json"), 'w') as f:
         f.write(json.dumps({'hparams': hparams, 'args': vars(args)}))
 
-    # Seed everything
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-
     # Choose device (CPU or GPU)
     if torch.cuda.is_available():
         device = "cuda"
     else:
-        device = "cpu"               
+        device = "cpu"       
+    print(f"Device: {device}")       
     
     # Instantiate task
     task = task_class(hparams, vars(args))
@@ -174,9 +176,9 @@ if __name__ == "__main__":
     
     print("Number of parameters: %s" % sum([np.prod(p.size()) for p in algorithm.parameters()]))
 
-    # Load any existing checkpoints
-    if has_checkpoint():
-        state = load_checkpoint()
+    # Load any existing checkpoints (only available on slurm cluster)
+    if args.use_checkpoint and has_checkpoint(args.output_dir):
+        state = load_checkpoint(args.output_dir)
         algorithm.load_state_dict(state['model_dict'])
         
         if isinstance(algorithm.optimizer, dict):
@@ -192,25 +194,27 @@ if __name__ == "__main__":
         print("Loaded checkpoint at step %s" % start_step)
     else:
         start_step = 0    
+        es = EarlyStopping(patience=args.es_patience, maximize=args.es_maximize) 
 
     # Set any remaining training settings
     train_minibatches_iterator = zip(*train_loaders)   
     checkpoint_vals = collections.defaultdict(lambda: [])
 
-    steps_per_epoch = min([len(i)/hparams['batch_size'] for i in train_dss])
+    steps_per_epoch = task.samples_per_epoch // hparams['batch_size']
 
-    n_steps = args.max_steps
-    checkpoint_freq = args.checkpoint_freq
-    
-    es = EarlyStopping(patience=args.es_patience, maximize=args.es_maximize)    
+    n_steps = args.max_epochs * steps_per_epoch
+       
     last_results_keys = None
 
     # Main training loop -------------------------------------------------------
     print("Training:")
+    prog_bar = tqdm.tqdm(leave=False)
     for step in range(start_step, n_steps):
         # Check early stopping
         if es.early_stop:
             break
+
+        prog_bar.update()
 
         # Forward pass and parameter update
         step_start_time = time.time()
@@ -224,10 +228,12 @@ if __name__ == "__main__":
             checkpoint_vals[key].append(val)
 
         # Validation and checkpointing
-        if step % checkpoint_freq == 0:
+        if step % steps_per_epoch == 0:
+            prog_bar.set_description_str("Evaluating...")
+
             results = {
                 'step': step,
-                'epoch': step / steps_per_epoch,
+                'epoch': int(step / steps_per_epoch),
             }
 
             for key, val in checkpoint_vals.items():
@@ -236,7 +242,9 @@ if __name__ == "__main__":
             val_metrics = task.eval_metrics(algorithm, val_loader, device=device)
             val_metrics = misc.add_prefix(val_metrics, 'val')
             results.update(val_metrics)                        
-                
+
+            prog_bar.close()
+
             results_keys = sorted(results.keys())
             if results_keys != last_results_keys:
                 misc.print_row(results_keys, colwidth=12)
@@ -248,6 +256,9 @@ if __name__ == "__main__":
             with open(epochs_path, 'a') as f:
                 f.write(json.dumps(results, sort_keys=True) + "\n")
             
+            if not algorithm.warmup:
+                es(-results[args.es_metric], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
+
             save_checkpoint(
                 algorithm, 
                 algorithm.optimizer, 
@@ -257,12 +268,9 @@ if __name__ == "__main__":
                 torch.random.get_rng_state(),
                 args.output_dir
             )
-            
-            checkpoint_vals = collections.defaultdict(lambda: [])
-            
-            if not algorithm.warmup:
-                es(-results[args.es_metric], step, algorithm.state_dict(), os.path.join(args.output_dir, "model.pkl"))            
 
+            checkpoint_vals = collections.defaultdict(lambda: [])
+            prog_bar = tqdm.tqdm(leave=False)
 
     # Testing ------------------------------------------------------------------
     algorithm.load_state_dict(torch.load(os.path.join(args.output_dir, "model.pkl")))

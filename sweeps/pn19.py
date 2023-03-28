@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from itertools import product
-from clinicaldg.lib import misc
+from icudg.lib import misc
 
 # Define values to sweep over --------------------------------------------------
 algorithms = []

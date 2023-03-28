@@ -7,9 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 from tqdm import tqdm
-from torchvision.datasets import MNIST
 
-from icudg.tasks.mnist import Constants as mnistConstants
 from icudg.tasks.physionet import Constants as pnConstants
 
 def safe_mkdir(path):
@@ -19,17 +17,6 @@ def safe_mkdir(path):
             print("Cancelled data download.")
             return 
         path.mkdir(parents=True, exist_ok=True)
-
-# MNIST ------------------------------------------------------------------------
-
-def download_mnist():
-    # Original URL: http://yann.lecun.com/exdb/mnist/
-    path = Path(mnistConstants.data_dir)
-    safe_mkdir(path)
-    MNIST(mnistConstants.data_dir, download=True)
-
-
-# PhysioNet CinC Challenge 2019 ------------------------------------------------
 
 def download_physionet2019(path):
     path = Path(path)
@@ -64,6 +51,5 @@ def import_physionet2019():
 
 
 if __name__ == "__main__":
-    download_mnist()
     download_physionet2019()
     import_physionet2019()

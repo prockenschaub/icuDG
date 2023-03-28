@@ -1,3 +1,6 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Modifications made by Patrick Rockenschaub
+
 import torch
 
 from icudg.lib.hparams_registry import HparamSpec
@@ -6,9 +9,9 @@ from .erm import ERM
 
 
 class GroupDRO(ERM):
-    """
-    Robust ERM minimizes the error at the worst minibatch
-    Algorithm 1 from [https://arxiv.org/pdf/1911.08731.pdf]
+    """Robust ERM minimizes the error at the worst minibatch
+    
+    Implements algorithm 1 from https://arxiv.org/pdf/1911.08731.pdf
     """
 
     HPARAM_SPEC = ERM.HPARAM_SPEC + [
@@ -29,15 +32,15 @@ class GroupDRO(ERM):
         for m in range(len(minibatches)):
             x, y = minibatches[m]
             mask = self.task.get_mask((x, y))
-            losses[m] = self.loss_fn(self.predict(x), y, mask)
+            losses[m] = self.loss_fn(self.predict(x).flatten(end_dim=-2), y.flatten(), mask.flatten())
             self.q[m] *= (self.hparams["groupdro_eta"] * losses[m].data).exp()
 
         self.q /= self.q.sum()
 
-        loss = torch.dot(losses, self.q) / len(minibatches)
+        loss = torch.dot(losses, self.q)
 
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
-        return {'loss': loss.item()}
+        return {'loss': loss.item(), 'nll': losses.mean().item()}

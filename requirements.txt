@@ -4,6 +4,7 @@ torch==1.7.0
 torchvision==0.8.1
 scikit-learn==0.23.1
 scipy==1.5.1
+statsmodels==0.13.2
 Pillow==5.1.0
 matplotlib==2.2.2
 tqdm==4.54.0

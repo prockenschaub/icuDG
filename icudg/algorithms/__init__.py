@@ -1,4 +1,4 @@
-
+from .base import Algorithm
 from .erm import ERM, ERMID, ERMMerged
 from .groupdro import GroupDRO
 from .mldg import MLDG

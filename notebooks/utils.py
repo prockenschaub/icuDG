@@ -10,7 +10,10 @@ import plotnine as ggp
 METHODS = ['ERMMerged', 'ERMID', 'ERM',  'CORAL', 'VREx', 'Fishr', 'GroupDRO', 'MLDG']
 
 def load_single_set_of_stats(path: Path, subset: List = None) -> Dict:
-    stats = torch.load((path/'stats.pkl').open('rb')) 
+    try:
+        stats = torch.load((path/'stats.pkl').open('rb'))
+    except: 
+        return None 
     stats['folder'] = path.stem
     
     if subset is None:
@@ -31,7 +34,8 @@ def load_all_stats(path: Path, subset: List = None) -> pd.DataFrame:
     lst = []
     for i in tqdm(path.glob('**/done')):
         stats = load_single_set_of_stats(i.parent, subset)
-        lst.append(stats)
+        if stats is not None:
+            lst.append(stats)
     return pd.DataFrame(lst)
 
 def load_model_performance(path: Path) -> List:
@@ -51,7 +55,7 @@ def load_model_performance(path: Path) -> List:
         "args/trial",
         "folder",
         "es_step",
-        "es_val_loss",
+        "es_val_nll",
         "test_results"
     ]
     
@@ -76,15 +80,15 @@ def aggregate_results(df, by):
     return df.\
         drop(columns=['trial', 'folder', 'es_step']).\
         groupby(by+['hparams_seed'], observed=True).\
-        agg(['mean', 'std']).\
+        agg(['count', 'mean', 'std']).\
         reset_index()
 
 def pick_best_result(df, by):
     return df.\
         groupby(by, observed=True, as_index=False).\
-        apply(lambda x: x.loc[x['es_val_loss']['mean'].idxmin(), :])
+        apply(lambda x: x.loc[x['es_val_nll']['mean'].idxmin(), :])
 
-def summ_mean_std(df, keep=None):
+def summ_mean_ste(df, keep=None):
     df = df.copy()
     meta = [c for c, s in df.columns if s == ""]
     cols = [c for c, s in df.columns if s != ""]
@@ -94,7 +98,8 @@ def summ_mean_std(df, keep=None):
     if keep:
         cols = [c for c in cols if re.search(keep, c)]
     for c in cols:
-        df[c] = df[f'{c}_mean'].apply('{:.3f}'.format) + u"\u00B1" + df[f'{c}_std'].apply('{:.3f}'.format)
+        df[f'{c}_ste'] = df[f'{c}_std'] / df[f'{c}_count'] ** (1/2)
+        df[c] = df[f'{c}_mean'].apply('{:.3f}'.format) + u"\u00B1" + df[f'{c}_ste'].apply('{:.3f}'.format)
     return df[meta+cols]
 
 
@@ -112,7 +117,7 @@ def plot_base(progress: pd.DataFrame) -> ggp.ggplot:
     return (
         ggp.ggplot(progress, ggp.aes('step', group='trial'))
             + ggp.geom_line(ggp.aes(y='loss', color=['loss']), show_legend=True) 
-            + ggp.geom_line(ggp.aes(y='val_loss', color=['val']), show_legend=True)
+            + ggp.geom_line(ggp.aes(y='val_nll', color=['val']), show_legend=True)
             + ggp.geom_vline(ggp.aes(xintercept='es_step'), colour='black', show_legend=True)
             + ggp.scale_color_discrete(name='', limits=['loss', 'val', 'nll', 'penalty'])
             + ggp.facet_wrap("~ trial")

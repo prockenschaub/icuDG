@@ -1,3 +1,5 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Modifications made by Patrick Rockenschaub
 import torch
 
 from icudg.lib.hparams_registry import HparamSpec
@@ -6,11 +8,14 @@ from icudg.lib.misc import cat
 from .erm import ERM
 
 class VREx(ERM):
-    """V-REx algorithm from http://arxiv.org/abs/2003.00688"""
+    """Out-of-Distribution Generalization via Risk Extrapolation (REx)
+    
+    Implements equation (8) from http://arxiv.org/abs/2003.00688
+    """
     
     HPARAM_SPEC = ERM.HPARAM_SPEC + [
         HparamSpec('vrex_lambda', 1e1, lambda r: 10**r.uniform(-1, 5)),
-        HparamSpec('vrex_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
+        HparamSpec('vrex_penalty_anneal_iters', 500, lambda r: int(10**r.uniform(0, 4))),
     ]
     
     def __init__(self, task, num_domains, hparams):
@@ -33,7 +38,7 @@ class VREx(ERM):
             mask = self.task.get_mask((x, y))
             logits = all_logits[all_logits_idx:all_logits_idx + y.shape[0]]
             all_logits_idx += y.shape[0]
-            nll = self.loss_fn(logits, y, mask)
+            nll = self.loss_fn(logits.flatten(end_dim=-2), y.flatten(), mask.flatten())
             losses[i] = nll
 
         mean = losses.mean()
@@ -53,7 +58,7 @@ class VREx(ERM):
         self.optimizer.step()
 
         self.update_count += 1
-        return {'loss': loss.item(), 'nll': nll.item(),
+        return {'loss': loss.item(), 'nll': mean.item(),
                 'penalty': penalty.item()}
 
     @property

@@ -1,3 +1,5 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Modifications made by Patrick Rockenschaub
 import abc
 import numpy as np
 import torch

@@ -1,8 +1,9 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Modifications made by Patrick Rockenschaub
 from collections import OrderedDict
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from backpack import backpack, extend
 from backpack.extensions import BatchGrad
@@ -15,11 +16,14 @@ from .base import Algorithm
 
 
 class Fishr(Algorithm):
-    "Invariant Gradients variances for Out-of-distribution Generalization"
+    """Invariant Gradients variances for Out-of-distribution Generalization
+
+    Implements algorithm 1 from https://arxiv.org/abs/2109.02934
+    """
 
     HPARAM_SPEC = Algorithm.HPARAM_SPEC + [
         HparamSpec('fishr_lambda', 1000., lambda r: 10**r.uniform(1., 4.)),
-        HparamSpec('fishr_penalty_anneal_iters', 100, lambda r: int(10**r.uniform(0, 3))),
+        HparamSpec('fishr_penalty_anneal_iters', 1500, lambda r: int(r.uniform(0., 5000.))),
         HparamSpec('fishr_ema', 0.95, lambda r: r.uniform(0.90, 0.99)),
     ]
 
@@ -39,7 +43,7 @@ class Fishr(Algorithm):
         self.network = nn.Sequential(self.featurizer, self.classifier)
 
         self.register_buffer("update_count", torch.tensor([0]))
-        self.bce_extended = extend(nn.CrossEntropyLoss(reduction='none')) 
+        self.loss_extended = task.get_extended_loss_fn(reduction='none') # 
         self.ema_per_domain = [
             MovingAverage(ema=self.hparams["fishr_ema"], oneminusema_correction=True)
             for _ in range(self.num_domains)
@@ -68,7 +72,7 @@ class Fishr(Algorithm):
         all_logits = self.classifier(all_z)
 
         penalty = self.compute_fishr_penalty(all_logits, all_y, all_m, len_minibatches)
-        all_nll = self.loss_fn(all_logits, all_y, all_m)
+        all_nll = self.loss_fn(all_logits.flatten(end_dim=-2), all_y.flatten(), all_m.flatten())
 
         penalty_weight = 0
         if self.update_count >= self.hparams["fishr_penalty_anneal_iters"]:
@@ -93,7 +97,7 @@ class Fishr(Algorithm):
 
     def _get_grads(self, logits, y, m):
         self.optimizer.zero_grad()
-        loss = self.bce_extended(logits.view(-1, self.task.num_classes), y.long().view(-1)) * m.view(-1)
+        loss = self.loss_extended(logits.flatten(end_dim=-2), y.flatten(), m.flatten()) 
         loss = loss.sum()
         with backpack(BatchGrad()):
             loss.backward(

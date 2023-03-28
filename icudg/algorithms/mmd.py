@@ -1,3 +1,5 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Modifications made by Patrick Rockenschaub
 import torch
 
 from icudg.lib.hparams_registry import HparamSpec
@@ -5,9 +7,7 @@ from icudg.lib.hparams_registry import HparamSpec
 from .erm import ERM
 
 class AbstractMMD(ERM):
-    """
-    Perform ERM while matching the pair-wise domain feature distributions
-    using MMD (abstract class)
+    """Perform ERM while matching the pair-wise domain feature distributions using MMD (abstract class)
     """
     HPARAM_SPEC = ERM.HPARAM_SPEC + [
         HparamSpec('mmd_gamma', 1., lambda r: 10**r.uniform(-1, 1)),
@@ -68,11 +68,11 @@ class AbstractMMD(ERM):
         masks = [self.task.get_mask(batchi) for batchi in minibatches]
 
         for i in range(nmb):
-            objective += self.loss_fn(classifs[i], targets[i], masks[i])
+            objective += self.loss_fn(classifs[i].flatten(end_dim=-2), targets[i].flatten(), masks[i].flatten())
             for j in range(i + 1, nmb):
                 penalty += self.mmd(
-                    features[i].flatten(end_dim=-2), 
-                    features[j].flatten(end_dim=-2)
+                    features[i].flatten(end_dim=-2)[masks[i].flatten()], 
+                    features[j].flatten(end_dim=-2)[masks[j].flatten()]
                 )
 
         objective /= nmb
@@ -95,15 +95,14 @@ class MMD(AbstractMMD):
     """
     MMD using Gaussian kernel
     """
-
     def __init__(self, task, num_domains, hparams):
         super(MMD, self).__init__(task, num_domains, hparams, gaussian=True)
 
 
 class CORAL(AbstractMMD):
-    """
-    MMD using mean and covariance difference 
-    """
+    """MMD using mean and covariance difference 
 
+    Implements CORAL loss based on https://arxiv.org/abs/1607.01719
+    """
     def __init__(self, task, num_domains, hparams):
         super(CORAL, self).__init__(task, num_domains, hparams, gaussian=False)

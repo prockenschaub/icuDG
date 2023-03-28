@@ -11,6 +11,7 @@ import inspect
 import numpy as np
 import torch
 from collections import Counter
+from itertools import cycle
 
 
 def make_weights_for_balanced_classes(dataset):
@@ -120,6 +121,22 @@ def random_pairs_of_minibatches(minibatches):
     return pairs
 
 
+def split_meta_train_test(minibatches, num_meta_test=1):
+    n_domains = len(minibatches)
+    perm = torch.randperm(n_domains).tolist()
+    pairs = []
+    meta_train = perm[:(n_domains-num_meta_test)]
+    meta_test = perm[-num_meta_test:]
+
+    for i,j in zip(meta_train, cycle(meta_test)):
+         xi, yi = minibatches[i][0], minibatches[i][1]
+         xj, yj = minibatches[j][0], minibatches[j][1]
+
+         min_n = min(len(xi), len(xj))
+         pairs.append(((xi[:min_n], yi[:min_n]), (xj[:min_n], yj[:min_n])))
+
+    return pairs
+
 class Tee:
     def __init__(self, fname, mode="a"):
         self.stdout = sys.stdout
@@ -176,12 +193,12 @@ def predict_on_set(algorithm, loader, device, aux_fn=None):
     with torch.no_grad():
         for batch in loader:
             # Batch: (x, y, ...)
-            
-            # Make predictions
             x = to_device(batch[0], device)
-            
+            y = to_device(batch[1], device)
+
+            # Make predictions
             algorithm.eval()
-            preds = algorithm.predict(x).cpu()
+            preds = algorithm.predict(x)
 
             # Extract auxilliary information 
             aux = None
@@ -190,7 +207,7 @@ def predict_on_set(algorithm, loader, device, aux_fn=None):
 
             # Store all necessary information
             all_preds += [preds]
-            all_targets += [batch[1]]
+            all_targets += [y]
             all_aux += [aux]
     
     return cat(all_preds), cat(all_targets), all_aux

@@ -1,42 +1,26 @@
-from typing import Optional
-
-from torch import Tensor
-import torch.nn.functional as F
 import torch.nn as nn
 
+import backpack
 
-def masked_bce_with_logits(logits, y, mask, reduction='mean', pos_weight=None, **kwargs):
-    logits = logits[..., -1]
-    logits, y, mask = logits.view(-1), y.view(-1), mask.view(-1)
     
-    elem_loss = F.binary_cross_entropy_with_logits(
-        logits, 
-        y, 
-        mask.type(y.dtype),
-        pos_weight=pos_weight,
-        reduction='none',
-        **kwargs
-    )
 
-    # Aggregate as needed
-    if reduction == 'mean':
-        return elem_loss.sum() / mask.sum()
-    elif reduction == 'sum':
-        return elem_loss.sum()
-    elif reduction == 'none': 
-        return elem_loss
-    else:
-        raise ValueError(f"reduction must be 'mean', 'sum', or 'none', got {reduction}")
-
-
-class MaskedBCEWithLogitsLoss(nn.modules.loss._Loss):
-    def __init__(self, size_average=None, reduce=None, reduction: str = 'mean',
-                 pos_weight=None):
-        super(MaskedBCEWithLogitsLoss, self).__init__(size_average, reduce, reduction)
-        self.register_buffer('pos_weight', pos_weight)
-        self.pos_weight: Optional[Tensor]
+class MaskedBCEWithLogitsLoss(nn.Module):
+    def __init__(self, weights=None, reduction: str = 'mean',extend=False):
+        super(MaskedBCEWithLogitsLoss, self).__init__()
+        self.ce_loss = nn.CrossEntropyLoss(weights, reduction=reduction)
+        if extend:
+            self.ce_loss = backpack.extend(self.ce_loss)
 
     def forward(self, input, target, mask):
-        return masked_bce_with_logits(input, target, mask,
-                               pos_weight=self.pos_weight,
-                               reduction=self.reduction)
+        if len(input.shape) != 2:
+            raise ValueError(f"expected input to have 2 dimensions, got {len(input.shape)} instead.")
+        elif len(target.shape) != 1:
+            raise ValueError(f"expected target to have 1 dimension, got {len(target.shape)} instead.")
+        elif len(mask.shape) != 1:
+            raise ValueError(f"expected mask to have 1 dimension, got {len(mask.shape)} instead.")
+        if input.shape[-1] != 2:
+            raise ValueError(f"the final dimension of `input` must be 2, got {input.shape[-1]} instead.")
+        masked_input = input[mask]
+        masked_target = target[mask]
+        return self.ce_loss(masked_input, masked_target)
+

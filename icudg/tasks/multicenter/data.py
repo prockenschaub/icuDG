@@ -17,27 +17,19 @@ class ICUEnvironment():
     """Data for a single ICU database (e.g., MIMIC) and outcome (e.g., mortality24)
 
     Args:
-            db (str): data source, one of 'miiv', 'eicu', 'hirid', 'aumc'
-            outcome (str): prediction target, one of 'mortality24', 'aki', 'sepsis'
+            db: data source, one of 'miiv', 'eicu', 'hirid', 'aumc'
+            outcome: prediction target, one of 'mortality24', 'aki', 'sepsis'
     """
     def __init__(self, db, outcome, pad_to):
         self.db = db
         self.outcome = outcome
         self.pad_to = pad_to
 
-    def load(self, debug=False) -> None:
+    def load(self, debug=False):
         """Load hourly data processed with the R package ``ricu``
 
         Args:
-            db (str): data source, one of 'miiv', 'eicu', 'hirid', 'aumc'
-            outcome (str): prediction target, one of 'mortality24', 'aki', 'sepsis'
-            debug (bool, optional): flag to load only a subset of 1000 patients for debugging. Defaults to False.
-
-        Returns:
-            Dict[str, pd.DataFrame]: 
-                'sta' : static data like age or sex
-                'dyn' : time-varying data like heart rate or blood pressure
-                'outc': the outcome
+            debug: flag to load only a subset of 1000 patients for debugging. Defaults to False.
         """
         data = {}
         for part in ["sta", "dyn", "outc"]:
@@ -61,7 +53,7 @@ class ICUEnvironment():
         self.ascertain_loaded()
         self.data['sta']['sex'] = (self.data['sta']['sex'] == "Female").astype(float)
 
-    def split(self, trial, n_splits, seed=None):
+    def split(self, trial: int, n_splits: int, seed: int = None):
         """Split the data into training, validation, and test sets
 
         See also: `get_cv_split()`
@@ -73,11 +65,10 @@ class ICUEnvironment():
         """Calculate means and standard deviations for static and dynamic predictors
 
         Args:
-            fold (str, optional): Fold for which to calculate. Defaults to 'train'.
+            fold: Fold for which to calculate. Defaults to 'train'.
 
         Returns:
-            Tuple[Dict[str, pd.Series]]: means and standard deviations for static
-                ('sta') and dynamic ('dyn) predictors
+            means and standard deviations for static ('sta') and dynamic ('dyn) predictors
         """
         means, stds = {}, {}
         for part in ['sta', 'dyn']:
@@ -85,13 +76,13 @@ class ICUEnvironment():
             stds[part] = self.data[fold][part].std(numeric_only=True)
         return means, stds
 
-    def normalise(self, means: Dict[str, pd.Series] = None, stds=None) -> None:
+    def normalise(self, means: Dict[str, pd.Series] = None, stds: Dict[str, pd.Series] = None):
         """Normalise the predictors using mean and standard deviation
 
         Args:
-            means (Dict[str, pd.Series], optional): Means of static('sta') and dynamic ('dyn) predictors. 
+            means: Means of static('sta') and dynamic ('dyn) predictors. 
                 Defaults to means of own training fold.
-            stds (Dict[str, pd.Series], optional): Standard deviation of static('sta') and dynamic ('dyn) 
+            stds: Standard deviation of static('sta') and dynamic ('dyn) 
                 predictors. Defaults to standard deviations of own training fold.
         """
         if means is None and stds is None:
@@ -103,7 +94,7 @@ class ICUEnvironment():
             for fold in ['train', 'val', 'test']:
                self.data[fold][part] = (self.data[fold][part] - means[part]) / stds[part]
     
-    def impute(self) -> None:
+    def impute(self):
         """Impute data with forward fill.
 
         Note: Time steps without a prior entry are filled with 0. If applied after normalisation, this 
@@ -132,6 +123,7 @@ class ICUEnvironment():
 
     @property
     def splits(self) -> Dict[str, pd.Index]:
+        """Return patient ids in each split"""
         return {f: v['sta'].index for f, v in self.data.items()}
 
     def ascertain_loaded(self):
@@ -149,7 +141,7 @@ class ICUEnvironment():
         """Training, validation, or test fold of the current environment
         
         Args:
-            fold (str): type of fold to return, one of 'train', 'val', or 'test'.
+            fold: type of fold to return, one of 'train', 'val', or 'test'.
 
         Returns:
             Fold: pytorch dataset representing a training, validation, or test fold.
@@ -164,9 +156,9 @@ class Fold(Dataset):
     """A single training, validation, or test fold of an environment
 
     Args:
-        data (Dict[str, pd.DataFrame]): fold as dictionary of DataFrames, see also `Environment.load()`
-        fold (str): type of fold represented by this object, one of 'train', 'val', or 'test'.
-        pad_to (int): maximum number of time steps that dynamic ('dyn') predictors should be padded to. 
+        data: fold as dictionary of DataFrames, see also `Environment.load()`
+        fold: type of fold represented by this object, one of 'train', 'val', or 'test'.
+        pad_to: maximum number of time steps that dynamic ('dyn') predictors should be padded to. 
     """
     def __init__(self, data: Dict[str, pd.DataFrame], fold: str, pad_to: int = None):
         self.fold = fold
@@ -190,7 +182,6 @@ class Fold(Dataset):
 
         # Get labels
         Y = self.data['outc'].loc[pat_id].values  # 1 or T x 1
-        Y = Y.astype(np.float32)
 
         # Pad them to the right length (if necessary)
         if self.pad_to:
@@ -199,5 +190,6 @@ class Fold(Dataset):
                 Y = pad_to_len(Y, self.pad_to, PAD_VALUE)   # pad_to x 1
                 Y = Y[:, -1] 
             Y = pad_missing(Y)
+        Y = Y.astype(np.int64)
 
         return X, Y

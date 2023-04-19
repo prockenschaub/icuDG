@@ -53,6 +53,10 @@ class MulticenterICU(base.Task):
         HparamSpec('kernel_size', 4, lambda r: int(r.randint(low=2, high=6))),
         HparamSpec('heads', 4, lambda r: int(r.randint(low=1, high=3))),
         HparamSpec('dropout', 0.5, lambda r: float(r.choice(a=[0.3, 0.4, 0.5, 0.6, 0.7]))),
+        
+        HparamSpec('missing', 'ind', lambda r: r.choice(a=['noind', 'ind', 'neumiss'])),
+        HparamSpec('neumiss_depth', 1, lambda r: int(r.randint(low=1, high=10))),
+
 
         # Task-specific algorithm hyperparams
         HparamSpec('mmd_gamma', 1000., lambda r: 10**r.uniform(2., 4.)),
@@ -66,7 +70,7 @@ class MulticenterICU(base.Task):
         self.outcome = outcome
         self.args = args
         self.hparams = hparams
-        self.envs = {e: data.ICUEnvironment(e, outcome, self.pad_to) for e in self.ENVIRONMENTS}
+        self.envs = {e: data.ICUEnvironment(e, outcome, self.pad_to, hparams['missing']) for e in self.ENVIRONMENTS}
 
         # Assign environments to train / val / test
         def _not(lst, excl):
@@ -184,14 +188,14 @@ class MulticenterICU(base.Task):
         """Get the torch module used to embed the preprocessed input
         """
         if self.hparams['architecture'] == "gru":
-            return featurizer.GRUNet(
+            net = featurizer.GRUNet(
                 self.num_inputs,
                 self.hparams['hidden_dims'],
                 self.hparams['num_layers'],
                 self.hparams['dropout']
             )
         elif self.hparams['architecture'] == "tcn":
-            return featurizer.TCNet(
+            net = featurizer.TCNet(
                 self.num_inputs,
                 self.hparams['hidden_dims'],
                 self.hparams['num_layers'],
@@ -199,17 +203,25 @@ class MulticenterICU(base.Task):
                 self.hparams['dropout']
             )
         elif self.hparams['architecture'] == "attn":
-            return featurizer.TransformerNet(
+            net = featurizer.TransformerNet(
                 self.num_inputs,
                 self.hparams['hidden_dims'],
                 self.hparams['num_layers'],
                 self.hparams['heads'],
                 self.hparams['dropout']
             )
-        return NotImplementedError(
-            f"Architecture {self.hparams['architecture']} not available ",
-            f"as a featurizer for the MulticenterICU task."
-        )
+        else:
+            return NotImplementedError(
+                f"Architecture {self.hparams['architecture']} not available ",
+                f"as a featurizer for the MulticenterICU task."
+            )
+    
+        if self.hparams['missing'] == 'neumiss':
+            net = featurizer.NeuMissFeaturizer(net, self.hparams['neumiss_depth'])
+
+        return net
+
+
 
     def get_loss_fn(self, reduction='mean') -> Callable:
         """Return the loss function for this task, a (weighted) mask BCE loss

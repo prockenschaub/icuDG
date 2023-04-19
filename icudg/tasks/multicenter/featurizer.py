@@ -12,6 +12,7 @@ class GRUNet(nn.Module):
     def __init__(self, num_inputs: int, hidden_dims: int, num_layers: int, dropout: float):
         super().__init__()
         self.rnn = nn.GRU(num_inputs, hidden_dims, num_layers, batch_first=True, dropout=dropout)
+        self.n_inputs = num_inputs
         self.n_outputs = hidden_dims
 
     def forward(self, x: Tensor) -> Tensor:
@@ -32,6 +33,7 @@ class TCNet(nn.Module):
             kernel_size,
             dropout
         )
+        self.n_inputs = num_inputs
         self.n_outputs = hidden_dims
 
     def forward(self, x: Tensor) -> Tensor:
@@ -54,6 +56,7 @@ class TransformerNet(nn.Module):
             dropout=dropout, 
             dropout_att=dropout
         )
+        self.n_inputs = num_inputs
         self.n_outputs = hidden_dims
 
     def forward(self, x: Tensor) -> Tensor:
@@ -73,8 +76,41 @@ class LastStep(nn.Module):
         self.featurizer = featurizer
     
     @property
+    def n_inputs(self) -> int:
+        return self.featurizer.n_inputs
+
+    @property
     def n_outputs(self) -> int:
         return self.featurizer.n_outputs
     
     def forward(self, x: Tensor) -> Tensor:
         return self.featurizer(x)[:, -1, :]
+
+
+class NeuMissFeaturizer(nn.Module):
+    """Wrap an existing featurizer, allowing it to deal with missing data without imputation
+
+    Note: assumes the following output dimensions of the featurzier (batch_size, seq_len, n_outputs)
+
+    Args: 
+        featurizer: base featurizer to wrap 
+        neumiss_depth: number of layers in the NeuMiss block that handles missing data
+    """
+    def __init__(self, featurizer: nn.Module, neumiss_depth=1):
+        super().__init__()
+        self.neumiss = networks.NeuMissBlock(
+            featurizer.n_inputs, 
+            neumiss_depth
+        )
+        self.featurizer = featurizer
+    
+    @property
+    def n_inputs(self) -> int:
+        return self.featurizer.n_inputs
+
+    @property
+    def n_outputs(self) -> int:
+        return self.featurizer.n_outputs
+    
+    def forward(self, x: Tensor) -> Tensor:
+        return self.featurizer(self.neumiss(x))

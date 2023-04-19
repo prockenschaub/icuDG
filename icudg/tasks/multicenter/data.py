@@ -19,11 +19,14 @@ class ICUEnvironment():
     Args:
             db: data source, one of 'miiv', 'eicu', 'hirid', 'aumc'
             outcome: prediction target, one of 'mortality24', 'aki', 'sepsis'
+            pad_to: maximum sequence length to pad all sequences to
+            missing: how to deal with missing data, one of 'noind', 'ind', 'neumiss'
     """
-    def __init__(self, db, outcome, pad_to):
+    def __init__(self, db, outcome, pad_to, missing='ind'):
         self.db = db
         self.outcome = outcome
         self.pad_to = pad_to
+        self.missing = missing
 
     def load(self, debug=False):
         """Load hourly data processed with the R package ``ricu``
@@ -105,14 +108,16 @@ class ICUEnvironment():
             for fold in ['train', 'val', 'test']:
                 df = self.data[fold][part]
 
-                # Add indicators for missingness
-                inds = df.isna().astype(float)
-                inds.columns = [name+"_ind" for name in inds.columns]
-                df = pd.concat((df, inds), axis=1) 
+                if self.missing == 'ind':
+                    # Add indicators for missingness
+                    inds = df.isna().astype(float)
+                    inds.columns = [name+"_ind" for name in inds.columns]
+                    df = pd.concat((df, inds), axis=1) 
 
-                # Fill missing values
-                df = df.groupby(level=0).ffill()  # start with forward fill
-                df = df.fillna(value=0)             # fill any remaining NAs with 0
+                if self.missing != 'neumiss':
+                    # Fill missing values
+                    df = df.groupby(level=0).ffill()  # start with forward fill
+                    df = df.fillna(value=0)             # fill any remaining NAs with 0
 
                 self.data[fold][part] = df
 

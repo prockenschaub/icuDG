@@ -4,3 +4,4 @@
 from .NN import MLP
 from .TCN import TemporalConvNet as TCN
 from .Transformer import Transformer
+from .NeuMiss import NeuMissBlock

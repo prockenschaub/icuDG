@@ -9,7 +9,7 @@ from torch.utils.data import ConcatDataset
 
 from icudg.lib.hparams_registry import HparamSpec
 from icudg.lib.misc import predict_on_set, cat
-from icudg.lib.metrics import roc_auc_score
+from icudg.lib.metrics import roc_auc_score, roc_curve, average_precision_score, precision_recall_curve, recall_score, precision_score
 from icudg.lib.losses import MaskedBCEWithLogitsLoss
 from icudg.tasks import base
 from icudg.algorithms.base import Algorithm
@@ -242,17 +242,43 @@ class MulticenterICU(base.Task):
         """
         logits, y, mask = predict_on_set(algorithm, loader, device, self.get_mask)
         mask = cat(mask).to(device)
-        
+
         # Get the loss function
         loss = algorithm.loss_fn(logits.flatten(end_dim=-2), y.flatten(), mask.flatten()) # Loss is defined by task
 
-        # Get the AUROC
+        # Get the AUROC and AUPRC
         logits = logits[..., -1]
         logits = logits.view(-1)[mask.view(-1)].cpu().numpy()
         y = y.view(-1)[mask.view(-1)].long().cpu().numpy()
         auroc = roc_auc_score(y, logits)
+        auprc = average_precision_score(y, logits)
 
-        return {'nll': loss.item(), 'auroc': auroc}
+        # Get sensitivity and PPV at the level of ICU admissions
+        if len(y.shape) == 2:
+            y = y.max(axis=-1)
+            logits = y.max(axis=-1)
+
+        def calc_ppv_at(sens):
+            _, roc_sens, roc_thresh = roc_curve(y, logits)
+            sens_thresh = max(roc_thresh[roc_sens >= sens])
+            return precision_score(y, logits >= sens_thresh)
+
+        ppvs = {sens: calc_ppv_at(sens) for sens in [0.5, 0.75, 0.9]}
+
+        def calc_sens_at(ppv):
+            prc_ppv, _, prc_thresh = precision_recall_curve(y, logits)
+            ppv_thresh = min(prc_thresh[prc_ppv[:-1] >= ppv])
+            return recall_score(y, logits >= ppv_thresh)
+
+        senss = {ppv: calc_sens_at(ppv) for ppv in [0.05, 0.2, 0.4]}
+
+        return {
+            'nll': loss.item(), 
+            'auroc': auroc, 
+            'auprc': auprc,
+            'ppvs': ppvs,
+            'senss': senss
+        }
 
     def save_task(self, file_path: str):
         """Save the task state for reproducibility (splits and means)

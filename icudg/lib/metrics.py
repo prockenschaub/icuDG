@@ -2,7 +2,12 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from sklearn.metrics import (
+    average_precision_score,
+    precision_recall_curve,
     roc_auc_score, 
+    roc_curve,
+    precision_score,
+    recall_score,
     accuracy_score, 
     recall_score, 
     f1_score, 

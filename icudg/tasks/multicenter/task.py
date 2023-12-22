@@ -260,17 +260,25 @@ class MulticenterICU(base.Task):
 
         def calc_ppv_at(sens):
             _, roc_sens, roc_thresh = roc_curve(y, logits)
-            sens_thresh = max(roc_thresh[roc_sens >= sens])
-            return precision_score(y, logits >= sens_thresh)
+            candidates = roc_thresh[roc_sens >= sens]
+            if len(candidates) > 0:
+                sens_thresh = max(candidates)
+                return precision_score(y, logits >= sens_thresh)
+            else:
+                return np.nan
 
-        ppvs = {sens: calc_ppv_at(sens) for sens in [0.5, 0.75, 0.9]}
+        ppvs = {sens: calc_ppv_at(sens) for sens in np.arange(0.05, 0.95, 0.05)}
 
         def calc_sens_at(ppv):
             prc_ppv, _, prc_thresh = precision_recall_curve(y, logits)
-            ppv_thresh = min(prc_thresh[prc_ppv[:-1] >= ppv])
-            return recall_score(y, logits >= ppv_thresh)
+            candidates = prc_thresh[prc_ppv[:-1] >= ppv]
+            if len(candidates) > 0:
+                ppv_thresh = min(candidates)
+                return recall_score(y, logits >= ppv_thresh)
+            else:
+                return np.nan
 
-        senss = {ppv: calc_sens_at(ppv) for ppv in [0.05, 0.2, 0.4]}
+        senss = {ppv: calc_sens_at(ppv) for ppv in np.arange(0.05, 0.95, 0.05)}
 
         return {
             'nll': loss.item(), 
